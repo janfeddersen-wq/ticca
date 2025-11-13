@@ -24,6 +24,7 @@ class CodeAgent(BaseAgent):
         return [
             "list_agents",
             "invoke_agent",
+            "ask_human_feedback",
             "list_files",
             "read_file",
             "grep",

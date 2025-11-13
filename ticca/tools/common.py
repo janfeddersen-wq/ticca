@@ -657,9 +657,32 @@ def get_user_approval(
     import time
 
     from ticca.tools.command_runner import set_awaiting_user_input
+    from ticca.tui_state import is_tui_mode
 
     if puppy_name is None:
         puppy_name = "Ticca"
+
+    # Check if we're in TUI mode - use TUI modal if available
+    if is_tui_mode():
+        try:
+            from ticca.tui.approval_helpers import show_tui_approval
+
+            # Convert content to string if it's a Text object
+            content_str = str(content) if isinstance(content, Text) else content
+
+            # Try TUI modal first
+            approved, feedback = show_tui_approval(title, content_str, preview)
+
+            # If TUI modal returns False with no feedback, it means it failed
+            # and we should fall back to CLI mode
+            if approved or feedback is not None:
+                return approved, feedback
+
+        except Exception as e:
+            # TUI modal failed, fall through to CLI mode
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.debug(f"TUI approval modal failed, using CLI: {e}")
 
     # Build panel content
     if isinstance(content, str):

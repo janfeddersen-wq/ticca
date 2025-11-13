@@ -1,5 +1,6 @@
 from ticca.messaging import emit_warning
 from ticca.tools.agent_tools import register_invoke_agent, register_list_agents
+from ticca.tools.ask_human import register_ask_human_feedback_tool
 
 # Browser automation tools
 from ticca.tools.browser.browser_control import (
@@ -71,6 +72,7 @@ TOOL_REGISTRY = {
     # Agent Tools
     "list_agents": register_list_agents,
     "invoke_agent": register_invoke_agent,
+    "ask_human_feedback": register_ask_human_feedback_tool,
     # File Operations
     "list_files": register_list_files,
     "read_file": register_read_file,

@@ -29,6 +29,7 @@ class PlanningAgent(BaseAgent):
             "read_file",
             "grep",
             "agent_share_your_reasoning",
+            "ask_human_feedback",
             "list_agents",
             "invoke_agent",
         ]
