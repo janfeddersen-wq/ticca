@@ -21,7 +21,7 @@ class HelpScreen(ModalScreen):
         width: 80;
         height: 30;
         border: thick $primary;
-        background: $surface;
+        background: rgba(46, 52, 64, 0.5);
         padding: 1;
     }
 

@@ -33,7 +33,7 @@ class MCPInstallWizardScreen(ModalScreen):
         max-width: 100;
         height: 80%;
         max-height: 40;
-        background: $surface;
+        background: rgba(46, 52, 64, 0.5);
         border: solid $primary;
         padding: 1 2;
         layout: vertical;
@@ -79,7 +79,7 @@ class MCPInstallWizardScreen(ModalScreen):
         border: solid $success;
         padding: 1;
         margin-bottom: 1;
-        background: $surface-lighten-1;
+        background: transparent;
     }
 
     #env-vars-container {
@@ -156,7 +156,7 @@ class MCPInstallWizardScreen(ModalScreen):
         height: 1fr;
         border: solid $primary;
         margin-bottom: 1;
-        background: $surface-darken-1;
+        background: transparent;
     }
 
     #custom-json-button {

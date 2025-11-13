@@ -64,6 +64,11 @@ class CodePuppyTUI(App):
         background: $background;
     }
 
+    /* Make modal screens have semi-transparent scrim to dim background */
+    ModalScreen {
+        background: rgba(0, 0, 0, 0.6);
+    }
+
     /* Global scrollbar styling - slim and subtle */
     * {
         scrollbar-background: transparent;

@@ -62,7 +62,7 @@ class CommandHistoryModal(ModalScreen):
         /* Set a definite height that's large enough but fits on screen */
         height: 22;  /* Increased height to make room for navigation hint */
         min-height: 18;
-        background: $surface;
+        background: rgba(46, 52, 64, 0.5);
         border: solid $primary;
         /* Increase vertical padding to add more space between elements */
         padding: 1 2;
@@ -89,7 +89,7 @@ class CommandHistoryModal(ModalScreen):
         padding: 0 1;
         margin-bottom: 1;
         margin-top: 1;
-        background: $surface-darken-1;
+        background: transparent;
         border: solid $primary-darken-2;
         overflow: auto;
     }

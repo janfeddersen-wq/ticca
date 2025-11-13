@@ -21,8 +21,12 @@ class QuitConfirmationScreen(ModalScreen[bool]):
         width: 50;
         height: 14;
         border: thick $error;
-        background: $surface;
+        background: rgba(46, 52, 64, 0.5);
         padding: 1;
+    }
+
+    #quit-title {
+        background: rgba(0, 0, 0, 0);
     }
 
     #quit-message {
@@ -31,6 +35,7 @@ class QuitConfirmationScreen(ModalScreen[bool]):
         padding: 1 0;
         margin: 0 0 1 0;
         color: $text;
+        background: rgba(0, 0, 0, 0);
     }
 
     #quit-buttons {
@@ -38,6 +43,7 @@ class QuitConfirmationScreen(ModalScreen[bool]):
         height: 3;
         align: center middle;
         width: 100%;
+        background: rgba(0, 0, 0, 0);
     }
 
     #cancel-button {

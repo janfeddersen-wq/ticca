@@ -27,7 +27,7 @@ class ImageViewerModal(ModalScreen):
     DEFAULT_CSS = """
     ImageViewerModal {
         align: center middle;
-        background: #00000088;
+        background: transparent;
     }
 
     #viewer-container {
@@ -35,7 +35,7 @@ class ImageViewerModal(ModalScreen):
         max-width: 120;
         height: 85%;
         min-height: 30;
-        background: #2e3440;
+        background: rgba(46, 52, 64, 0.5);
         border: solid #5e81ac;
         padding: 1 2;
         layout: vertical;
@@ -54,7 +54,7 @@ class ImageViewerModal(ModalScreen):
         width: 100%;
         height: 1fr;
         border: solid #5e81ac;
-        background: #3b4252;
+        background: transparent;
         margin-bottom: 1;
         align: center top;
     }

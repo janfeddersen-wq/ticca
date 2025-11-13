@@ -32,7 +32,7 @@ class ModelPicker(ModalScreen):
         max-width: 100;
         height: 24;
         min-height: 18;
-        background: $surface;
+        background: rgba(46, 52, 64, 0.5);
         border: solid $primary;
         padding: 1 2;
         layout: vertical;
@@ -49,7 +49,7 @@ class ModelPicker(ModalScreen):
         height: 1fr;
         overflow: auto;
         border: solid $primary-darken-2;
-        background: $surface-darken-1;
+        background: transparent;
         margin: 1 0;
     }
 

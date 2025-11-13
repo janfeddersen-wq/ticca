@@ -35,7 +35,7 @@ class FileEditorModal(ModalScreen):
     DEFAULT_CSS = """
     FileEditorModal {
         align: center middle;
-        background: #00000088;
+        background: transparent;
     }
 
     #editor-container {
@@ -43,7 +43,7 @@ class FileEditorModal(ModalScreen):
         max-width: 120;
         height: 80%;
         min-height: 30;
-        background: #2e3440;
+        background: rgba(46, 52, 64, 0.5);
         border: solid #5e81ac;
         padding: 1 2;
         layout: vertical;

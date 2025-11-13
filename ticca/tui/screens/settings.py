@@ -31,7 +31,7 @@ class SettingsScreen(ModalScreen):
         width: 110;
         height: 40;
         border: round #5e81ac;
-        background: #2e3440;
+        background: rgba(46, 52, 64, 0.5);
         padding: 1 2;
     }
 
