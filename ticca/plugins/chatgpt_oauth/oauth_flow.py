@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import datetime
+import logging
 import threading
 import time
 import urllib.parse
@@ -26,8 +27,14 @@ from .utils import (
     save_tokens,
 )
 
+logger = logging.getLogger(__name__)
+
 REQUIRED_PORT = CHATGPT_OAUTH_CONFIG["required_port"]
 URL_BASE = f"http://localhost:{REQUIRED_PORT}"
+
+# Global server tracking to allow cleanup of previous servers
+_active_server: Optional[HTTPServer] = None
+_server_lock = threading.Lock()
 
 
 @dataclass
@@ -249,7 +256,30 @@ class _CallbackHandler(BaseHTTPRequestHandler):
         threading.Thread(target=_later, daemon=True).start()
 
 
+def _shutdown_active_server() -> None:
+    """Shutdown any active OAuth callback server."""
+    global _active_server
+
+    with _server_lock:
+        if _active_server is not None:
+            try:
+                logger.info("Shutting down previous OAuth callback server")
+                _active_server.shutdown()
+                _active_server.server_close()
+                time.sleep(0.1)  # Give the server thread time to clean up
+                logger.info("Previous OAuth callback server shutdown complete")
+            except Exception as e:
+                logger.error(f"Error shutting down previous OAuth callback server: {e}")
+            finally:
+                _active_server = None
+
+
 def run_oauth_flow() -> None:
+    global _active_server
+
+    # Shutdown any existing server first
+    _shutdown_active_server()
+
     existing_tokens = load_stored_tokens()
     if existing_tokens and existing_tokens.get("access_token"):
         emit_warning("Existing ChatGPT tokens will be overwritten.")
@@ -260,6 +290,10 @@ def run_oauth_flow() -> None:
         emit_error(f"Could not start OAuth server on port {REQUIRED_PORT}: {exc}")
         emit_info(f"Use `lsof -ti:{REQUIRED_PORT} | xargs kill` to free the port.")
         return
+
+    # Track the active server globally
+    with _server_lock:
+        _active_server = server
 
     auth_url = server.auth_url()
     emit_info(f"Open this URL in your browser: {auth_url}")
@@ -280,17 +314,23 @@ def run_oauth_flow() -> None:
 
     emit_info("Waiting for authentication callback…")
 
-    elapsed = 0.0
-    timeout = CHATGPT_OAUTH_CONFIG["callback_timeout"]
-    interval = 0.25
-    while elapsed < timeout:
-        time.sleep(interval)
-        elapsed += interval
-        if server.exit_code == 0:
-            break
+    try:
+        elapsed = 0.0
+        timeout = CHATGPT_OAUTH_CONFIG["callback_timeout"]
+        interval = 0.25
+        while elapsed < timeout:
+            time.sleep(interval)
+            elapsed += interval
+            if server.exit_code == 0:
+                break
 
-    server.shutdown()
-    server_thread.join(timeout=5)
+        server.shutdown()
+        server_thread.join(timeout=5)
+    finally:
+        # Clear the global reference
+        with _server_lock:
+            if _active_server is server:
+                _active_server = None
 
     if server.exit_code != 0:
         emit_error("Authentication failed or timed out.")

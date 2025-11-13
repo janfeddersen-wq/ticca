@@ -1,69 +1,57 @@
-"""Shared HTML templates drenched in ridiculous puppy-fueled OAuth theatrics."""
+"""Shared HTML templates for OAuth flow with clean, professional Ticca Bar styling."""
 
 from __future__ import annotations
 
 from typing import Optional, Tuple
 
-CLAUDE_LOGO_URL = "https://voideditor.com/claude-icon.png"
-CHATGPT_LOGO_URL = (
-    "https://freelogopng.com/images/all_img/1681038325chatgpt-logo-transparent.png"
-)
-
 
 def oauth_success_html(service_name: str, extra_message: Optional[str] = None) -> str:
-    """Return an over-the-top puppy celebration HTML page with artillery effects."""
+    """Return a clean, professional OAuth success page with Ticca Bar vibes."""
     clean_service = service_name.strip() or "OAuth"
-    detail = f"<p class='detail'>🐾 {extra_message} 🐾</p>" if extra_message else ""
-    projectile, rival_url, rival_alt, target_modifier = _service_targets(clean_service)
-    target_classes = "target" if not target_modifier else f"target {target_modifier}"
+    detail = f"<p class='detail'>{extra_message}</p>" if extra_message else ""
+
     return (
         "<!DOCTYPE html>"
         "<html lang='en'><head><meta charset='utf-8'>"
-        "<title>Puppy Paw-ty Success</title>"
+        "<title>Authentication Successful</title>"
         "<style>"
-        "html,body{margin:0;padding:0;height:100%;overflow:hidden;font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:linear-gradient(135deg,#0f172a 0%,#111827 45%,#1f2937 100%);color:#e5e7eb;}"
+        "html,body{margin:0;padding:0;height:100%;overflow:hidden;font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#0a0e1a;color:#e5e7eb;}"
         "body{display:flex;align-items:center;justify-content:center;}"
-        ".kennel{position:relative;width:90%;max-width:880px;padding:60px;background:rgba(15,23,42,0.72);border-radius:32px;backdrop-filter:blur(14px);box-shadow:0 30px 90px rgba(8,11,18,0.7);text-align:center;border:1px solid rgba(148,163,184,0.25);}"
-        "h1{font-size:3.4em;margin:0;color:#f1f5f9;text-shadow:0 14px 40px rgba(8,11,18,0.55);letter-spacing:1px;}"
-        "p{font-size:1.25em;margin:16px 0;color:#cbd5f5;}"
-        ".detail{font-size:1.1em;opacity:0.9;}"
-        ".mega{display:inline-block;font-size:1.35em;margin-top:14px;color:#f97316;}"
-        ".confetti{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:200%;height:200%;pointer-events:none;mix-blend-mode:screen;}"
-        ".confetti span{position:absolute;font-size:3.4em;animation:floaty 6s ease-in-out infinite;color:#fbbf24;}"
-        "@keyframes floaty{0%,100%{transform:translate3d(0,0,0) rotate(0deg);}35%{transform:translate3d(0,-70px,0) rotate(10deg);}65%{transform:translate3d(0,-90px,0) rotate(-12deg);}90%{transform:translate3d(0,-60px,0) rotate(6deg);}}"
-        ".confetti span:nth-child(odd){animation-duration:7.2s;}"
-        ".confetti span:nth-child(3n){animation-duration:8.6s;}"
-        ".confetti span:nth-child(4n){animation-duration:5.9s;}"
-        ".confetti span:nth-child(5n){animation-duration:9.4s;}"
-        ".artillery{position:absolute;bottom:12%;left:0;width:100%;max-width:1100px;height:240px;pointer-events:none;overflow:visible;}"
-        ".artillery .cannon{position:absolute;bottom:0;font-size:3.4em;color:#f97316;filter:drop-shadow(0 12px 32px rgba(249,115,22,0.45));}"
-        ".artillery .cannon.left{left:4%;}"
-        ".artillery .cannon.right{left:12%;transform:rotate(-4deg);}"
-        ".artillery .shell{position:absolute;left:10%;font-size:2.6em;animation:strafe 2.6s ease-out infinite;color:#facc15;text-shadow:0 0 14px rgba(250,204,21,0.45);}"
-        "@keyframes strafe{0%{left:10%;opacity:1;}60%{left:72%;opacity:1;}100%{left:82%;opacity:0;}}"
-        ".target{position:absolute;top:175px;right:-10%;width:220px;filter:drop-shadow(0 24px 46px rgba(8,11,18,0.72));animation:targetShake 1.9s ease-in-out infinite;}"
-        ".target img{width:200px;height:auto;border-radius:18px;background:#0f172a;padding:16px;border:1px solid rgba(148,163,184,0.35);}"
-        ".target.invert img{filter:brightness(1.2) saturate(1.15);background:rgba(15,23,42,0.9);}"
-        "@keyframes targetShake{0%,100%{transform:rotate(0deg) scale(1);}30%{transform:rotate(-4deg) scale(1.05);}60%{transform:rotate(3deg) scale(0.97);}85%{transform:rotate(-2deg) scale(1.04);}}"
-        ".target::after{content:'';position:absolute;top:50%;left:50%;width:220px;height:220px;border-radius:50%;background:radial-gradient(circle,rgba(248,113,113,0.35)0%,rgba(248,113,113,0)70%);transform:translate(-50%,-50%) scale(0);animation:impact 2.6s ease-out infinite;opacity:0;mix-blend-mode:screen;}"
-        "@keyframes impact{0%,60%{transform:translate(-50%,-50%) scale(0);opacity:0;}70%{transform:translate(-50%,-50%) scale(1.2);opacity:1;}100%{transform:translate(-50%,-50%) scale(1.5);opacity:0;}}"
+        ".container{position:relative;width:90%;max-width:600px;padding:48px;background:rgba(15,23,42,0.85);border-radius:16px;backdrop-filter:blur(12px);box-shadow:0 20px 60px rgba(0,0,0,0.5);text-align:center;border:1px solid rgba(148,163,184,0.15);}"
+        "h1{font-size:2em;margin:0 0 12px;color:#f1f5f9;font-weight:600;letter-spacing:-0.02em;}"
+        "p{font-size:1.05em;margin:12px 0;color:#94a3b8;line-height:1.6;}"
+        ".detail{font-size:0.95em;opacity:0.8;}"
+        ".status-icon{font-size:3.5em;margin-bottom:16px;animation:checkPulse 2s ease-in-out infinite;}"
+        "@keyframes checkPulse{0%,100%{transform:scale(1);opacity:1;}50%{transform:scale(1.05);opacity:0.9;}}"
+        ".progress-container{width:100%;height:4px;background:rgba(148,163,184,0.2);border-radius:2px;margin:24px 0;overflow:hidden;}"
+        ".progress-bar{height:100%;background:linear-gradient(90deg,#3b82f6,#8b5cf6);border-radius:2px;animation:fillBar 3s ease-out forwards;}"
+        "@keyframes fillBar{0%{width:0%;}100%{width:100%;}}"
+        ".ticca-bars{display:flex;justify-content:center;gap:4px;margin:32px 0 24px;}"
+        ".bar{width:8px;height:40px;background:linear-gradient(180deg,#3b82f6,#1e40af);border-radius:4px;animation:barPulse 1.5s ease-in-out infinite;}"
+        ".bar:nth-child(1){animation-delay:0s;height:32px;}"
+        ".bar:nth-child(2){animation-delay:0.1s;height:48px;}"
+        ".bar:nth-child(3){animation-delay:0.2s;height:40px;}"
+        ".bar:nth-child(4){animation-delay:0.3s;height:56px;}"
+        ".bar:nth-child(5){animation-delay:0.4s;height:36px;}"
+        "@keyframes barPulse{0%,100%{opacity:0.4;transform:scaleY(0.9);}50%{opacity:1;transform:scaleY(1.1);}}"
+        ".service-badge{display:inline-block;padding:8px 16px;background:rgba(59,130,246,0.15);border:1px solid rgba(59,130,246,0.3);border-radius:20px;color:#60a5fa;font-size:0.9em;font-weight:500;margin-bottom:24px;}"
         "</style>"
         "</head><body>"
-        "<div class='kennel'>"
-        "<div class='confetti'>"
-        + "".join(
-            f"<span style='left:{left}%;top:{top}%;animation-delay:{delay}s;'>{emoji}</span>"
-            for left, top, delay, emoji in _SUCCESS_PUPPIES
-        )
-        + "</div>"
-        f"<h1>🐶⚡ {clean_service} OAuth Complete ⚡🐶</h1>"
-        "<p class='mega'>Puppy squad delivered the token payload without mercy.</p>"
+        "<div class='container'>"
+        f"<div class='service-badge'>{clean_service}</div>"
+        "<div class='status-icon'>✓</div>"
+        "<h1>Authentication Successful</h1>"
+        "<p>Your authentication has been completed successfully.</p>"
         f"{detail}"
-        f"<p>💣 Puppies are bombarding the {rival_alt} defenses! 💣</p>"
-        "<p>🚀 This window will auto-close faster than a corgi zoomie. 🚀</p>"
-        "<p class='mega'>Keep the artillery firing – the rivals never stood a chance.</p>"
-        f"<div class='{target_classes}'><img src='{rival_url}' alt='{rival_alt}'></div>"
-        "<div class='artillery'>" + _build_artillery(projectile) + "</div>"
+        "<div class='ticca-bars'>"
+        "<div class='bar'></div>"
+        "<div class='bar'></div>"
+        "<div class='bar'></div>"
+        "<div class='bar'></div>"
+        "<div class='bar'></div>"
+        "</div>"
+        "<div class='progress-container'><div class='progress-bar'></div></div>"
+        "<p class='detail'>This window will close automatically in a moment.</p>"
         "</div>"
         "<script>setTimeout(()=>window.close(),3500);</script>"
         "</body></html>"
@@ -71,155 +59,70 @@ def oauth_success_html(service_name: str, extra_message: Optional[str] = None) -
 
 
 def oauth_failure_html(service_name: str, reason: str) -> str:
-    """Return a dramatic puppy-tragedy HTML page for OAuth sadness."""
+    """Return a clean, professional OAuth failure page with Ticca Bar vibes."""
     clean_service = service_name.strip() or "OAuth"
-    clean_reason = reason.strip() or "Something went wrong with the treats"
-    projectile, rival_url, rival_alt, target_modifier = _service_targets(clean_service)
-    target_classes = "target" if not target_modifier else f"target {target_modifier}"
+    clean_reason = reason.strip() or "Authentication failed"
+
     return (
         "<!DOCTYPE html>"
         "<html lang='en'><head><meta charset='utf-8'>"
-        "<title>Puppy Tears</title>"
+        "<title>Authentication Failed</title>"
         "<style>"
-        "html,body{margin:0;padding:0;height:100%;overflow:hidden;font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:linear-gradient(160deg,#101827 0%,#0b1120 100%);color:#e2e8f0;}"
+        "html,body{margin:0;padding:0;height:100%;overflow:hidden;font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#0a0e1a;color:#e5e7eb;}"
         "body{display:flex;align-items:center;justify-content:center;}"
-        ".kennel{position:relative;width:90%;max-width:780px;padding:55px;background:rgba(10,13,23,0.78);border-radius:30px;box-shadow:0 26px 80px rgba(2,6,23,0.78);text-align:center;border:1px solid rgba(71,85,105,0.35);}"
-        "h1{font-size:3em;margin:0 0 14px;text-shadow:0 16px 36px rgba(15,23,42,0.7);color:#f87171;}"
-        "p{font-size:1.2em;margin:14px 0;line-height:1.6;color:#cbd5f5;}"
-        ".howl{font-size:1.35em;margin:18px 0;color:#fda4af;}"
-        ".tearstorm{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:190%;height:190%;pointer-events:none;mix-blend-mode:screen;}"
-        ".tearstorm span{position:absolute;font-size:3.2em;animation:weep 4.8s ease-in-out infinite;color:#60a5fa;}"
-        "@keyframes weep{0%{transform:translate3d(0,-10px,0) rotate(-6deg);opacity:0.85;}35%{transform:translate3d(-20px,18px,0) rotate(8deg);opacity:1;}65%{transform:translate3d(25px,28px,0) rotate(-12deg);opacity:0.8;}100%{transform:translate3d(0,60px,0) rotate(0deg);opacity:0;}}"
-        ".tearstorm span:nth-child(odd){animation-duration:5.8s;}"
-        ".tearstorm span:nth-child(3n){animation-duration:6.4s;}"
-        ".tearstorm span:nth-child(4n){animation-duration:7.3s;}"
+        ".container{position:relative;width:90%;max-width:600px;padding:48px;background:rgba(15,23,42,0.85);border-radius:16px;backdrop-filter:blur(12px);box-shadow:0 20px 60px rgba(0,0,0,0.5);text-align:center;border:1px solid rgba(148,163,184,0.15);}"
+        "h1{font-size:2em;margin:0 0 12px;color:#f87171;font-weight:600;letter-spacing:-0.02em;}"
+        "p{font-size:1.05em;margin:12px 0;color:#94a3b8;line-height:1.6;}"
+        ".error-msg{font-size:0.95em;color:#fca5a5;background:rgba(220,38,38,0.1);border:1px solid rgba(220,38,38,0.2);padding:12px 16px;border-radius:8px;margin:20px 0;}"
+        ".status-icon{font-size:3.5em;margin-bottom:16px;animation:errorPulse 2s ease-in-out infinite;color:#f87171;}"
+        "@keyframes errorPulse{0%,100%{transform:scale(1);opacity:1;}50%{transform:scale(1.05);opacity:0.8;}}"
+        ".ticca-bars{display:flex;justify-content:center;gap:4px;margin:32px 0 24px;}"
+        ".bar{width:8px;height:40px;background:linear-gradient(180deg,#dc2626,#991b1b);border-radius:4px;animation:barFade 1.5s ease-in-out infinite;}"
+        ".bar:nth-child(1){animation-delay:0s;height:32px;}"
+        ".bar:nth-child(2){animation-delay:0.1s;height:48px;}"
+        ".bar:nth-child(3){animation-delay:0.2s;height:40px;}"
+        ".bar:nth-child(4){animation-delay:0.3s;height:56px;}"
+        ".bar:nth-child(5){animation-delay:0.4s;height:36px;}"
+        "@keyframes barFade{0%,100%{opacity:0.3;transform:scaleY(0.85);}50%{opacity:0.6;transform:scaleY(1);}}"
+        ".service-badge{display:inline-block;padding:8px 16px;background:rgba(220,38,38,0.15);border:1px solid rgba(220,38,38,0.3);border-radius:20px;color:#fca5a5;font-size:0.9em;font-weight:500;margin-bottom:24px;}"
         ".buttons{margin-top:26px;}"
-        ".buttons a{display:inline-block;margin:6px 12px;padding:12px 28px;border-radius:999px;background:rgba(59,130,246,0.16);color:#bfdbfe;text-decoration:none;font-weight:600;border:1px solid rgba(96,165,250,0.4);transition:all 0.3s;}"
-        ".buttons a:hover{background:rgba(96,165,250,0.28);transform:translateY(-2px);}"
-        ".battlefield{position:absolute;bottom:-25px;left:0;width:100%;max-width:960px;height:220px;pointer-events:none;}"
-        ".battlefield .shell{position:absolute;left:10%;font-size:2.4em;color:#38bdf8;text-shadow:0 0 12px rgba(56,189,248,0.45);animation:strafeSad 3s ease-out infinite;}"
-        "@keyframes strafeSad{0%{left:10%;opacity:1;}65%{left:70%;opacity:1;}100%{left:80%;opacity:0;}}"
-        ".battlefield .target{position:absolute;top:16px;right:6%;width:220px;filter:drop-shadow(0 20px 44px rgba(2,6,23,0.78));animation:sway 2s ease-in-out infinite;}"
-        ".battlefield .target img{width:200px;height:auto;border-radius:18px;background:#0b1120;padding:16px;border:1px solid rgba(96,165,250,0.4);}"
-        ".battlefield .target.invert img{filter:brightness(1.2) saturate(1.15);background:rgba(15,23,42,0.9);}"
-        "@keyframes sway{0%,100%{transform:rotate(0deg);}40%{transform:rotate(-6deg);}70%{transform:rotate(5deg);}}"
+        ".buttons a{display:inline-block;margin:6px 12px;padding:12px 24px;border-radius:8px;background:rgba(59,130,246,0.15);color:#93c5fd;text-decoration:none;font-weight:500;border:1px solid rgba(59,130,246,0.3);transition:all 0.3s;}"
+        ".buttons a:hover{background:rgba(59,130,246,0.25);transform:translateY(-2px);border-color:rgba(59,130,246,0.5);}"
         "</style>"
         "</head><body>"
-        "<div class='kennel'>"
-        "<div class='tearstorm'>"
-        + "".join(
-            f"<span style='left:{left}%;top:{top}%;animation-delay:{delay}s;'>{emoji}</span>"
-            for left, top, delay, emoji in _FAILURE_PUPPIES
-        )
-        + "</div>"
-        f"<h1>💔🐶 {clean_service} OAuth Whoopsie 💔</h1>"
-        "<p class='howl'>😭 Puppy artillery jammed! Someone cut the firing wire.</p>"
-        f"<p>{clean_reason}</p>"
-        "<p>💧 A thousand doggy eyes are welling up. Try again from Code Puppy! 💧</p>"
-        f"<p>Re-calibrate the {projectile} barrage and slam it into the {rival_alt} wall.</p>"
-        "<div class='buttons'>"
-        "<a href='https://codepuppy.dev' target='_blank'>Adopt more puppies</a>"
-        "<a href='https://github.com/code-puppy/ticca' target='_blank'>Send treats</a>"
+        "<div class='container'>"
+        f"<div class='service-badge'>{clean_service}</div>"
+        "<div class='status-icon'>✗</div>"
+        "<h1>Authentication Failed</h1>"
+        "<p>We encountered an issue during the authentication process.</p>"
+        f"<div class='error-msg'>{clean_reason}</div>"
+        "<div class='ticca-bars'>"
+        "<div class='bar'></div>"
+        "<div class='bar'></div>"
+        "<div class='bar'></div>"
+        "<div class='bar'></div>"
+        "<div class='bar'></div>"
         "</div>"
-        "<div class='battlefield'>"
-        + _build_artillery(projectile, shells_only=True)
-        + f"<div class='{target_classes}'><img src='{rival_url}' alt='{rival_alt}'></div>"
-        + "</div>"
+        "<p>Please try again from Ticca.</p>"
+        "<div class='buttons'>"
+        "<a href='https://github.com/code-puppy/ticca' target='_blank'>View Documentation</a>"
+        "</div>"
         "</div>"
         "</body></html>"
     )
 
 
-_SUCCESS_PUPPIES = (
-    (5, 12, 0.0, "🐶"),
-    (18, 28, 0.2, "🐕"),
-    (32, 6, 1.1, "🐩"),
-    (46, 18, 0.5, "🦮"),
-    (62, 9, 0.8, "🐕‍🦺"),
-    (76, 22, 1.3, "🐶"),
-    (88, 14, 0.4, "🐺"),
-    (12, 48, 0.6, "🐕"),
-    (28, 58, 1.7, "🦴"),
-    (44, 42, 0.9, "🦮"),
-    (58, 52, 1.5, "🐾"),
-    (72, 46, 0.3, "🐩"),
-    (86, 54, 1.1, "🐕‍🦺"),
-    (8, 72, 0.7, "🐶"),
-    (24, 80, 1.2, "🐩"),
-    (40, 74, 0.2, "🐕"),
-    (56, 66, 1.6, "🦮"),
-    (70, 78, 1.0, "🐕‍🦺"),
-    (84, 70, 1.4, "🐾"),
-    (16, 90, 0.5, "🐶"),
-    (32, 92, 1.9, "🦴"),
-    (48, 88, 1.1, "🐺"),
-    (64, 94, 1.8, "🐩"),
-    (78, 88, 0.6, "🐕"),
-    (90, 82, 1.3, "🐾"),
-)
-
-
-_FAILURE_PUPPIES = (
-    (8, 6, 0.0, "🥺🐶"),
-    (22, 18, 0.3, "😢🐕"),
-    (36, 10, 0.6, "😿🐩"),
-    (50, 20, 0.9, "😭🦮"),
-    (64, 8, 1.2, "🥺🐕‍🦺"),
-    (78, 16, 1.5, "😢🐶"),
-    (12, 38, 0.4, "😭🐕"),
-    (28, 44, 0.7, "😿🐩"),
-    (42, 34, 1.0, "🥺🦮"),
-    (58, 46, 1.3, "😭🐕‍🦺"),
-    (72, 36, 1.6, "😢🐶"),
-    (86, 40, 1.9, "😭🐕"),
-    (16, 64, 0.5, "🥺🐩"),
-    (32, 70, 0.8, "😭🦮"),
-    (48, 60, 1.1, "😿🐕‍🦺"),
-    (62, 74, 1.4, "🥺🐶"),
-    (78, 68, 1.7, "😭🐕"),
-    (90, 72, 2.0, "😢🐩"),
-    (20, 88, 0.6, "🥺🦮"),
-    (36, 92, 0.9, "😭🐕‍🦺"),
-    (52, 86, 1.2, "😢🐶"),
-    (68, 94, 1.5, "😭🐕"),
-    (82, 90, 1.8, "😿🐩"),
-)
-
-
-_STRAFE_SHELLS: Tuple[Tuple[float, float], ...] = (
-    (22.0, 0.0),
-    (28.0, 0.35),
-    (34.0, 0.7),
-    (26.0, 0.2),
-    (32.0, 0.55),
-    (24.0, 0.9),
-    (30.0, 1.25),
-)
+# Legacy constants - no longer used but kept for backwards compatibility
+_SUCCESS_PUPPIES = ()
+_FAILURE_PUPPIES = ()
+_STRAFE_SHELLS: Tuple[Tuple[float, float], ...] = ()
 
 
 def _build_artillery(projectile: str, *, shells_only: bool = False) -> str:
-    """Return HTML spans for puppy artillery shells (and cannons when desired)."""
-    shell_markup = []
-    for index, (top, delay) in enumerate(_STRAFE_SHELLS):
-        duration = 2.3 + (index % 3) * 0.25
-        shell_markup.append(
-            f"<span class='shell' style='top:{top}%;animation-delay:-{delay}s;animation-duration:{duration}s;'>{projectile}💥</span>"
-        )
-    shells = "".join(shell_markup)
-    if shells_only:
-        return shells
-
-    cannons = (
-        "<span class='cannon left'>🐶🧨</span><span class='cannon right'>🐕‍🦺🔥</span>"
-    )
-    return cannons + shells
+    """Legacy function - no longer used."""
+    return ""
 
 
 def _service_targets(service_name: str) -> Tuple[str, str, str, str]:
-    """Map service names to projectile emoji and rival logo metadata."""
-    normalized = service_name.lower()
-    if "anthropic" in normalized or "claude" in normalized:
-        return "🐕‍🦺🧨", CLAUDE_LOGO_URL, "Claude logo", ""
-    if "chat" in normalized or "gpt" in normalized:
-        return "🐶🚀", CHATGPT_LOGO_URL, "ChatGPT logo", "invert"
-    return "🐾💥", CHATGPT_LOGO_URL, "mystery logo", "invert"
+    """Legacy function - no longer used."""
+    return "", "", "", ""

@@ -2,91 +2,109 @@
 Textual spinner implementation for TUI mode.
 """
 
-from textual.widgets import Static
+from textual.app import ComposeResult
+from textual.containers import Container
 
 from .spinner_base import SpinnerBase
+from .kitt_scanner import KittScanner
 
 
-class TextualSpinner(Static):
-    """A textual spinner widget based on the SimpleSpinnerWidget."""
+class TextualSpinner(Container):
+    """A textual spinner widget with KITT-style scanner animation."""
 
-    # Use the frames from SpinnerBase
-    FRAMES = SpinnerBase.FRAMES
+    DEFAULT_CSS = """
+    TextualSpinner {
+        height: auto;
+        width: 1fr;
+        display: none;
+    }
+
+    TextualSpinner.active {
+        display: block;
+    }
+    """
 
     def __init__(self, **kwargs):
         """Initialize the textual spinner."""
-        super().__init__("", **kwargs)
-        self._frame_index = 0
+        super().__init__(**kwargs)
         self._is_spinning = False
-        self._timer = None
         self._paused = False
-        self._previous_state = ""
+        self.scanner = None
 
         # Register this spinner for global management
         from . import register_spinner
 
         register_spinner(self)
 
+    def compose(self) -> ComposeResult:
+        """Compose the spinner with the KITT scanner."""
+        self.scanner = KittScanner(message=SpinnerBase.THINKING_MESSAGE)
+        yield self.scanner
+
     def start_spinning(self):
-        """Start the spinner animation using Textual's timer system."""
+        """Start the spinner animation."""
         if not self._is_spinning:
             self._is_spinning = True
-            self._frame_index = 0
-            self.update_frame_display()
-            # Start the animation timer using Textual's timer system
-            self._timer = self.set_interval(0.10, self.update_frame_display)
+            self._paused = False
+
+            # Show the spinner
+            self.add_class("active")
+
+            # Ensure scanner is available
+            if self.scanner is None:
+                self.scanner = self.query_one(KittScanner)
+
+            # Update message based on current state
+            self._update_message()
+
+            # Start the KITT scanner animation
+            self.scanner.start_scanning()
 
     def stop_spinning(self):
         """Stop the spinner animation."""
         self._is_spinning = False
-        if self._timer:
-            self._timer.stop()
-            self._timer = None
-        self.update("")
+
+        # Hide the spinner
+        self.remove_class("active")
+
+        if self.scanner:
+            self.scanner.stop_scanning()
 
         # Unregister this spinner from global management
         from . import unregister_spinner
 
         unregister_spinner(self)
 
-    def update_frame(self):
-        """Update to the next frame."""
-        if self._is_spinning:
-            self._frame_index = (self._frame_index + 1) % len(self.FRAMES)
+    def _update_message(self):
+        """Update the message displayed based on current state."""
+        if not self.scanner:
+            return
 
-    def update_frame_display(self):
-        """Update the display with the current frame."""
-        if self._is_spinning:
-            self.update_frame()
-            current_frame = self.FRAMES[self._frame_index]
+        # Check if we're awaiting user input to determine which message to show
+        from ticca.tools.command_runner import is_awaiting_user_input
 
-            # Check if we're awaiting user input to determine which message to show
-            from ticca.tools.command_runner import is_awaiting_user_input
+        if is_awaiting_user_input():
+            # Show waiting message when waiting for user input
+            message = SpinnerBase.WAITING_MESSAGE
+        else:
+            # Show thinking message during normal processing
+            message = SpinnerBase.THINKING_MESSAGE
 
-            if is_awaiting_user_input():
-                # Show waiting message when waiting for user input
-                message = SpinnerBase.WAITING_MESSAGE
-            else:
-                # Show thinking message during normal processing
-                message = SpinnerBase.THINKING_MESSAGE
+        # Add context info if available
+        context_info = SpinnerBase.get_context_info()
+        if context_info:
+            message = f"{message} {context_info}"
 
-            context_info = SpinnerBase.get_context_info()
-            context_segment = (
-                f" [bold white]{context_info}[/bold white]" if context_info else ""
-            )
-
-            self.update(
-                f"[bold cyan]{message}[/bold cyan][bold cyan]{current_frame}[/bold cyan]{context_segment}"
-            )
+        self.scanner.update_message(message)
 
     def pause(self):
         """Pause the spinner animation temporarily."""
-        if self._is_spinning and self._timer and not self._paused:
+        if self._is_spinning and not self._paused:
             self._paused = True
-            self._timer.pause()
-            # Store current state but don't clear it completely
-            self._previous_state = self.renderable
-            self.update("")
+            # Hide the spinner when paused
+            self.remove_class("active")
+            if self.scanner:
+                self.scanner.stop_scanning()
 
     def resume(self):
         """Resume a paused spinner animation."""
@@ -96,11 +114,10 @@ class TextualSpinner(Static):
         if is_awaiting_user_input():
             return  # Don't resume if waiting for user input
 
-        if self._is_spinning and self._timer and self._paused:
+        if self._is_spinning and self._paused:
             self._paused = False
-            self._timer.resume()
-            # Restore previous state instead of immediately updating display
-            if self._previous_state:
-                self.update(self._previous_state)
-            else:
-                self.update_frame_display()
+            # Show the spinner again
+            self.add_class("active")
+            self._update_message()
+            if self.scanner:
+                self.scanner.start_scanning()

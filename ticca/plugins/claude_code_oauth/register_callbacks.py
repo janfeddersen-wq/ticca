@@ -37,6 +37,10 @@ logger = logging.getLogger(__name__)
 # Global lock to prevent multiple OAuth flows from running simultaneously
 _oauth_lock = threading.Lock()
 
+# Global server tracking to allow cleanup of previous servers
+_active_server: Optional[HTTPServer] = None
+_server_lock = threading.Lock()
+
 
 class _OAuthResult:
     def __init__(self) -> None:
@@ -85,9 +89,32 @@ class _CallbackHandler(BaseHTTPRequestHandler):
         self.wfile.write(body.encode("utf-8"))
 
 
+def _shutdown_active_server() -> None:
+    """Shutdown any active OAuth callback server."""
+    global _active_server
+
+    with _server_lock:
+        if _active_server is not None:
+            try:
+                logger.info("Shutting down previous OAuth callback server")
+                _active_server.shutdown()
+                _active_server.server_close()
+                time.sleep(0.1)  # Give the server thread time to clean up
+                logger.info("Previous OAuth callback server shutdown complete")
+            except Exception as e:
+                logger.error(f"Error shutting down previous OAuth callback server: {e}")
+            finally:
+                _active_server = None
+
+
 def _start_callback_server(
     context: OAuthContext,
 ) -> Optional[Tuple[HTTPServer, _OAuthResult, threading.Event]]:
+    global _active_server
+
+    # Shutdown any existing server first
+    _shutdown_active_server()
+
     port_range = CLAUDE_CODE_OAUTH_CONFIG["callback_port_range"]
 
     for port in range(port_range[0], port_range[1] + 1):
@@ -104,6 +131,11 @@ def _start_callback_server(
                     server.serve_forever()
 
             threading.Thread(target=run_server, daemon=True).start()
+
+            # Track the active server globally
+            with _server_lock:
+                _active_server = server
+
             return server, result, event
         except OSError:
             continue
@@ -159,6 +191,7 @@ def _await_callback(context: OAuthContext) -> Optional[str]:
 
     finally:
         # Always clean up the server, even on errors
+        global _active_server
         try:
             server.shutdown()
             server.server_close()
@@ -167,6 +200,11 @@ def _await_callback(context: OAuthContext) -> Optional[str]:
             logger.debug("OAuth callback server shutdown complete")
         except Exception as e:
             logger.error(f"Error shutting down OAuth callback server: {e}")
+        finally:
+            # Clear the global reference
+            with _server_lock:
+                if _active_server is server:
+                    _active_server = None
 
 
 def _custom_help() -> List[Tuple[str, str]]:

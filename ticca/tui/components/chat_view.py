@@ -31,126 +31,123 @@ class ChatView(VerticalScroll):
     }
 
     .user-message {
-        background: $surface;
+        background: transparent;
         color: $text;
-        margin: 1 0 1 0;
+        margin: 1 0;
         padding: 1 2;
         height: auto;
         text-wrap: wrap;
-        border: round $panel;
-        text-style: bold;
+        border: round $border;
     }
 
     .agent-message {
-        background: $surface;
+        background: transparent;
         color: $text;
-        margin: 1 0 1 0;
+        margin: 1 0;
         padding: 1 2;
         height: auto;
         text-wrap: wrap;
-        border: round $panel;
+        border: round $border;
     }
 
     .system-message {
-        background: $surface;
-        color: $accent;
-        margin: 1 0 1 0;
+        background: transparent;
+        color: $text;
+        margin: 1 0;
         padding: 1 2;
         height: auto;
         text-wrap: wrap;
-        border: round $panel;
+        border: round $border;
     }
 
     .error-message {
-        background: $surface;
-        color: $error;
-        margin: 1 0 1 0;
+        background: transparent;
+        color: $text;
+        margin: 1 0;
         padding: 1 2;
         height: auto;
         text-wrap: wrap;
-        border: round $panel;
+        border: round $border;
     }
 
     .agent_reasoning-message {
-        background: $surface;
-        color: $warning;
-        margin: 1 0 1 0;
+        background: transparent;
+        color: $text;
+        margin: 1 0;
         padding: 1 2;
         height: auto;
         text-wrap: wrap;
-        text-style: italic;
-        border: round $panel;
+        border: round $border;
     }
 
     .planned_next_steps-message {
-        background: $surface;
-        color: $success;
-        margin: 1 0 1 0;
+        background: transparent;
+        color: $text;
+        margin: 1 0;
         padding: 1 2;
         height: auto;
         text-wrap: wrap;
-        text-style: italic;
-        border: round $panel;
+        border: round $border;
     }
 
     .agent_response-message {
-        background: $surface;
+        background: transparent;
         color: $text;
-        margin: 1 0 1 0;
+        margin: 1 0;
         padding: 1 2;
         height: auto;
         text-wrap: wrap;
-        border: round $panel;
+        border: round $border;
     }
 
     .info-message {
-        background: $surface;
-        color: $accent;
-        margin: 1 0 1 0;
+        background: transparent;
+        color: $text;
+        margin: 1 0;
         padding: 1 2;
         height: auto;
         text-wrap: wrap;
-        border: round $panel;
+        border: round $border;
     }
 
     .success-message {
-        background: $surface;
-        color: $success;
-        margin: 1 0 1 0;
+        background: transparent;
+        color: $text;
+        margin: 1 0;
         padding: 1 2;
         height: auto;
         text-wrap: wrap;
-        border: round $panel;
+        border: round $border;
     }
 
     .warning-message {
-        background: $surface;
-        color: $warning;
-        margin: 1 0 1 0;
+        background: transparent;
+        color: $text;
+        margin: 1 0;
         padding: 1 2;
         height: auto;
         text-wrap: wrap;
-        border: round $panel;
+        border: round $border;
     }
 
     .tool_output-message {
-        background: $surface;
-        color: $success;
-        margin: 1 0 1 0;
+        background: transparent;
+        color: $text;
+        margin: 1 0;
         padding: 1 2;
         height: auto;
         text-wrap: wrap;
-        border: round $panel;
+        border: round $border;
     }
 
     .command_output-message {
-        background: $surface;
-        color: $accent;
-        margin: 1 0 1 0;
+        background: transparent;
+        color: $text;
+        margin: 1 0;
         padding: 1 2;
         height: auto;
         text-wrap: wrap;
-        border: round $panel;
+        border: round $border;
     }
 
     .message-container {
@@ -304,16 +301,12 @@ class ChatView(VerticalScroll):
 
         # Update the widget based on message type
         if last_message.type == MessageType.AGENT_RESPONSE:
-            # Re-render agent response with updated content
-            prefix = "AGENT RESPONSE:\n"
+            # Re-render agent response with updated content (no prefix, we have separate header)
             try:
                 md = Markdown(last_message.content)
-                header = Text(prefix, style="bold")
-                group_content = Group(header, md)
-                last_widget.update(group_content)
+                last_widget.update(md)
             except Exception:
-                full_content = f"{prefix}{last_message.content}"
-                last_widget.update(Text(full_content))
+                last_widget.update(Text(last_message.content))
         else:
             # Handle other message types
             # After the content concatenation above, content is always a string
@@ -465,12 +458,12 @@ class ChatView(VerticalScroll):
         css_class = f"{message.type.value}-message"
 
         if message.type == MessageType.USER:
-            # Simple user message display
-            formatted_content = message.content
-            message_widget = Static(Text(formatted_content), classes=css_class)
-            # User messages are not collapsible - mount directly
+            # User message with border title
+            message_widget = Static(Text(message.content), classes=css_class)
+            message_widget.border_title = "USER"
+            # Mount the message
             self.mount(message_widget)
-            # Track this widget for potential combining
+            # Track the widget for potential combining
             self._last_widget = message_widget
             # Track the category of this message for future combining
             self._last_message_category = message_category
@@ -480,56 +473,49 @@ class ChatView(VerticalScroll):
             self._schedule_scroll()
             return
         elif message.type == MessageType.AGENT:
-            prefix = "AGENT: "
-            content = f"{message.content}"
-            message_widget = Static(
-                Text.from_markup(message.content), classes=css_class
-            )
-            # Try to render markup
+            # Agent message with border title
             try:
-                message_widget = Static(Text.from_markup(content), classes=css_class)
+                message_widget = Static(Text.from_markup(message.content), classes=css_class)
             except Exception:
-                message_widget = Static(Text(content), classes=css_class)
+                message_widget = Static(Text(message.content), classes=css_class)
+            message_widget.border_title = "AGENT"
 
         elif message.type == MessageType.SYSTEM:
-            # Check if content is a Rich object (like Markdown)
+            # System message with border title
             if hasattr(message.content, "__rich_console__"):
                 # Render Rich objects directly (like Markdown)
                 message_widget = Static(message.content, classes=css_class)
             else:
-                content = f"{message.content}"
                 # Try to render markup
                 try:
                     message_widget = Static(
-                        Text.from_markup(content), classes=css_class
+                        Text.from_markup(message.content), classes=css_class
                     )
                 except Exception:
-                    message_widget = Static(Text(content), classes=css_class)
+                    message_widget = Static(Text(message.content), classes=css_class)
+            message_widget.border_title = "SYSTEM"
 
         elif message.type == MessageType.AGENT_REASONING:
-            prefix = "AGENT REASONING:\n"
-            content = f"{prefix}{message.content}"
-            message_widget = Static(Text(content), classes=css_class)
+            # Agent reasoning with border title
+            message_widget = Static(Text(message.content), classes=css_class)
+            message_widget.border_title = "AGENT REASONING"
         elif message.type == MessageType.PLANNED_NEXT_STEPS:
-            prefix = "PLANNED NEXT STEPS:\n"
-            content = f"{prefix}{message.content}"
-            message_widget = Static(Text(content), classes=css_class)
+            # Planned next steps with border title
+            message_widget = Static(Text(message.content), classes=css_class)
+            message_widget.border_title = "PLANNED NEXT STEPS"
         elif message.type == MessageType.AGENT_RESPONSE:
-            prefix = "AGENT RESPONSE:\n"
+            # Agent response with border title
             content = message.content
 
             try:
                 # First try to render as markdown with proper syntax highlighting
                 md = Markdown(content)
-                # Create a group with the header and markdown content
-                header = Text(prefix, style="bold")
-                group_content = Group(header, md)
-                message_widget = Static(group_content, classes=css_class)
+                message_widget = Static(md, classes=css_class)
             except Exception:
                 # If markdown parsing fails, fall back to simple text display
-                full_content = f"{prefix}{content}"
-                message_widget = Static(Text(full_content), classes=css_class)
+                message_widget = Static(Text(content), classes=css_class)
 
+            message_widget.border_title = "AGENT RESPONSE"
             # Make message selectable for easy copying
             message_widget.can_focus = False  # Don't interfere with navigation
 
@@ -558,30 +544,32 @@ class ChatView(VerticalScroll):
             self._schedule_scroll()
             return
         elif message.type == MessageType.INFO:
-            prefix = "INFO: "
-            content = f"{prefix}{message.content}"
-            message_widget = Static(Text(content), classes=css_class)
+            # Info message with border title
+            message_widget = Static(Text(message.content), classes=css_class)
+            message_widget.border_title = "INFO"
         elif message.type == MessageType.SUCCESS:
-            prefix = "SUCCESS: "
-            content = f"{prefix}{message.content}"
-            message_widget = Static(Text(content), classes=css_class)
+            # Success message with border title
+            message_widget = Static(Text(message.content), classes=css_class)
+            message_widget.border_title = "SUCCESS"
         elif message.type == MessageType.WARNING:
-            prefix = "WARNING: "
-            content = f"{prefix}{message.content}"
-            message_widget = Static(Text(content), classes=css_class)
+            # Warning message with border title
+            message_widget = Static(Text(message.content), classes=css_class)
+            message_widget.border_title = "WARNING"
         elif message.type == MessageType.TOOL_OUTPUT:
-            prefix = "TOOL OUTPUT: "
-            content = f"{prefix}{message.content}"
-            message_widget = Static(Text(content), classes=css_class)
+            # Tool output message with border title
+            message_widget = Static(Text(message.content), classes=css_class)
+            message_widget.border_title = "TOOL OUTPUT"
         elif message.type == MessageType.COMMAND_OUTPUT:
-            prefix = "COMMAND: "
-            content = f"{prefix}{message.content}"
-            message_widget = Static(Text(content), classes=css_class)
+            # Command output message with border title
+            message_widget = Static(Text(message.content), classes=css_class)
+            message_widget.border_title = "COMMAND OUTPUT"
         else:  # ERROR and fallback
-            prefix = "Error: " if message.type == MessageType.ERROR else "Unknown: "
-            content = f"{prefix}{message.content}"
-            message_widget = Static(Text(content), classes=css_class)
+            # Error/unknown message with border title
+            header_text = "ERROR" if message.type == MessageType.ERROR else "UNKNOWN"
+            message_widget = Static(Text(message.content), classes=css_class)
+            message_widget.border_title = header_text
 
+        # Mount the message widget
         self.mount(message_widget)
 
         # Track this widget for potential combining
