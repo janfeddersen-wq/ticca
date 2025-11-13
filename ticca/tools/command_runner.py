@@ -624,29 +624,56 @@ def run_shell_command(
 
         command_displayed = True
 
-        # Build panel content
-        panel_content = Text()
-        panel_content.append("⚡ Requesting permission to run:\n", style="bold yellow")
-        panel_content.append("$ ", style="bold green")
-        panel_content.append(command, style="bold white")
+        # Try TUI modal first if in TUI mode
+        confirmed = False
+        user_feedback = None
+        tui_approval_attempted = False
 
-        if cwd:
-            panel_content.append("\n\n", style="")
-            panel_content.append("📂 Working directory: ", style="dim")
-            panel_content.append(cwd, style="dim cyan")
+        if is_tui_mode():
+            try:
+                from ticca.tui.approval_helpers import show_tui_command_approval
 
-        # Use the common approval function
-        confirmed, user_feedback = get_user_approval(
-            title="Shell Command",
-            content=panel_content,
-            preview=None,
-            border_style="dim white",
-            puppy_name="Ticca",
-        )
+                tui_approval_attempted = True
+                confirmed, user_feedback = show_tui_command_approval(command, cwd)
 
-        # Release lock after approval
-        if confirmation_lock_acquired:
-            _CONFIRMATION_LOCK.release()
+                # Release lock after TUI approval
+                if confirmation_lock_acquired:
+                    _CONFIRMATION_LOCK.release()
+                    confirmation_lock_acquired = False
+
+            except Exception as e:
+                emit_warning(f"TUI approval failed, falling back to CLI: {e}")
+                tui_approval_attempted = False
+                # Fall through to CLI approval below
+
+        # Fall back to CLI approval if:
+        # 1. Not in TUI mode, OR
+        # 2. TUI approval was not attempted (failed), OR
+        # 3. We need CLI approval and haven't done TUI
+        if not tui_approval_attempted:
+            # Build panel content for CLI
+            panel_content = Text()
+            panel_content.append("⚡ Requesting permission to run:\n", style="bold yellow")
+            panel_content.append("$ ", style="bold green")
+            panel_content.append(command, style="bold white")
+
+            if cwd:
+                panel_content.append("\n\n", style="")
+                panel_content.append("📂 Working directory: ", style="dim")
+                panel_content.append(cwd, style="dim cyan")
+
+            # Use the common approval function
+            confirmed, user_feedback = get_user_approval(
+                title="Shell Command",
+                content=panel_content,
+                preview=None,
+                border_style="dim white",
+                puppy_name="Ticca",
+            )
+
+            # Release lock after approval
+            if confirmation_lock_acquired:
+                _CONFIRMATION_LOCK.release()
 
         if not confirmed:
             if user_feedback:

@@ -21,7 +21,7 @@ class HumanFeedbackModal(ModalScreen):
         width: 80;
         height: auto;
         max-height: 40;
-        border: thick $primary;
+        border: round $primary;
         background: $surface;
         padding: 1 2;
     }
@@ -29,7 +29,7 @@ class HumanFeedbackModal(ModalScreen):
     #feedback-title {
         text-align: center;
         text-style: bold;
-        color: $primary;
+        color: $accent;
         margin: 0 0 1 0;
     }
 
@@ -74,6 +74,28 @@ class HumanFeedbackModal(ModalScreen):
     #custom-input {
         width: 100%;
         margin: 0 0 1 0;
+        border: round $primary;
+        background: $panel;
+        color: $foreground;
+        padding: 0 1;
+    }
+
+    #custom-input:focus {
+        border: round $accent;
+        background: $secondary;
+    }
+
+    Input.direct-input {
+        width: 100%;
+        border: round $primary;
+        background: $panel;
+        color: $foreground;
+        padding: 0 1;
+    }
+
+    Input.direct-input:focus {
+        border: round $accent;
+        background: $secondary;
     }
 
     #feedback-buttons {
@@ -91,24 +113,36 @@ class HumanFeedbackModal(ModalScreen):
 
     #submit-button {
         border: wide $accent;
+        border-bottom: wide $accent-darken-1;
+        border-right: wide $accent-darken-1;
         background: $primary;
         color: $background;
     }
 
     #submit-button:hover {
         border: wide $accent-lighten-1;
+        border-bottom: wide $secondary;
+        border-right: wide $secondary;
         background: $primary-lighten-1;
     }
 
+    #submit-button:focus {
+        border: wide $panel;
+        border-top: wide $accent;
+        border-left: wide $accent;
+        background: $primary-darken-1;
+        color: $accent;
+    }
+
     #cancel-button {
-        border: wide $error;
-        background: $error;
-        color: $background;
+        border: wide $primary;
+        background: $secondary;
+        color: $text;
     }
 
     #cancel-button:hover {
-        border: wide $error;
-        background: $error-darken-1;
+        border: wide $primary-lighten-1;
+        background: $border;
     }
     """
 

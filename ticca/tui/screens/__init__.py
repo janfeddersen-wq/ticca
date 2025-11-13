@@ -9,6 +9,7 @@ from .tools import ToolsScreen
 from .autosave_picker import AutosavePicker
 from .model_picker import ModelPicker
 from .quit_confirmation import QuitConfirmationScreen
+from .command_execution_approval_modal import CommandExecutionApprovalModal
 
 __all__ = [
     "HelpScreen",
@@ -18,4 +19,5 @@ __all__ = [
     "AutosavePicker",
     "ModelPicker",
     "QuitConfirmationScreen",
+    "CommandExecutionApprovalModal",
 ]

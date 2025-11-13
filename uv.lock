@@ -2871,7 +2871,7 @@ wheels = [
 
 [[package]]
 name = "ticca"
-version = "0.1.0"
+version = "0.1.2"
 source = { editable = "." }
 dependencies = [
     { name = "bs4" },

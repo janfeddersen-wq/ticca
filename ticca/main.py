@@ -427,10 +427,9 @@ async def interactive_mode(message_renderer, initial_command: str = None) -> Non
             )
             if response is not None:
                 agent_response = response.output
+                from ticca.messaging import emit_agent_response
 
-                emit_system_message(
-                    f"\n[bold purple]AGENT RESPONSE: [/bold purple]\n{agent_response}"
-                )
+                emit_agent_response(agent_response)
                 emit_system_message("\n" + "=" * 50)
                 emit_info("[bold green]⚡ Continuing in Interactive Mode[/bold green]")
                 emit_system_message(
@@ -599,11 +598,9 @@ async def interactive_mode(message_renderer, initial_command: str = None) -> Non
                     continue
                 # Get the structured response
                 agent_response = result.output
-                from ticca.messaging import emit_info
+                from ticca.messaging import emit_agent_response
 
-                emit_system_message(
-                    f"\n[bold purple]AGENT RESPONSE: [/bold purple]\n{agent_response}"
-                )
+                emit_agent_response(agent_response)
 
                 # Ensure console output is flushed before next prompt
                 # This fixes the issue where prompt doesn't appear after agent response
@@ -731,9 +728,9 @@ async def execute_single_prompt(prompt: str, message_renderer) -> None:
             return
 
         agent_response = response.output
-        emit_system_message(
-            f"\n[bold purple]AGENT RESPONSE: [/bold purple]\n{agent_response}"
-        )
+        from ticca.messaging import emit_agent_response
+
+        emit_agent_response(agent_response)
 
     except asyncio.CancelledError:
         from ticca.messaging import emit_warning

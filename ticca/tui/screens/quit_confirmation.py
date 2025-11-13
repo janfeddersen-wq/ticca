@@ -19,14 +19,17 @@ class QuitConfirmationScreen(ModalScreen[bool]):
 
     #quit-dialog {
         width: 50;
-        height: 14;
-        border: thick $error;
-        background: rgba(46, 52, 64, 0.5);
-        padding: 1;
+        height: auto;
+        border: round $error;
+        background: $surface;
+        padding: 1 2;
     }
 
     #quit-title {
-        background: rgba(0, 0, 0, 0);
+        text-align: center;
+        text-style: bold;
+        color: $error;
+        margin: 0 0 1 0;
     }
 
     #quit-message {
@@ -35,7 +38,6 @@ class QuitConfirmationScreen(ModalScreen[bool]):
         padding: 1 0;
         margin: 0 0 1 0;
         color: $text;
-        background: rgba(0, 0, 0, 0);
     }
 
     #quit-buttons {
@@ -43,15 +45,47 @@ class QuitConfirmationScreen(ModalScreen[bool]):
         height: 3;
         align: center middle;
         width: 100%;
-        background: rgba(0, 0, 0, 0);
+        margin: 1 0 0 0;
     }
 
     #cancel-button {
         margin: 0 1;
+        min-width: 12;
+        height: 3;
+        border: wide $primary;
+        background: $secondary;
+        color: $text;
+    }
+
+    #cancel-button:hover {
+        border: wide $primary-lighten-1;
+        background: $border;
     }
 
     #quit-button {
         margin: 0 1;
+        min-width: 12;
+        height: 3;
+        border: wide $error;
+        border-bottom: wide $error-darken-1;
+        border-right: wide $error-darken-1;
+        background: $error;
+        color: $background;
+    }
+
+    #quit-button:hover {
+        border: wide $error-lighten-1;
+        border-bottom: wide $error-darken-2;
+        border-right: wide $error-darken-2;
+        background: $error-lighten-1;
+    }
+
+    #quit-button:focus {
+        border: wide $panel;
+        border-top: wide $error;
+        border-left: wide $error;
+        background: $error-darken-1;
+        color: $error-lighten-2;
     }
     """
 
@@ -63,8 +97,8 @@ class QuitConfirmationScreen(ModalScreen[bool]):
                 id="quit-message",
             )
             with Horizontal(id="quit-buttons"):
-                yield Button("Cancel", id="cancel-button", variant="default")
-                yield Button("Quit", id="quit-button", variant="error")
+                yield Button("Cancel", id="cancel-button")
+                yield Button("Quit", id="quit-button")
 
     def on_mount(self) -> None:
         """Set initial focus to the Quit button."""

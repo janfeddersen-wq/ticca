@@ -168,20 +168,46 @@ class RightSidebar(Container):
         # Try to get available agents and their status
         try:
             from ticca.agents import get_available_agents
+            from ticca.agents.agent_manager import get_current_agent, _AGENT_HISTORIES
             agents = get_available_agents()
+
+            # Get the current agent to access its live message history
+            try:
+                current_agent = get_current_agent()
+                current_agent_id = current_agent.name
+            except Exception:
+                current_agent = None
+                current_agent_id = None
 
             for agent_id, agent_display in agents.items():
                 # Show agent with idle status and message count
                 # Use a simple indicator: ○ for idle agents, ● for active
                 indicator = "●" if agent_id.lower() in self.agent_name.lower() else "○"
                 status_text.append(f"  {indicator} ", style="dim")
-                status_text.append(f"{agent_display}: ", style="white")
+
+                # Remove the word "Agent" from display name
+                display_clean = agent_display.replace(" Agent", "").replace(" agent", "")
+                status_text.append(f"{display_clean}: ", style="white")
                 status_text.append("idle ", style="dim")
-                # Show message count if available
-                status_text.append(f"({self.message_count} msg)\n", style="dim")
+
+                # Get message count for this specific agent
+                try:
+                    # If this is the current agent, get its live history
+                    if current_agent and agent_id == current_agent_id:
+                        agent_msg_count = len(current_agent.get_message_history())
+                    # Otherwise, get from stored history
+                    elif agent_id in _AGENT_HISTORIES:
+                        agent_msg_count = len(_AGENT_HISTORIES[agent_id])
+                    else:
+                        agent_msg_count = 0
+                except Exception:
+                    agent_msg_count = 0
+
+                status_text.append(f"({agent_msg_count} msg)\n", style="dim")
         except Exception:
             # Fallback if agent discovery fails
-            status_text.append(f"  ● {self.agent_name}: idle ({self.message_count} msg)\n", style="white")
+            display_clean = self.agent_name.replace("-agent", "").title()
+            status_text.append(f"  ● {display_clean}: idle ({self.message_count} msg)\n", style="white")
 
         # Context Window Section (compact)
         status_text.append("\n")

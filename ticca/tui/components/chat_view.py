@@ -10,7 +10,7 @@ from rich.markdown import Markdown
 from rich.syntax import Syntax
 from rich.text import Text
 from textual.containers import Vertical, VerticalScroll
-from textual.widgets import Static
+from textual.widgets import MarkdownViewer, Static
 
 from ..models import ChatMessage, MessageCategory, MessageType, get_message_category
 
@@ -301,12 +301,20 @@ class ChatView(VerticalScroll):
 
         # Update the widget based on message type
         if last_message.type == MessageType.AGENT_RESPONSE:
-            # Re-render agent response with updated content as selectable markdown
+            # Re-render agent response with updated content as markdown
             try:
-                md = Markdown(last_message.content, selectable=True)
-                last_widget.update(md)
+                # For MarkdownViewer, we need to update the markdown property
+                if isinstance(last_widget, MarkdownViewer):
+                    # Access the internal Markdown widget and update its content
+                    # Note: This might need adjustment depending on MarkdownViewer's API
+                    last_widget.document.update_source(last_message.content)
+                else:
+                    # Fallback for Static widgets
+                    md = Markdown(last_message.content)
+                    last_widget.update(md)
             except Exception:
-                last_widget.update(Text(last_message.content))
+                if isinstance(last_widget, Static):
+                    last_widget.update(Text(last_message.content))
         else:
             # Handle other message types
             # After the content concatenation above, content is always a string
@@ -483,8 +491,27 @@ class ChatView(VerticalScroll):
         elif message.type == MessageType.SYSTEM:
             # System message with border title
             if hasattr(message.content, "__rich_console__"):
-                # Render Rich objects directly (like Markdown)
-                message_widget = Static(message.content, classes=css_class)
+                # Check if it's a Markdown object - if so, use MarkdownViewer
+                if isinstance(message.content, Markdown):
+                    # Convert Rich Markdown to string and use MarkdownViewer
+                    from io import StringIO
+                    from rich.console import Console
+
+                    string_io = StringIO()
+                    temp_console = Console(
+                        file=string_io, width=80, legacy_windows=False, markup=False
+                    )
+                    temp_console.print(message.content)
+                    markdown_content = string_io.getvalue().rstrip("\n")
+
+                    message_widget = MarkdownViewer(
+                        markdown_content,
+                        show_table_of_contents=False,
+                        classes=css_class
+                    )
+                else:
+                    # Render other Rich objects directly
+                    message_widget = Static(message.content, classes=css_class)
             else:
                 # Try to render markup
                 try:
@@ -504,19 +531,21 @@ class ChatView(VerticalScroll):
             message_widget = Static(Text(message.content), classes=css_class)
             message_widget.border_title = "PLANNED NEXT STEPS"
         elif message.type == MessageType.AGENT_RESPONSE:
-            # Agent response with border title - use selectable Markdown
+            # Agent response with border title - use MarkdownViewer
             content = message.content
 
             try:
-                # Render as markdown with syntax highlighting AND text selection
-                md = Markdown(content, selectable=True)
-                message_widget = Static(md, classes=css_class)
+                # Render as markdown with MarkdownViewer (no table of contents)
+                message_widget = MarkdownViewer(
+                    content,
+                    show_table_of_contents=False,
+                    classes=css_class
+                )
             except Exception:
                 # If markdown parsing fails, fall back to simple text display
                 message_widget = Static(Text(content), classes=css_class)
 
             message_widget.border_title = "AGENT RESPONSE"
-            # Markdown content is now selectable in terminal
 
             # Mount the message
             self.mount(message_widget)
@@ -601,8 +630,10 @@ class ChatView(VerticalScroll):
         self._last_message_category = None  # Reset category tracking
         self._last_widget = None  # Reset widget tracking
         self._last_combined_message = None  # Reset combined message tracking
-        # Remove all message widgets (Static widgets and any Vertical containers)
+        # Remove all message widgets (Static, MarkdownViewer, and Vertical containers)
         for widget in self.query(Static):
+            widget.remove()
+        for widget in self.query(MarkdownViewer):
             widget.remove()
         for widget in self.query(Vertical):
             widget.remove()

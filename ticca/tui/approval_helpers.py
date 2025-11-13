@@ -169,3 +169,57 @@ def show_tui_file_edit_approval(
         logger = logging.getLogger(__name__)
         logger.error(f"TUI file edit approval modal failed: {e}")
         return False, None
+
+
+def show_tui_command_approval(
+    command: str,
+    cwd: str | None = None
+) -> Tuple[bool, str | None]:
+    """Show command execution approval dialog in TUI mode.
+
+    Args:
+        command: Shell command to be executed
+        cwd: Working directory for command execution
+
+    Returns:
+        Tuple of (approved: bool, feedback: str | None)
+    """
+    if not is_tui_mode():
+        return False, None
+
+    try:
+        app = get_tui_app_instance()
+        if not app:
+            return False, None
+
+        from ticca.tui.screens.command_execution_approval_modal import CommandExecutionApprovalModal
+
+        # Use threading event to block until modal returns
+        result_container = {}
+        event = threading.Event()
+
+        def callback(result):
+            result_container['result'] = result
+            event.set()
+
+        # Use call_from_thread for thread-safe UI operations
+        app.call_from_thread(
+            app.push_screen,
+            CommandExecutionApprovalModal(command, cwd),
+            callback
+        )
+
+        # Block until result is available
+        event.wait()
+
+        result = result_container.get('result')
+        if result:
+            return result.get("approved", False), result.get("feedback", None)
+        else:
+            return False, None
+
+    except Exception as e:
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"TUI command approval modal failed: {e}")
+        return False, None

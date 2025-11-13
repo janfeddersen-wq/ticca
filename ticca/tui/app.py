@@ -174,7 +174,7 @@ class CodePuppyTUI(App):
         Binding("ctrl+q", "quit", "Quit"),
         Binding("ctrl+c", "quit", "Quit"),
         Binding("ctrl+l", "clear_chat", "Clear Chat"),
-        Binding("ctrl+1", "show_help", "Help", show=False),  # Hidden from footer
+        Binding("ctrl+1", "clear_chat", "Clear Chat", show=False),  # Hidden from footer
         Binding("ctrl+2", "toggle_sidebar", "History"),
         Binding("ctrl+3", "open_settings", "Settings"),
         Binding("ctrl+4", "toggle_file_tree", "Files"),

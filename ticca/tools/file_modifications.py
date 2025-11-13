@@ -651,7 +651,7 @@ def _edit_file(
         group_id = generate_group_id("edit_file", file_path)
 
     emit_info(
-        "\n[bold white on blue] EDIT FILE [/bold white on blue]", message_group=group_id
+        f"\n[bold white on blue] EDIT FILE [/bold white on blue] 📝 [bold cyan]{file_path}[/bold cyan]", message_group=group_id
     )
     try:
         if isinstance(payload, DeleteSnippetPayload):
