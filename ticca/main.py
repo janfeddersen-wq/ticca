@@ -56,6 +56,17 @@ async def main():
         help="Run in web mode (serves TUI in browser)",
     )
     parser.add_argument(
+        "--host",
+        type=str,
+        default="127.0.0.1",
+        help="Host to bind web server to (default: 127.0.0.1). Use 0.0.0.0 to allow external connections",
+    )
+    parser.add_argument(
+        "--port",
+        type=int,
+        help="Port to bind web server to (default: auto-find available port 8090-9010)",
+    )
+    parser.add_argument(
         "--interactive",
         "-i",
         action="store_true",
@@ -119,13 +130,20 @@ async def main():
 
         direct_console = Console()
         try:
-            # Find an available port for the web server
-            available_port = find_available_port()
-            if available_port is None:
-                direct_console.print(
-                    "[bold red]Error:[/bold red] No available ports in range 8090-9010!"
-                )
-                sys.exit(1)
+            # Use provided port or find an available one
+            if args.port:
+                web_port = args.port
+            else:
+                web_port = find_available_port()
+                if web_port is None:
+                    direct_console.print(
+                        "[bold red]Error:[/bold red] No available ports in range 8090-9010!"
+                    )
+                    sys.exit(1)
+
+            # Use provided host or default to localhost
+            web_host = args.host
+
             python_executable = sys.executable
             serve_command = f"{python_executable} -m ticca --tui"
             textual_serve_cmd = [
@@ -133,14 +151,16 @@ async def main():
                 "serve",
                 "-c",
                 serve_command,
+                "--host",
+                web_host,
                 "--port",
-                str(available_port),
+                str(web_port),
             ]
             direct_console.print(
                 "[bold blue]🌐 Starting Ticca web interface...[/bold blue]"
             )
             direct_console.print(f"[dim]Running: {' '.join(textual_serve_cmd)}[/dim]")
-            web_url = f"http://localhost:{available_port}"
+            web_url = f"http://{web_host}:{web_port}"
             direct_console.print(
                 f"[green]Web interface will be available at: {web_url}[/green]"
             )

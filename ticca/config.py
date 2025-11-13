@@ -642,6 +642,27 @@ def set_http2(enabled: bool) -> None:
     set_config_value("http2", "true" if enabled else "false")
 
 
+def get_show_file_tree() -> bool:
+    """
+    Get the show_file_tree configuration value.
+    Returns True if not set (default is to show file tree).
+    """
+    val = get_value("show_file_tree")
+    if val is None:
+        return True
+    return str(val).lower() in ("1", "true", "yes", "on")
+
+
+def set_show_file_tree(enabled: bool) -> None:
+    """
+    Sets the show_file_tree configuration value.
+
+    Args:
+        enabled: Whether to show the file tree panel
+    """
+    set_config_value("show_file_tree", "true" if enabled else "false")
+
+
 def set_enable_dbos(enabled: bool) -> None:
     """Enable DBOS via config (true enables, default false)."""
     set_config_value("enable_dbos", "true" if enabled else "false")

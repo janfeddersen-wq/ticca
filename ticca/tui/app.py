@@ -42,7 +42,6 @@ from .screens import (
     ModelPicker,
     QuitConfirmationScreen,
     SettingsScreen,
-    ToolsScreen,
 )
 
 
@@ -178,7 +177,7 @@ class CodePuppyTUI(App):
         Binding("ctrl+1", "show_help", "Help", show=False),  # Hidden from footer
         Binding("ctrl+2", "toggle_sidebar", "History"),
         Binding("ctrl+3", "open_settings", "Settings"),
-        Binding("ctrl+4", "show_tools", "Tools"),
+        Binding("ctrl+4", "toggle_file_tree", "Files"),
         Binding("ctrl+5", "focus_input", "Focus Prompt"),
         Binding("ctrl+6", "focus_chat", "Focus Response"),
         Binding("ctrl+7", "toggle_right_sidebar", "Status"),
@@ -373,6 +372,14 @@ class CodePuppyTUI(App):
             right_sidebar = self.query_one(RightSidebar)
             right_sidebar.display = True  # Show by default for sexy UI
             self._update_right_sidebar()
+        except Exception:
+            pass
+
+        # Apply file tree visibility setting from config
+        try:
+            from ticca.config import get_show_file_tree
+            file_tree = self.query_one(FileTreePanel)
+            file_tree.display = get_show_file_tree()
         except Exception:
             pass
 
@@ -882,9 +889,13 @@ class CodePuppyTUI(App):
         except Exception:
             pass
 
-    def action_show_tools(self) -> None:
-        """Show the tools modal."""
-        self.push_screen(ToolsScreen())
+    def action_toggle_file_tree(self) -> None:
+        """Toggle file tree visibility."""
+        try:
+            file_tree = self.query_one(FileTreePanel)
+            file_tree.display = not file_tree.display
+        except Exception:
+            pass
 
     def action_open_settings(self) -> None:
         """Open the settings configuration screen."""

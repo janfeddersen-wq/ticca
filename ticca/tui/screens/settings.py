@@ -458,6 +458,24 @@ class SettingsScreen(ModalScreen):
                 # Tab 4: Appearance
                 with TabPane("Appearance", id="appearance"):
                     with VerticalScroll(classes="tab-scroll"):
+                        yield Label("UI Panels", classes="section-header")
+                        yield Static(
+                            "Control visibility of sidebar panels.",
+                            classes="setting-description",
+                        )
+
+                        with Container(classes="switch-row"):
+                            yield Label(
+                                "Show File Tree:", classes="setting-label"
+                            )
+                            yield Switch(
+                                id="show-file-tree-switch", classes="setting-input"
+                            )
+                            yield Static(
+                                "Show or hide the left file tree panel (toggle with Ctrl+4).",
+                                classes="setting-description",
+                            )
+
                         yield Label("Message Display", classes="section-header")
                         yield Static(
                             "Control which message types are displayed in the chat view.",
@@ -680,6 +698,7 @@ class SettingsScreen(ModalScreen):
             get_mcp_disabled,
             get_openai_reasoning_effort,
             get_protected_token_count,
+            get_show_file_tree,
             get_suppress_informational_messages,
             get_suppress_thinking_messages,
             get_use_dbos,
@@ -716,6 +735,7 @@ class SettingsScreen(ModalScreen):
         )
 
         # Tab 4: Appearance
+        self.query_one("#show-file-tree-switch", Switch).value = get_show_file_tree()
         self.query_one(
             "#suppress-thinking-switch", Switch
         ).value = get_suppress_thinking_messages()
@@ -991,6 +1011,7 @@ class SettingsScreen(ModalScreen):
             set_max_saved_sessions,
             set_model_name,
             set_openai_reasoning_effort,
+            set_show_file_tree,
             set_suppress_informational_messages,
             set_suppress_thinking_messages,
             set_vqa_model_name,
@@ -1072,6 +1093,7 @@ class SettingsScreen(ModalScreen):
                 set_max_saved_sessions(int(max_autosaves))
 
             # Tab 4: Appearance
+            show_file_tree = self.query_one("#show-file-tree-switch", Switch).value
             suppress_thinking = self.query_one(
                 "#suppress-thinking-switch", Switch
             ).value
@@ -1083,6 +1105,7 @@ class SettingsScreen(ModalScreen):
                 "#diff-context-lines-input", Input
             ).value.strip()
 
+            set_show_file_tree(show_file_tree)
             set_suppress_thinking_messages(suppress_thinking)
             set_suppress_informational_messages(suppress_informational)
             if diff_style:

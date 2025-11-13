@@ -301,9 +301,9 @@ class ChatView(VerticalScroll):
 
         # Update the widget based on message type
         if last_message.type == MessageType.AGENT_RESPONSE:
-            # Re-render agent response with updated content (no prefix, we have separate header)
+            # Re-render agent response with updated content as selectable markdown
             try:
-                md = Markdown(last_message.content)
+                md = Markdown(last_message.content, selectable=True)
                 last_widget.update(md)
             except Exception:
                 last_widget.update(Text(last_message.content))
@@ -504,20 +504,19 @@ class ChatView(VerticalScroll):
             message_widget = Static(Text(message.content), classes=css_class)
             message_widget.border_title = "PLANNED NEXT STEPS"
         elif message.type == MessageType.AGENT_RESPONSE:
-            # Agent response with border title
+            # Agent response with border title - use selectable Markdown
             content = message.content
 
             try:
-                # First try to render as markdown with proper syntax highlighting
-                md = Markdown(content)
+                # Render as markdown with syntax highlighting AND text selection
+                md = Markdown(content, selectable=True)
                 message_widget = Static(md, classes=css_class)
             except Exception:
                 # If markdown parsing fails, fall back to simple text display
                 message_widget = Static(Text(content), classes=css_class)
 
             message_widget.border_title = "AGENT RESPONSE"
-            # Make message selectable for easy copying
-            message_widget.can_focus = False  # Don't interfere with navigation
+            # Markdown content is now selectable in terminal
 
             # Mount the message
             self.mount(message_widget)
