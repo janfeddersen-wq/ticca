@@ -1,4 +1,4 @@
-"""Tests for code_puppy.tools.common.
+"""Tests for ticca.tools.common.
 
 This module tests shared utility functions for the tools package including
 ignore patterns, path matching, fuzzy text search, and ID generation.
@@ -14,7 +14,7 @@ import pytest
 # Import directly from the module file to avoid heavy dependencies in __init__.py
 spec = importlib.util.spec_from_file_location(
     "common_module",
-    Path(__file__).parent.parent.parent / "code_puppy" / "tools" / "common.py",
+    Path(__file__).parent.parent.parent / "ticca" / "tools" / "common.py",
 )
 common_module = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(common_module)

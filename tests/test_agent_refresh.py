@@ -4,7 +4,7 @@ import tempfile
 from pathlib import Path
 from unittest.mock import patch
 
-from code_puppy.agents import get_available_agents, refresh_agents
+from ticca.agents import get_available_agents, refresh_agents
 
 
 def test_refresh_agents_function():
@@ -36,7 +36,7 @@ def test_json_agent_discovery_refresh():
     """Test that refresh picks up new JSON agents."""
     with tempfile.TemporaryDirectory() as temp_dir:
         with patch(
-            "code_puppy.config.get_user_agents_directory", return_value=temp_dir
+            "ticca.config.get_user_agents_directory", return_value=temp_dir
         ):
             # Get initial agents (should not include our test agent)
             initial_agents = get_available_agents()

@@ -1,4 +1,4 @@
-from code_puppy.tools import file_modifications
+from ticca.tools import file_modifications
 
 
 def test_replace_in_file_multiple_replacements(tmp_path):

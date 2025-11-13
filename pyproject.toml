@@ -3,9 +3,9 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "code-puppy"
+name = "ticca"
 version = "0.0.262"
-description = "Code generation agent"
+description = "Terminal Injected Coding CLI Assistant"
 readme = "README.md"
 requires-python = ">=3.11,<3.14"
 dependencies = [
@@ -26,7 +26,7 @@ dependencies = [
     "fastapi>=0.110.0",
     "uvicorn>=0.29.0",
     "PyJWT>=2.8.0",
-    "textual>=5.0.0",
+    "textual[syntax]>=5.0.0",
     "termcolor>=3.1.0",
     "textual-dev>=1.7.0",
     "pyfiglet>=0.8.post1",
@@ -36,6 +36,7 @@ dependencies = [
     "playwright>=1.40.0",
     "camoufox>=0.4.11",
     "dbos>=2.0.0",
+    "pillow>=10.0.0",
 ]
 dev-dependencies = [
     "pytest>=8.3.4",
@@ -59,33 +60,33 @@ classifiers = [
 ]
 
 [project.urls]
-repository = "https://github.com/mpfaffenberger/code_puppy"
-HomePage = "https://github.com/mpfaffenberger/code_puppy"
+repository = "https://github.com/mpfaffenberger/ticca"
+HomePage = "https://github.com/mpfaffenberger/ticca"
 
 
 [project.scripts]
-code-puppy = "code_puppy.main:main_entry"
-pup = "code_puppy.main:main_entry"
+ticca = "ticca.main:main_entry"
+tic = "ticca.main:main_entry"
 
 [tool.logfire]
 ignore_no_config = true
 
 [tool.hatch.build]
-packages = ["code_puppy"]
+packages = ["ticca"]
 build_data = true
 
 [tool.hatch.build.targets.wheel.shared-data]
-"code_puppy/models.json" = "code_puppy/models.json"
+"ticca/models.json" = "ticca/models.json"
 
 [[tool.hatch.build.targets.sdist.include]]
-path = "code_puppy/models.json"
+path = "ticca/models.json"
 [tool.pytest.ini_options]
-addopts = "--cov=code_puppy --cov-report=term-missing"
+addopts = "--cov=ticca --cov-report=term-missing"
 testpaths = ["tests"]
 asyncio_mode = "auto"
 
 [tool.coverage.run]
-omit = ["code_puppy/main.py", "code_puppy/tui/*"]
+omit = ["ticca/main.py", "ticca/tui/*"]
 
 [tool.uv]
 python-preference = "only-managed"

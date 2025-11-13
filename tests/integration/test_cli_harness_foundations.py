@@ -13,7 +13,7 @@ def test_harness_bootstrap_write_config(
 ) -> None:
     """Config file should exist and contain expected values after bootstrap."""
     result = cli_harness.spawn(args=["--version"], env=integration_env)
-    cfg_path = result.temp_home / ".config" / "code_puppy" / "puppy.cfg"
+    cfg_path = result.temp_home / ".config" / "ticca" / "puppy.cfg"
     assert cfg_path.exists(), f"Config not written to {cfg_path}"
     cfg_text = cfg_path.read_text(encoding="utf-8")
     assert "IntegrationPup" in cfg_text
@@ -25,7 +25,7 @@ def test_harness_bootstrap_write_config(
 def test_integration_env_env(integration_env: dict[str, str]) -> None:
     """Environment used for live integration tests should include required keys or a fake for CI."""
     assert "CEREBRAS_API_KEY" in integration_env
-    assert integration_env["CODE_PUPPY_TEST_FAST"] == "1"
+    assert integration_env["ticca_TEST_FAST"] == "1"
 
 
 def test_retry_policy_constructs(retry_policy) -> None:
@@ -69,15 +69,15 @@ def test_harness_cleanup_terminates_and_removes_temp_home(
     assert temp_home.exists()
 
     # Disable selective cleanup for this test to verify original behavior
-    old_selective_cleanup = os.environ.get("CODE_PUPPY_SELECTIVE_CLEANUP")
-    os.environ["CODE_PUPPY_SELECTIVE_CLEANUP"] = "false"
+    old_selective_cleanup = os.environ.get("ticca_SELECTIVE_CLEANUP")
+    os.environ["ticca_SELECTIVE_CLEANUP"] = "false"
     try:
         cli_harness.cleanup(result)
     finally:
         if old_selective_cleanup is None:
-            os.environ.pop("CODE_PUPPY_SELECTIVE_CLEANUP", None)
+            os.environ.pop("ticca_SELECTIVE_CLEANUP", None)
         else:
-            os.environ["CODE_PUPPY_SELECTIVE_CLEANUP"] = old_selective_cleanup
+            os.environ["ticca_SELECTIVE_CLEANUP"] = old_selective_cleanup
 
     assert not temp_home.exists()
     assert not result.child.isalive()
@@ -125,15 +125,15 @@ def test_selective_cleanup_only_removes_test_files(
     assert test_nested.exists()
 
     # Cleanup with selective cleanup enabled (default)
-    old_selective_cleanup = os.environ.get("CODE_PUPPY_SELECTIVE_CLEANUP")
-    os.environ["CODE_PUPPY_SELECTIVE_CLEANUP"] = "true"
+    old_selective_cleanup = os.environ.get("ticca_SELECTIVE_CLEANUP")
+    os.environ["ticca_SELECTIVE_CLEANUP"] = "true"
     try:
         cli_harness.cleanup(result)
     finally:
         if old_selective_cleanup is None:
-            os.environ.pop("CODE_PUPPY_SELECTIVE_CLEANUP", None)
+            os.environ.pop("ticca_SELECTIVE_CLEANUP", None)
         else:
-            os.environ["CODE_PUPPY_SELECTIVE_CLEANUP"] = old_selective_cleanup
+            os.environ["ticca_SELECTIVE_CLEANUP"] = old_selective_cleanup
 
     # Pre-existing files should still exist
     assert pre_existing_file.exists()

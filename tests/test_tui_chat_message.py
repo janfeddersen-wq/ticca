@@ -1,4 +1,4 @@
-"""Tests for code_puppy.tui.models.chat_message.
+"""Tests for ticca.tui.models.chat_message.
 
 This module tests the ChatMessage dataclass used in the TUI
 for representing messages in the chat interface.
@@ -12,25 +12,25 @@ from pathlib import Path
 import pytest
 
 # Load enums first (needed for relative import in chat_message)
-enums_path = Path(__file__).parent.parent / "code_puppy" / "tui" / "models" / "enums.py"
+enums_path = Path(__file__).parent.parent / "ticca" / "tui" / "models" / "enums.py"
 spec_enums = importlib.util.spec_from_file_location(
-    "code_puppy.tui.models.enums", enums_path
+    "ticca.tui.models.enums", enums_path
 )
 enums_module = importlib.util.module_from_spec(spec_enums)
-sys.modules["code_puppy.tui.models.enums"] = enums_module
+sys.modules["ticca.tui.models.enums"] = enums_module
 spec_enums.loader.exec_module(enums_module)
 
 MessageType = enums_module.MessageType
 
 # Now load chat_message module
 module_path = (
-    Path(__file__).parent.parent / "code_puppy" / "tui" / "models" / "chat_message.py"
+    Path(__file__).parent.parent / "ticca" / "tui" / "models" / "chat_message.py"
 )
 spec = importlib.util.spec_from_file_location(
-    "code_puppy.tui.models.chat_message", module_path
+    "ticca.tui.models.chat_message", module_path
 )
 chat_message_module = importlib.util.module_from_spec(spec)
-sys.modules["code_puppy.tui.models.chat_message"] = chat_message_module
+sys.modules["ticca.tui.models.chat_message"] = chat_message_module
 spec.loader.exec_module(chat_message_module)
 
 ChatMessage = chat_message_module.ChatMessage

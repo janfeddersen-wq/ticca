@@ -4,7 +4,7 @@ from unittest.mock import patch
 
 from prompt_toolkit.document import Document
 
-from code_puppy.command_line.load_context_completion import LoadContextCompleter
+from ticca.command_line.load_context_completion import LoadContextCompleter
 
 
 class TestLoadContextCompleter:
@@ -42,7 +42,7 @@ class TestLoadContextCompleter:
         """Test that available session files are suggested for completion."""
         with tempfile.TemporaryDirectory() as temp_dir:
             with patch(
-                "code_puppy.command_line.load_context_completion.CONFIG_DIR", temp_dir
+                "ticca.command_line.load_context_completion.CONFIG_DIR", temp_dir
             ):
                 # Create contexts directory with some test files
                 contexts_dir = Path(temp_dir) / "contexts"
@@ -74,7 +74,7 @@ class TestLoadContextCompleter:
         """Test that partial session names are filtered correctly."""
         with tempfile.TemporaryDirectory() as temp_dir:
             with patch(
-                "code_puppy.command_line.load_context_completion.CONFIG_DIR", temp_dir
+                "ticca.command_line.load_context_completion.CONFIG_DIR", temp_dir
             ):
                 # Create contexts directory with some test files
                 contexts_dir = Path(temp_dir) / "contexts"
@@ -101,7 +101,7 @@ class TestLoadContextCompleter:
         """Test behavior when contexts directory doesn't exist."""
         with tempfile.TemporaryDirectory() as temp_dir:
             with patch(
-                "code_puppy.command_line.load_context_completion.CONFIG_DIR", temp_dir
+                "ticca.command_line.load_context_completion.CONFIG_DIR", temp_dir
             ):
                 # Don't create contexts directory
 

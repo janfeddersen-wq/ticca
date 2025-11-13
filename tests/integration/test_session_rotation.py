@@ -63,7 +63,7 @@ def test_session_rotation(
             second_run.child.expect("Enter your coding task", timeout=60)
 
             # Verify we now have two session directories
-            autosave_dir = Path(second_run.temp_home) / ".code_puppy" / "autosaves"
+            autosave_dir = Path(second_run.temp_home) / ".ticca" / "autosaves"
             session_dirs = list(autosave_dir.glob("*"))
             assert len(session_dirs) == 2, (
                 f"Should have exactly two autosave sessions, found {len(session_dirs)}"
@@ -74,5 +74,5 @@ def test_session_rotation(
         finally:
             harness.cleanup(second_run)
     finally:
-        if os.getenv("CODE_PUPPY_KEEP_TEMP_HOME") not in {"1", "true", "TRUE", "True"}:
+        if os.getenv("ticca_KEEP_TEMP_HOME") not in {"1", "true", "TRUE", "True"}:
             shutil.rmtree(first_run.temp_home, ignore_errors=True)

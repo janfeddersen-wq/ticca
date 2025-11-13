@@ -195,7 +195,7 @@ def dump_dbos_report(temp_home: pathlib.Path) -> None:
     Appends human-readable text to a global report buffer.
     """
     try:
-        db_path = temp_home / ".code_puppy" / "dbos_store.sqlite"
+        db_path = temp_home / ".ticca" / "dbos_store.sqlite"
         if not db_path.exists():
             return
         conn = sqlite3.connect(str(db_path))
@@ -260,26 +260,26 @@ class CliHarness:
         """Spawn the CLI, optionally reusing an existing HOME for autosave tests."""
         if existing_home is not None:
             temp_home = pathlib.Path(existing_home)
-            config_dir = temp_home / ".config" / "code_puppy"
-            code_puppy_dir = temp_home / ".code_puppy"
+            config_dir = temp_home / ".config" / "ticca"
+            ticca_dir = temp_home / ".ticca"
             config_dir.mkdir(parents=True, exist_ok=True)
-            code_puppy_dir.mkdir(parents=True, exist_ok=True)
+            ticca_dir.mkdir(parents=True, exist_ok=True)
             write_config = not (config_dir / "puppy.cfg").exists()
         else:
             temp_home = pathlib.Path(
-                tempfile.mkdtemp(prefix=f"code_puppy_home_{_random_name()}_")
+                tempfile.mkdtemp(prefix=f"ticca_home_{_random_name()}_")
             )
-            config_dir = temp_home / ".config" / "code_puppy"
-            code_puppy_dir = temp_home / ".code_puppy"
+            config_dir = temp_home / ".config" / "ticca"
+            ticca_dir = temp_home / ".ticca"
             config_dir.mkdir(parents=True, exist_ok=True)
-            code_puppy_dir.mkdir(parents=True, exist_ok=True)
+            ticca_dir.mkdir(parents=True, exist_ok=True)
             write_config = True
 
         if write_config:
-            # Write config to both legacy (~/.code_puppy) and XDG (~/.config/code_puppy)
+            # Write config to both legacy (~/.ticca) and XDG (~/.config/ticca)
             (config_dir / "puppy.cfg").write_text(CONFIG_TEMPLATE, encoding="utf-8")
             (config_dir / "motd.txt").write_text(MOTD_TEMPLATE, encoding="utf-8")
-            (code_puppy_dir / "puppy.cfg").write_text(CONFIG_TEMPLATE, encoding="utf-8")
+            (ticca_dir / "puppy.cfg").write_text(CONFIG_TEMPLATE, encoding="utf-8")
 
         log_path = temp_home / f"cli_output_{uuid.uuid4().hex}.log"
         cmd_args = ["code-puppy"] + (args or [])
@@ -289,7 +289,7 @@ class CliHarness:
         spawn_env["HOME"] = str(temp_home)
         spawn_env.pop("PYTHONPATH", None)  # avoid accidental venv confusion
         # Ensure DBOS uses a temp sqlite under this HOME
-        dbos_sqlite = code_puppy_dir / "dbos_store.sqlite"
+        dbos_sqlite = ticca_dir / "dbos_store.sqlite"
         spawn_env["DBOS_SYSTEM_DATABASE_URL"] = f"sqlite:///{dbos_sqlite}"
         spawn_env.setdefault("DBOS_LOG_LEVEL", "ERROR")
 
@@ -338,7 +338,7 @@ class CliHarness:
 
     def cleanup(self, result: SpawnResult) -> None:
         """Terminate the child, dump DBOS report, then remove test-created files unless kept."""
-        keep_home = os.getenv("CODE_PUPPY_KEEP_TEMP_HOME") in {
+        keep_home = os.getenv("ticca_KEEP_TEMP_HOME") in {
             "1",
             "true",
             "TRUE",
@@ -357,7 +357,7 @@ class CliHarness:
             if not keep_home:
                 # Use selective cleanup - only delete files created during test
                 use_selective_cleanup = os.getenv(
-                    "CODE_PUPPY_SELECTIVE_CLEANUP", "true"
+                    "ticca_SELECTIVE_CLEANUP", "true"
                 ).lower() in {"1", "true", "yes", "on"}
                 if use_selective_cleanup:
                     _cleanup_test_only_files(result.temp_home, result._initial_files)
@@ -382,7 +382,7 @@ def integration_env() -> dict[str, str]:
     """Return a basic environment for integration tests."""
     return {
         "CEREBRAS_API_KEY": os.environ["CEREBRAS_API_KEY"],
-        "CODE_PUPPY_TEST_FAST": "1",
+        "ticca_TEST_FAST": "1",
     }
 
 

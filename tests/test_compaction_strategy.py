@@ -3,7 +3,7 @@ import os
 import tempfile
 from unittest.mock import patch
 
-from code_puppy.config import (
+from ticca.config import (
     CONFIG_DIR,
     CONFIG_FILE,
     DEFAULT_SECTION,
@@ -13,7 +13,7 @@ from code_puppy.config import (
 
 def test_default_compaction_strategy():
     """Test that the default compaction strategy is truncation"""
-    with patch("code_puppy.config.get_value") as mock_get_value:
+    with patch("ticca.config.get_value") as mock_get_value:
         mock_get_value.return_value = None
         strategy = get_compaction_strategy()
         assert strategy == "truncation"
@@ -27,10 +27,10 @@ def test_set_compaction_strategy_truncation():
         original_config_file = CONFIG_FILE
 
         # Monkey patch the config directory
-        import code_puppy.config
+        import ticca.config
 
-        code_puppy.config.CONFIG_DIR = temp_dir
-        code_puppy.config.CONFIG_FILE = os.path.join(temp_dir, "puppy.cfg")
+        ticca.config.CONFIG_DIR = temp_dir
+        ticca.config.CONFIG_FILE = os.path.join(temp_dir, "puppy.cfg")
 
         # Create the config file with truncation strategy
         config = configparser.ConfigParser()
@@ -38,7 +38,7 @@ def test_set_compaction_strategy_truncation():
         config[DEFAULT_SECTION]["compaction_strategy"] = "truncation"
 
         # Write the config
-        with open(code_puppy.config.CONFIG_FILE, "w") as f:
+        with open(ticca.config.CONFIG_FILE, "w") as f:
             config.write(f)
 
         # Test that the strategy is read correctly
@@ -46,8 +46,8 @@ def test_set_compaction_strategy_truncation():
         assert strategy == "truncation"
 
         # Reset the config directory
-        code_puppy.config.CONFIG_DIR = original_config_dir
-        code_puppy.config.CONFIG_FILE = original_config_file
+        ticca.config.CONFIG_DIR = original_config_dir
+        ticca.config.CONFIG_FILE = original_config_file
 
 
 def test_set_compaction_strategy_summarization():
@@ -58,10 +58,10 @@ def test_set_compaction_strategy_summarization():
         original_config_file = CONFIG_FILE
 
         # Monkey patch the config directory
-        import code_puppy.config
+        import ticca.config
 
-        code_puppy.config.CONFIG_DIR = temp_dir
-        code_puppy.config.CONFIG_FILE = os.path.join(temp_dir, "puppy.cfg")
+        ticca.config.CONFIG_DIR = temp_dir
+        ticca.config.CONFIG_FILE = os.path.join(temp_dir, "puppy.cfg")
 
         # Create the config file with summarization strategy
         config = configparser.ConfigParser()
@@ -69,7 +69,7 @@ def test_set_compaction_strategy_summarization():
         config[DEFAULT_SECTION]["compaction_strategy"] = "summarization"
 
         # Write the config
-        with open(code_puppy.config.CONFIG_FILE, "w") as f:
+        with open(ticca.config.CONFIG_FILE, "w") as f:
             config.write(f)
 
         # Test that the strategy is read correctly
@@ -77,8 +77,8 @@ def test_set_compaction_strategy_summarization():
         assert strategy == "summarization"
 
         # Reset the config directory
-        code_puppy.config.CONFIG_DIR = original_config_dir
-        code_puppy.config.CONFIG_FILE = original_config_file
+        ticca.config.CONFIG_DIR = original_config_dir
+        ticca.config.CONFIG_FILE = original_config_file
 
 
 def test_set_compaction_strategy_invalid():
@@ -89,10 +89,10 @@ def test_set_compaction_strategy_invalid():
         original_config_file = CONFIG_FILE
 
         # Monkey patch the config directory
-        import code_puppy.config
+        import ticca.config
 
-        code_puppy.config.CONFIG_DIR = temp_dir
-        code_puppy.config.CONFIG_FILE = os.path.join(temp_dir, "puppy.cfg")
+        ticca.config.CONFIG_DIR = temp_dir
+        ticca.config.CONFIG_FILE = os.path.join(temp_dir, "puppy.cfg")
 
         # Create the config file with an invalid strategy
         config = configparser.ConfigParser()
@@ -100,7 +100,7 @@ def test_set_compaction_strategy_invalid():
         config[DEFAULT_SECTION]["compaction_strategy"] = "invalid_strategy"
 
         # Write the config
-        with open(code_puppy.config.CONFIG_FILE, "w") as f:
+        with open(ticca.config.CONFIG_FILE, "w") as f:
             config.write(f)
 
         # Test that the strategy defaults to truncation
@@ -108,5 +108,5 @@ def test_set_compaction_strategy_invalid():
         assert strategy == "truncation"
 
         # Reset the config directory
-        code_puppy.config.CONFIG_DIR = original_config_dir
-        code_puppy.config.CONFIG_FILE = original_config_file
+        ticca.config.CONFIG_DIR = original_config_dir
+        ticca.config.CONFIG_FILE = original_config_file

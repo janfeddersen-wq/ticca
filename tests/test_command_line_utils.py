@@ -1,4 +1,4 @@
-"""Tests for code_puppy.command_line.utils.
+"""Tests for ticca.command_line.utils.
 
 This module tests directory listing and table generation utilities
 used in the command-line interface.
@@ -9,7 +9,7 @@ import os
 import pytest
 from rich.table import Table
 
-from code_puppy.command_line.utils import list_directory, make_directory_table
+from ticca.command_line.utils import list_directory, make_directory_table
 
 
 class TestListDirectory:

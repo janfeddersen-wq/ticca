@@ -11,7 +11,7 @@ from prompt_toolkit.keys import Keys
 from prompt_toolkit.layout.controls import BufferControl
 from prompt_toolkit.layout.processors import TransformationInput
 
-from code_puppy.command_line.prompt_toolkit_completion import (
+from ticca.command_line.prompt_toolkit_completion import (
     AttachmentPlaceholderProcessor,
     CDCompleter,
     FilePathCompleter,
@@ -136,11 +136,11 @@ def test_set_completer_exact_trigger(monkeypatch):
 def test_set_completer_on_set_trigger(monkeypatch):
     # Simulate config keys
     monkeypatch.setattr(
-        "code_puppy.command_line.prompt_toolkit_completion.get_config_keys",
+        "ticca.command_line.prompt_toolkit_completion.get_config_keys",
         lambda: ["foo", "bar"],
     )
     monkeypatch.setattr(
-        "code_puppy.command_line.prompt_toolkit_completion.get_value",
+        "ticca.command_line.prompt_toolkit_completion.get_value",
         lambda key: "woo" if key == "foo" else None,
     )
     completer = SetCompleter()
@@ -163,11 +163,11 @@ def test_set_completer_on_set_trigger(monkeypatch):
 
 def test_set_completer_partial_key(monkeypatch):
     monkeypatch.setattr(
-        "code_puppy.command_line.prompt_toolkit_completion.get_config_keys",
+        "ticca.command_line.prompt_toolkit_completion.get_config_keys",
         lambda: ["long_key_name", "other_key", "model"],
     )
     monkeypatch.setattr(
-        "code_puppy.command_line.prompt_toolkit_completion.get_value",
+        "ticca.command_line.prompt_toolkit_completion.get_value",
         lambda key: "value_for_" + key if key == "long_key_name" else None,
     )
     completer = SetCompleter()
@@ -195,11 +195,11 @@ def test_set_completer_partial_key(monkeypatch):
 def test_set_completer_excludes_model_key(monkeypatch):
     # Ensure 'model' is a config key but SetCompleter doesn't offer it
     monkeypatch.setattr(
-        "code_puppy.command_line.prompt_toolkit_completion.get_config_keys",
+        "ticca.command_line.prompt_toolkit_completion.get_config_keys",
         lambda: ["api_key", "model", "temperature"],
     )
     monkeypatch.setattr(
-        "code_puppy.command_line.prompt_toolkit_completion.get_value",
+        "ticca.command_line.prompt_toolkit_completion.get_value",
         lambda key: "test_value",
     )
     completer = SetCompleter()
@@ -228,11 +228,11 @@ def test_set_completer_excludes_model_key(monkeypatch):
 def test_set_completer_excludes_puppy_token(monkeypatch):
     # Ensure 'puppy_token' is a config key but SetCompleter doesn't offer it
     monkeypatch.setattr(
-        "code_puppy.command_line.prompt_toolkit_completion.get_config_keys",
+        "ticca.command_line.prompt_toolkit_completion.get_config_keys",
         lambda: ["puppy_token", "user_name", "temp_dir"],
     )
     monkeypatch.setattr(
-        "code_puppy.command_line.prompt_toolkit_completion.get_value",
+        "ticca.command_line.prompt_toolkit_completion.get_value",
         lambda key: "sensitive_token_value" if key == "puppy_token" else "normal_value",
     )
     completer = SetCompleter()
@@ -259,7 +259,7 @@ def test_set_completer_excludes_puppy_token(monkeypatch):
 
 
 def test_set_completer_no_match(monkeypatch):
-    monkeypatch.setattr("code_puppy.config.get_config_keys", lambda: ["actual_key"])
+    monkeypatch.setattr("ticca.config.get_config_keys", lambda: ["actual_key"])
     completer = SetCompleter()
     doc = Document(text="/set non_existent", cursor_position=len("/set non_existent"))
     completions = list(completer.get_completions(doc, None))
@@ -415,7 +415,7 @@ def test_cd_completer_permission_error_silently_handled(monkeypatch):
     completer = CDCompleter()
     # Patch the utility function used by CDCompleter
     with patch(
-        "code_puppy.command_line.prompt_toolkit_completion.list_directory",
+        "ticca.command_line.prompt_toolkit_completion.list_directory",
         side_effect=PermissionError,
     ) as mock_list_dir:
         doc = Document(text="/cd somedir/", cursor_position=len("/cd somedir/"))
@@ -425,9 +425,9 @@ def test_cd_completer_permission_error_silently_handled(monkeypatch):
 
 
 @pytest.mark.asyncio
-@patch("code_puppy.command_line.prompt_toolkit_completion.PromptSession")
-@patch("code_puppy.command_line.prompt_toolkit_completion.FileHistory")
-@patch("code_puppy.command_line.prompt_toolkit_completion.merge_completers")
+@patch("ticca.command_line.prompt_toolkit_completion.PromptSession")
+@patch("ticca.command_line.prompt_toolkit_completion.FileHistory")
+@patch("ticca.command_line.prompt_toolkit_completion.merge_completers")
 async def test_get_input_with_combined_completion_defaults(
     mock_merge_completers, mock_file_history, mock_prompt_session_cls
 ):
@@ -468,8 +468,8 @@ async def test_get_input_with_combined_completion_defaults(
 
 
 @pytest.mark.asyncio
-@patch("code_puppy.command_line.prompt_toolkit_completion.PromptSession")
-@patch("code_puppy.command_line.prompt_toolkit_completion.FileHistory")
+@patch("ticca.command_line.prompt_toolkit_completion.PromptSession")
+@patch("ticca.command_line.prompt_toolkit_completion.FileHistory")
 async def test_get_input_with_combined_completion_with_history(
     mock_file_history, mock_prompt_session_cls
 ):
@@ -489,7 +489,7 @@ async def test_get_input_with_combined_completion_with_history(
 
 
 @pytest.mark.asyncio
-@patch("code_puppy.command_line.prompt_toolkit_completion.PromptSession")
+@patch("ticca.command_line.prompt_toolkit_completion.PromptSession")
 async def test_get_input_with_combined_completion_custom_prompt(
     mock_prompt_session_cls,
 ):
@@ -511,7 +511,7 @@ async def test_get_input_with_combined_completion_custom_prompt(
 
 
 @pytest.mark.asyncio
-@patch("code_puppy.command_line.prompt_toolkit_completion.PromptSession")
+@patch("ticca.command_line.prompt_toolkit_completion.PromptSession")
 async def test_get_input_with_combined_completion_no_model_update(
     mock_prompt_session_cls,
 ):
@@ -535,7 +535,7 @@ async def test_get_input_with_combined_completion_no_model_update(
     strict=False,
 )
 @pytest.mark.asyncio
-@patch("code_puppy.command_line.prompt_toolkit_completion.PromptSession")
+@patch("ticca.command_line.prompt_toolkit_completion.PromptSession")
 async def test_get_input_key_binding_alt_m(mock_prompt_session_cls):
     # We don't need the function to run fully, just to set up PromptSession
     mock_session_instance = MagicMock()
@@ -559,7 +559,7 @@ async def test_get_input_key_binding_alt_m(mock_prompt_session_cls):
 
 
 @pytest.mark.asyncio
-@patch("code_puppy.command_line.prompt_toolkit_completion.PromptSession")
+@patch("ticca.command_line.prompt_toolkit_completion.PromptSession")
 async def test_get_input_key_binding_escape(mock_prompt_session_cls):
     mock_session_instance = MagicMock()
     mock_session_instance.prompt_async = AsyncMock(return_value="test")

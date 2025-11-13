@@ -2,7 +2,7 @@
 
 from unittest.mock import MagicMock
 
-from code_puppy.tools import (
+from ticca.tools import (
     TOOL_REGISTRY,
     get_available_tool_names,
     register_all_tools,

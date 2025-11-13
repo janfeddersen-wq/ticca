@@ -10,8 +10,8 @@ from unittest.mock import MagicMock, patch
 # Add the project root to Python path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from code_puppy.callbacks import on_file_permission
-from code_puppy.tools.file_modifications import (
+from ticca.callbacks import on_file_permission
+from ticca.tools.file_modifications import (
     _delete_file,
     delete_snippet_from_file,
     replace_in_file,
@@ -36,7 +36,7 @@ class TestFilePermissions(unittest.TestCase):
         os.rmdir(self.temp_dir)
 
     @patch(
-        "code_puppy.plugins.file_permission_handler.register_callbacks.prompt_for_file_permission"
+        "ticca.plugins.file_permission_handler.register_callbacks.prompt_for_file_permission"
     )
     def test_prompt_for_file_permission_granted(self, mock_prompt):
         """Test that permission is granted when user enters 'y'."""
@@ -48,7 +48,7 @@ class TestFilePermissions(unittest.TestCase):
         self.assertEqual(result, [True])
 
     @patch(
-        "code_puppy.plugins.file_permission_handler.register_callbacks.prompt_for_file_permission"
+        "ticca.plugins.file_permission_handler.register_callbacks.prompt_for_file_permission"
     )
     def test_prompt_for_file_permission_denied(self, mock_prompt):
         """Test that permission is denied when user enters 'n'."""
@@ -62,7 +62,7 @@ class TestFilePermissions(unittest.TestCase):
     def test_prompt_for_file_permission_no_plugins(self):
         """Test that permission is automatically granted when no plugins registered."""
         # Temporarily unregister plugins
-        from code_puppy.callbacks import _callbacks
+        from ticca.callbacks import _callbacks
 
         original_callbacks = _callbacks["file_permission"].copy()
         _callbacks["file_permission"] = []
@@ -74,7 +74,7 @@ class TestFilePermissions(unittest.TestCase):
             # Restore callbacks
             _callbacks["file_permission"] = original_callbacks
 
-    @patch("code_puppy.callbacks.on_file_permission")
+    @patch("ticca.callbacks.on_file_permission")
     def test_write_to_file_with_permission_denied(self, mock_permission):
         """Test write_to_file when permission is denied."""
         mock_permission.return_value = [False]
@@ -88,7 +88,7 @@ class TestFilePermissions(unittest.TestCase):
         self.assertTrue(result["user_rejection"])
         self.assertEqual(result["rejection_type"], "explicit_user_denial")
 
-    @patch("code_puppy.callbacks.on_file_permission")
+    @patch("ticca.callbacks.on_file_permission")
     def test_write_to_file_with_permission_granted(self, mock_permission):
         """Test write_to_file when permission is granted."""
         mock_permission.return_value = [True]
@@ -104,7 +104,7 @@ class TestFilePermissions(unittest.TestCase):
             content = f.read()
         self.assertEqual(content, "New content")
 
-    @patch("code_puppy.config.get_yolo_mode")
+    @patch("ticca.config.get_yolo_mode")
     def test_write_to_file_in_yolo_mode(self, mock_yolo):
         """Test write_to_file in yolo mode (no permission prompt)."""
         mock_yolo.return_value = True
@@ -120,7 +120,7 @@ class TestFilePermissions(unittest.TestCase):
             content = f.read()
         self.assertEqual(content, "Yolo content")
 
-    @patch("code_puppy.callbacks.on_file_permission")
+    @patch("ticca.callbacks.on_file_permission")
     def test_delete_snippet_with_permission_denied(self, mock_permission):
         """Test delete_snippet_from_file when permission is denied."""
         mock_permission.return_value = [False]
@@ -134,7 +134,7 @@ class TestFilePermissions(unittest.TestCase):
         self.assertTrue(result["user_rejection"])
         self.assertEqual(result["rejection_type"], "explicit_user_denial")
 
-    @patch("code_puppy.callbacks.on_file_permission")
+    @patch("ticca.callbacks.on_file_permission")
     def test_replace_in_file_with_permission_denied(self, mock_permission):
         """Test replace_in_file when permission is denied."""
         mock_permission.return_value = [False]
@@ -149,7 +149,7 @@ class TestFilePermissions(unittest.TestCase):
         self.assertTrue(result["user_rejection"])
         self.assertEqual(result["rejection_type"], "explicit_user_denial")
 
-    @patch("code_puppy.callbacks.on_file_permission")
+    @patch("ticca.callbacks.on_file_permission")
     def test_delete_file_with_permission_denied(self, mock_permission):
         """Test _delete_file when permission is denied."""
         mock_permission.return_value = [False]

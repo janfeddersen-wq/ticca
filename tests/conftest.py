@@ -13,7 +13,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from code_puppy import config as cp_config
+from ticca import config as cp_config
 from tests.integration.cli_expect.fixtures import live_cli as live_cli  # noqa: F401
 
 # Expose the CLI harness fixtures globally

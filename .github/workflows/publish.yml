@@ -73,7 +73,7 @@ jobs:
         run: |
           echo "Running all tests (including integration tests) on ${{ runner.os }} with Python ${{ matrix.python-version }}..."
           echo "Required environment variables are set (using CI fallbacks if secrets not available)"
-          uv run pytest tests/ -v --cov=code_puppy --cov-report=term-missing
+          uv run pytest tests/ -v --cov=ticca --cov-report=term-missing
 
   build-publish:
     runs-on: ubuntu-latest

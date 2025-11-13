@@ -8,7 +8,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 from pydantic_ai.messages import ModelRequest, ModelResponse, TextPart
 
-from code_puppy.tools.agent_tools import (
+from ticca.tools.agent_tools import (
     _load_session_history,
     _save_session_history,
     _validate_session_id,
@@ -41,14 +41,14 @@ class TestAgentTools:
         # Test that the fix properly adds prompt additions to temporary agents
         from unittest.mock import patch
 
-        from code_puppy import callbacks
-        from code_puppy.plugins.file_permission_handler.register_callbacks import (
+        from ticca import callbacks
+        from ticca.plugins.file_permission_handler.register_callbacks import (
             get_file_permission_prompt_additions,
         )
 
         # Mock yolo mode to be False so we can test prompt additions
         with patch(
-            "code_puppy.plugins.file_permission_handler.register_callbacks.get_yolo_mode",
+            "ticca.plugins.file_permission_handler.register_callbacks.get_yolo_mode",
             return_value=False,
         ):
             # Register the file permission callback (normally done at startup)
@@ -199,7 +199,7 @@ class TestSessionSaveLoad:
         initial_prompt = "Hello, can you help?"
 
         with patch(
-            "code_puppy.tools.agent_tools._get_subagent_sessions_dir",
+            "ticca.tools.agent_tools._get_subagent_sessions_dir",
             return_value=temp_session_dir,
         ):
             # Save the session
@@ -222,7 +222,7 @@ class TestSessionSaveLoad:
     def test_load_nonexistent_session_returns_empty_list(self, temp_session_dir):
         """Test that loading a non-existent session returns an empty list."""
         with patch(
-            "code_puppy.tools.agent_tools._get_subagent_sessions_dir",
+            "ticca.tools.agent_tools._get_subagent_sessions_dir",
             return_value=temp_session_dir,
         ):
             loaded_messages = _load_session_history("nonexistent-session")
@@ -233,7 +233,7 @@ class TestSessionSaveLoad:
     ):
         """Test that saving with an invalid session ID raises ValueError."""
         with patch(
-            "code_puppy.tools.agent_tools._get_subagent_sessions_dir",
+            "ticca.tools.agent_tools._get_subagent_sessions_dir",
             return_value=temp_session_dir,
         ):
             with pytest.raises(ValueError, match="must be kebab-case"):
@@ -246,7 +246,7 @@ class TestSessionSaveLoad:
     def test_load_with_invalid_session_id_raises_error(self, temp_session_dir):
         """Test that loading with an invalid session ID raises ValueError."""
         with patch(
-            "code_puppy.tools.agent_tools._get_subagent_sessions_dir",
+            "ticca.tools.agent_tools._get_subagent_sessions_dir",
             return_value=temp_session_dir,
         ):
             with pytest.raises(ValueError, match="must be kebab-case"):
@@ -259,7 +259,7 @@ class TestSessionSaveLoad:
         initial_prompt = "Test prompt"
 
         with patch(
-            "code_puppy.tools.agent_tools._get_subagent_sessions_dir",
+            "ticca.tools.agent_tools._get_subagent_sessions_dir",
             return_value=temp_session_dir,
         ):
             _save_session_history(
@@ -282,7 +282,7 @@ class TestSessionSaveLoad:
         initial_prompt = "Test prompt"
 
         with patch(
-            "code_puppy.tools.agent_tools._get_subagent_sessions_dir",
+            "ticca.tools.agent_tools._get_subagent_sessions_dir",
             return_value=temp_session_dir,
         ):
             _save_session_history(
@@ -312,7 +312,7 @@ class TestSessionSaveLoad:
         initial_prompt = "Test prompt"
 
         with patch(
-            "code_puppy.tools.agent_tools._get_subagent_sessions_dir",
+            "ticca.tools.agent_tools._get_subagent_sessions_dir",
             return_value=temp_session_dir,
         ):
             # First save
@@ -348,7 +348,7 @@ class TestSessionSaveLoad:
         session_id = "corrupted-session"
 
         with patch(
-            "code_puppy.tools.agent_tools._get_subagent_sessions_dir",
+            "ticca.tools.agent_tools._get_subagent_sessions_dir",
             return_value=temp_session_dir,
         ):
             # Create a corrupted pickle file
@@ -366,7 +366,7 @@ class TestSessionSaveLoad:
         agent_name = "test-agent"
 
         with patch(
-            "code_puppy.tools.agent_tools._get_subagent_sessions_dir",
+            "ticca.tools.agent_tools._get_subagent_sessions_dir",
             return_value=temp_session_dir,
         ):
             # First save WITH initial_prompt
@@ -483,7 +483,7 @@ class TestSessionIntegration:
         agent_name = "test-agent"
 
         with patch(
-            "code_puppy.tools.agent_tools._get_subagent_sessions_dir",
+            "ticca.tools.agent_tools._get_subagent_sessions_dir",
             return_value=temp_session_dir,
         ):
             # First interaction
@@ -516,7 +516,7 @@ class TestSessionIntegration:
         agent_name = "test-agent"
 
         with patch(
-            "code_puppy.tools.agent_tools._get_subagent_sessions_dir",
+            "ticca.tools.agent_tools._get_subagent_sessions_dir",
             return_value=temp_session_dir,
         ):
             # Save to session 1
@@ -553,7 +553,7 @@ class TestSessionIntegration:
         agent_name = "test-agent"
 
         with patch(
-            "code_puppy.tools.agent_tools._get_subagent_sessions_dir",
+            "ticca.tools.agent_tools._get_subagent_sessions_dir",
             return_value=temp_session_dir,
         ):
             # Save with 1 message
@@ -590,7 +590,7 @@ class TestSessionIntegration:
         ]
 
         with patch(
-            "code_puppy.tools.agent_tools._get_subagent_sessions_dir",
+            "ticca.tools.agent_tools._get_subagent_sessions_dir",
             return_value=temp_session_dir,
         ):
             for invalid_id in invalid_ids:
@@ -611,7 +611,7 @@ class TestSessionIntegration:
         agent_name = "test-agent"
 
         with patch(
-            "code_puppy.tools.agent_tools._get_subagent_sessions_dir",
+            "ticca.tools.agent_tools._get_subagent_sessions_dir",
             return_value=temp_session_dir,
         ):
             # Save empty history

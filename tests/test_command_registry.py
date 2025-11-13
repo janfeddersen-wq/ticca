@@ -11,7 +11,7 @@ Tests the decorator-based command registration system including:
 
 import pytest
 
-from code_puppy.command_line.command_registry import (
+from ticca.command_line.command_registry import (
     CommandInfo,
     clear_registry,
     get_all_commands,

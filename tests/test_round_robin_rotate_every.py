@@ -2,7 +2,7 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from code_puppy.round_robin_model import RoundRobinModel
+from ticca.round_robin_model import RoundRobinModel
 
 
 class MockModel:

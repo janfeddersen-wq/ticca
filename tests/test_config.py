@@ -4,10 +4,10 @@ from unittest.mock import MagicMock, mock_open, patch
 
 import pytest
 
-from code_puppy import config as cp_config
+from ticca import config as cp_config
 
 # Define constants used in config.py to avoid direct import if they change
-CONFIG_DIR_NAME = ".code_puppy"
+CONFIG_DIR_NAME = ".ticca"
 CONFIG_FILE_NAME = "puppy.cfg"
 DEFAULT_SECTION_NAME = "puppy"
 
@@ -235,25 +235,25 @@ class TestGetValue:
 
 
 class TestSimpleGetters:
-    @patch("code_puppy.config.get_value")
+    @patch("ticca.config.get_value")
     def test_get_puppy_name_exists(self, mock_get_value):
         mock_get_value.return_value = "MyPuppy"
         assert cp_config.get_puppy_name() == "MyPuppy"
         mock_get_value.assert_called_once_with("puppy_name")
 
-    @patch("code_puppy.config.get_value")
+    @patch("ticca.config.get_value")
     def test_get_puppy_name_not_exists_uses_default(self, mock_get_value):
         mock_get_value.return_value = None
         assert cp_config.get_puppy_name() == "Puppy"  # Default value
         mock_get_value.assert_called_once_with("puppy_name")
 
-    @patch("code_puppy.config.get_value")
+    @patch("ticca.config.get_value")
     def test_get_owner_name_exists(self, mock_get_value):
         mock_get_value.return_value = "MyOwner"
         assert cp_config.get_owner_name() == "MyOwner"
         mock_get_value.assert_called_once_with("owner_name")
 
-    @patch("code_puppy.config.get_value")
+    @patch("ticca.config.get_value")
     def test_get_owner_name_not_exists_uses_default(self, mock_get_value):
         mock_get_value.return_value = None
         assert cp_config.get_owner_name() == "Master"  # Default value
@@ -407,8 +407,8 @@ class TestSetConfigValue:
 
 
 class TestModelName:
-    @patch("code_puppy.config.get_value")
-    @patch("code_puppy.config._validate_model_exists")
+    @patch("ticca.config.get_value")
+    @patch("ticca.config._validate_model_exists")
     def test_get_model_name_exists(self, mock_validate_model_exists, mock_get_value):
         mock_get_value.return_value = "test_model_from_config"
         mock_validate_model_exists.return_value = True
@@ -474,7 +474,7 @@ class TestModelName:
 
 
 class TestGetYoloMode:
-    @patch("code_puppy.config.get_value")
+    @patch("ticca.config.get_value")
     def test_get_yolo_mode_from_config_true(self, mock_get_value):
         true_values = ["true", "1", "YES", "ON"]
         for val in true_values:
@@ -483,7 +483,7 @@ class TestGetYoloMode:
             assert cp_config.get_yolo_mode() is True, f"Failed for config value: {val}"
             mock_get_value.assert_called_once_with("yolo_mode")
 
-    @patch("code_puppy.config.get_value")
+    @patch("ticca.config.get_value")
     def test_get_yolo_mode_not_in_config_defaults_true(self, mock_get_value):
         mock_get_value.return_value = None
 
@@ -602,9 +602,9 @@ class TestDefaultModelSelection:
         # Clear the cache before each test to ensure consistent behavior
         cp_config.clear_model_cache()
 
-    @patch("code_puppy.config.get_value")
-    @patch("code_puppy.config._validate_model_exists")
-    @patch("code_puppy.config._default_model_from_models_json")
+    @patch("ticca.config.get_value")
+    @patch("ticca.config._validate_model_exists")
+    @patch("ticca.config._default_model_from_models_json")
     def test_get_model_name_no_stored_model(
         self, mock_default_model, mock_validate_model_exists, mock_get_value
     ):
@@ -619,9 +619,9 @@ class TestDefaultModelSelection:
         mock_validate_model_exists.assert_not_called()
         mock_default_model.assert_called_once()
 
-    @patch("code_puppy.config.get_value")
-    @patch("code_puppy.config._validate_model_exists")
-    @patch("code_puppy.config._default_model_from_models_json")
+    @patch("ticca.config.get_value")
+    @patch("ticca.config._validate_model_exists")
+    @patch("ticca.config._default_model_from_models_json")
     def test_get_model_name_invalid_model(
         self, mock_default_model, mock_validate_model_exists, mock_get_value
     ):
@@ -637,7 +637,7 @@ class TestDefaultModelSelection:
         mock_validate_model_exists.assert_called_once_with("invalid-model")
         mock_default_model.assert_called_once()
 
-    @patch("code_puppy.model_factory.ModelFactory.load_config")
+    @patch("ticca.model_factory.ModelFactory.load_config")
     def test_default_model_from_models_json_with_valid_config(self, mock_load_config):
         # Test that the first model from models.json is selected when config is valid
         mock_load_config.return_value = {
@@ -651,7 +651,7 @@ class TestDefaultModelSelection:
         assert result == "test-model-1"
         mock_load_config.assert_called_once()
 
-    @patch("code_puppy.model_factory.ModelFactory.load_config")
+    @patch("ticca.model_factory.ModelFactory.load_config")
     def test_default_model_from_models_json_prefers_synthetic_glm(
         self, mock_load_config
     ):
@@ -670,7 +670,7 @@ class TestDefaultModelSelection:
         assert result == "synthetic-GLM-4.6"
         mock_load_config.assert_called_once()
 
-    @patch("code_puppy.model_factory.ModelFactory.load_config")
+    @patch("ticca.model_factory.ModelFactory.load_config")
     def test_default_model_from_models_json_empty_config(self, mock_load_config):
         # Test that gpt-5 is returned when models.json is empty
         mock_load_config.return_value = {}
@@ -680,7 +680,7 @@ class TestDefaultModelSelection:
         assert result == "gpt-5"
         mock_load_config.assert_called_once()
 
-    @patch("code_puppy.model_factory.ModelFactory.load_config")
+    @patch("ticca.model_factory.ModelFactory.load_config")
     def test_default_model_from_models_json_exception_handling(self, mock_load_config):
         # Test that gpt-5 is returned when there's an exception loading models.json
         mock_load_config.side_effect = Exception("Config load failed")
@@ -698,7 +698,7 @@ class TestDefaultModelSelection:
         # synthetic-GLM-4.6 should be selected as it's explicitly preferred
         assert result == "synthetic-GLM-4.6"
 
-    @patch("code_puppy.config.get_value")
+    @patch("ticca.config.get_value")
     def test_get_model_name_with_nonexistent_model_uses_first_from_models_json(
         self, mock_get_value
     ):

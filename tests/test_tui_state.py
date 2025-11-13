@@ -1,4 +1,4 @@
-"""Tests for code_puppy.tui_state.
+"""Tests for ticca.tui_state.
 
 This module tests the TUI state management functions that control
 global state for the TUI application mode and instance.
@@ -6,7 +6,7 @@ global state for the TUI application mode and instance.
 
 import pytest
 
-from code_puppy.tui_state import (
+from ticca.tui_state import (
     get_tui_app_instance,
     get_tui_mode,
     is_tui_mode,

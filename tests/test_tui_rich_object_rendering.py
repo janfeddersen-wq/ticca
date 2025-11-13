@@ -9,9 +9,9 @@ from rich.markdown import Markdown
 from rich.syntax import Syntax
 from rich.table import Table
 
-from code_puppy.messaging import MessageType, UIMessage
-from code_puppy.messaging.message_queue import MessageQueue
-from code_puppy.messaging.renderers import TUIRenderer
+from ticca.messaging import MessageType, UIMessage
+from ticca.messaging.message_queue import MessageQueue
+from ticca.messaging.renderers import TUIRenderer
 
 
 class MockTUIApp:
@@ -160,8 +160,8 @@ def test_tui_renderer_plain_string():
 
 def test_queue_console_rich_markdown():
     """Test that QueueConsole properly handles Rich Markdown objects."""
-    from code_puppy.messaging.message_queue import MessageQueue
-    from code_puppy.messaging.queue_console import QueueConsole
+    from ticca.messaging.message_queue import MessageQueue
+    from ticca.messaging.queue_console import QueueConsole
 
     queue = MessageQueue()
     # Mark renderer as active so messages go to main queue instead of startup buffer
@@ -224,8 +224,8 @@ print("This is code")
 
 def test_queue_console_mixed_content():
     """Test that QueueConsole properly handles mixed Rich and string content."""
-    from code_puppy.messaging.message_queue import MessageQueue
-    from code_puppy.messaging.queue_console import QueueConsole
+    from ticca.messaging.message_queue import MessageQueue
+    from ticca.messaging.queue_console import QueueConsole
 
     queue = MessageQueue()
     # Mark renderer as active so messages go to main queue instead of startup buffer
@@ -253,8 +253,8 @@ def test_system_message_grouping():
     """Test that system messages with the same group_id get concatenated."""
     from datetime import datetime, timezone
 
-    from code_puppy.tui.models.chat_message import ChatMessage
-    from code_puppy.tui.models.enums import MessageType
+    from ticca.tui.models.chat_message import ChatMessage
+    from ticca.tui.models.enums import MessageType
 
     # Mock ChatView to test logic without widget mounting
     class MockChatView:
@@ -330,7 +330,7 @@ def test_tools_generate_group_ids():
     """Test that our tools generate group_ids when emitting messages."""
     import time
 
-    from code_puppy.tools.common import generate_group_id
+    from ticca.tools.common import generate_group_id
 
     # Test group_id generation
     group_id1 = generate_group_id("list_files", "/test/path")

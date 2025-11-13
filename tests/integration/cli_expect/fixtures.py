@@ -35,7 +35,7 @@ __all__ = [
 def live_cli(cli_harness: CliHarness) -> Generator[SpawnResult, None, None]:
     """Spawn the CLI using the caller's environment (for live network tests)."""
     env = os.environ.copy()
-    env.setdefault("CODE_PUPPY_TEST_FAST", "1")
+    env.setdefault("ticca_TEST_FAST", "1")
     result = cli_harness.spawn(args=["-i"], env=env)
     try:
         yield result

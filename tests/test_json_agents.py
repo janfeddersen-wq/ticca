@@ -8,9 +8,9 @@ from unittest.mock import patch
 
 import pytest
 
-from code_puppy.agents.base_agent import BaseAgent
-from code_puppy.agents.json_agent import JSONAgent, discover_json_agents
-from code_puppy.config import get_user_agents_directory
+from ticca.agents.base_agent import BaseAgent
+from ticca.agents.json_agent import JSONAgent, discover_json_agents
+from ticca.config import get_user_agents_directory
 
 
 class TestJSONAgent:
@@ -184,7 +184,7 @@ class TestJSONAgentDiscovery:
         with tempfile.TemporaryDirectory() as temp_dir:
             # Mock the agents directory to use our temp directory
             monkeypatch.setattr(
-                "code_puppy.config.get_user_agents_directory", lambda: temp_dir
+                "ticca.config.get_user_agents_directory", lambda: temp_dir
             )
 
             # Create valid JSON agent
@@ -237,7 +237,7 @@ class TestJSONAgentDiscovery:
         """Test discovering agents when directory doesn't exist."""
         # Mock the agents directory to point to non-existent directory
         monkeypatch.setattr(
-            "code_puppy.config.get_user_agents_directory",
+            "ticca.config.get_user_agents_directory",
             lambda: "/nonexistent/directory",
         )
         agents = discover_json_agents()
@@ -248,7 +248,7 @@ class TestJSONAgentDiscovery:
         user_dir = get_user_agents_directory()
 
         assert isinstance(user_dir, str)
-        assert ".code_puppy" in user_dir
+        assert ".ticca" in user_dir
         assert "agents" in user_dir
 
         # Directory should be created
@@ -257,12 +257,12 @@ class TestJSONAgentDiscovery:
 
     def test_user_agents_directory_windows(self, monkeypatch):
         """Test user agents directory cross-platform consistency."""
-        mock_agents_dir = "/fake/home/.code_puppy/agents"
+        mock_agents_dir = "/fake/home/.ticca/agents"
 
         # Override the AGENTS_DIR constant directly
-        monkeypatch.setattr("code_puppy.config.AGENTS_DIR", mock_agents_dir)
+        monkeypatch.setattr("ticca.config.AGENTS_DIR", mock_agents_dir)
 
-        with patch("code_puppy.config.os.makedirs") as mock_makedirs:
+        with patch("ticca.config.os.makedirs") as mock_makedirs:
             user_dir = get_user_agents_directory()
 
             assert user_dir == mock_agents_dir
@@ -270,12 +270,12 @@ class TestJSONAgentDiscovery:
 
     def test_user_agents_directory_macos(self, monkeypatch):
         """Test user agents directory on macOS."""
-        mock_agents_dir = "/fake/home/.code_puppy/agents"
+        mock_agents_dir = "/fake/home/.ticca/agents"
 
         # Override the AGENTS_DIR constant directly
-        monkeypatch.setattr("code_puppy.config.AGENTS_DIR", mock_agents_dir)
+        monkeypatch.setattr("ticca.config.AGENTS_DIR", mock_agents_dir)
 
-        with patch("code_puppy.config.os.makedirs") as mock_makedirs:
+        with patch("ticca.config.os.makedirs") as mock_makedirs:
             user_dir = get_user_agents_directory()
 
             assert user_dir == mock_agents_dir

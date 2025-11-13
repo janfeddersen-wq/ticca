@@ -7,9 +7,9 @@ def test_dbos_initializes_and_creates_db(spawned_cli):
     log = spawned_cli.read_log()
     assert "Initializing DBOS with database at:" in log or "DBOS is disabled" not in log
 
-    # Database path should be under temp HOME/.code_puppy by default
+    # Database path should be under temp HOME/.ticca by default
     home = Path(spawned_cli.temp_home)
-    db_path = home / ".code_puppy" / "dbos_store.sqlite"
+    db_path = home / ".ticca" / "dbos_store.sqlite"
 
     # Allow a little time for DBOS to initialize the DB file
     # but generally by the time interactive prompt is ready, it should exist

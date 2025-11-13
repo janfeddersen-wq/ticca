@@ -5,8 +5,8 @@ import tempfile
 
 import pytest
 
-from code_puppy.agents.agent_code_puppy import CodePuppyAgent
-from code_puppy.config import (
+from ticca.agents.agent_ticca import CodePuppyAgent
+from ticca.config import (
     clear_agent_pinned_model,
     get_agent_pinned_model,
     get_global_model_name,
@@ -18,10 +18,10 @@ from code_puppy.config import (
 def mock_config_paths(monkeypatch):
     """Fixture to monkeypatch config paths to temporary locations for all tests in this class."""
     with tempfile.TemporaryDirectory() as tmp_dir:
-        tmp_config_dir = os.path.join(tmp_dir, ".code_puppy")
+        tmp_config_dir = os.path.join(tmp_dir, ".ticca")
         tmp_config_file = os.path.join(tmp_config_dir, "puppy.cfg")
-        monkeypatch.setattr("code_puppy.config.CONFIG_DIR", tmp_config_dir)
-        monkeypatch.setattr("code_puppy.config.CONFIG_FILE", tmp_config_file)
+        monkeypatch.setattr("ticca.config.CONFIG_DIR", tmp_config_dir)
+        monkeypatch.setattr("ticca.config.CONFIG_FILE", tmp_config_file)
         # Ensure the directory exists for the patched paths
         os.makedirs(tmp_config_dir, exist_ok=True)
         yield

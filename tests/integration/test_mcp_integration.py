@@ -23,7 +23,7 @@ from tests.integration.cli_expect.fixtures import (
 
 def test_mcp_context7_end_to_end(cli_harness: CliHarness) -> None:
     env = os.environ.copy()
-    env.setdefault("CODE_PUPPY_TEST_FAST", "1")
+    env.setdefault("ticca_TEST_FAST", "1")
 
     result = cli_harness.spawn(args=["-i"], env=env)
     try:

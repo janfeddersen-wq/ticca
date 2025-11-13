@@ -7,7 +7,7 @@ from typing import Callable, List
 
 import pytest
 
-from code_puppy.session_storage import (
+from ticca.session_storage import (
     cleanup_sessions,
     list_sessions,
     load_session,

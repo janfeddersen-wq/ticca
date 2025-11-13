@@ -3,9 +3,9 @@ from unittest.mock import patch
 
 import pytest
 
-from code_puppy.model_factory import ModelFactory
+from ticca.model_factory import ModelFactory
 
-TEST_CONFIG_PATH = os.path.join(os.path.dirname(__file__), "../code_puppy/models.json")
+TEST_CONFIG_PATH = os.path.join(os.path.dirname(__file__), "../ticca/models.json")
 
 
 def test_ollama_load_model():
@@ -77,14 +77,14 @@ def test_custom_endpoint_missing_url():
 
 # Additional tests for coverage
 def test_get_custom_config_missing_custom_endpoint():
-    from code_puppy.model_factory import get_custom_config
+    from ticca.model_factory import get_custom_config
 
     with pytest.raises(ValueError):
         get_custom_config({})
 
 
 def test_get_custom_config_missing_url():
-    from code_puppy.model_factory import get_custom_config
+    from ticca.model_factory import get_custom_config
 
     config = {"custom_endpoint": {"headers": {}}}
     with pytest.raises(ValueError):
@@ -130,7 +130,7 @@ def test_anthropic_missing_api_key(monkeypatch):
     config = {"anthropic": {"type": "anthropic", "name": "claude-v2"}}
     if "ANTHROPIC_API_KEY" in os.environ:
         monkeypatch.delenv("ANTHROPIC_API_KEY")
-    with patch("code_puppy.model_factory.emit_warning") as mock_warn:
+    with patch("ticca.model_factory.emit_warning") as mock_warn:
         model = ModelFactory.get_model("anthropic", config)
         assert model is None
         mock_warn.assert_called_once()
@@ -193,10 +193,10 @@ def test_extra_models_json_decode_error(tmp_path, monkeypatch):
     extra_models_file.write_text("{ invalid json content }")
 
     # Patch the EXTRA_MODELS_FILE path to point to our temporary file
-    from code_puppy.model_factory import ModelFactory
+    from ticca.model_factory import ModelFactory
 
     monkeypatch.setattr(
-        "code_puppy.model_factory.EXTRA_MODELS_FILE", str(extra_models_file)
+        "ticca.model_factory.EXTRA_MODELS_FILE", str(extra_models_file)
     )
 
     # This should not raise an exception despite the invalid JSON
@@ -214,10 +214,10 @@ def test_extra_models_exception_handling(tmp_path, monkeypatch, caplog):
     extra_models_file.mkdir()
 
     # Patch the EXTRA_MODELS_FILE path
-    from code_puppy.model_factory import ModelFactory
+    from ticca.model_factory import ModelFactory
 
     monkeypatch.setattr(
-        "code_puppy.model_factory.EXTRA_MODELS_FILE", str(extra_models_file)
+        "ticca.model_factory.EXTRA_MODELS_FILE", str(extra_models_file)
     )
 
     # This should not raise an exception despite the error

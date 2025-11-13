@@ -1,9 +1,9 @@
-"""Tests for code_puppy.messaging package __init__.py.
+"""Tests for ticca.messaging package __init__.py.
 
 This module tests that the messaging package properly exports all its public API.
 """
 
-import code_puppy.messaging as messaging_package
+import ticca.messaging as messaging_package
 
 
 class TestMessagingPackageExports:

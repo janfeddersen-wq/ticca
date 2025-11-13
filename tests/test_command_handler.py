@@ -1,8 +1,8 @@
 from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
-from code_puppy.command_line.command_handler import handle_command
-from code_puppy.command_line.command_registry import get_command
+from ticca.command_line.command_handler import handle_command
+from ticca.command_line.command_registry import get_command
 
 
 # Function to create a test context with patched messaging functions
@@ -10,11 +10,11 @@ def setup_messaging_mocks():
     """Set up mocks for all the messaging functions and return them in a dictionary."""
     mocks = {}
     patch_targets = [
-        "code_puppy.messaging.emit_info",
-        "code_puppy.messaging.emit_error",
-        "code_puppy.messaging.emit_warning",
-        "code_puppy.messaging.emit_success",
-        "code_puppy.messaging.emit_system_message",
+        "ticca.messaging.emit_info",
+        "ticca.messaging.emit_error",
+        "ticca.messaging.emit_warning",
+        "ticca.messaging.emit_success",
+        "ticca.messaging.emit_system_message",
     ]
 
     for target in patch_targets:
@@ -45,7 +45,7 @@ def test_cd_show_lists_directories():
     mock_emit_info = mocks["emit_info"].start()
 
     try:
-        with patch("code_puppy.command_line.utils.make_directory_table") as mock_table:
+        with patch("ticca.command_line.utils.make_directory_table") as mock_table:
             from rich.table import Table
 
             fake_table = Table()
@@ -97,13 +97,13 @@ def test_cd_invalid_directory():
 def test_m_sets_model():
     # Simplified test - just check that the command handler returns True
     with (
-        patch("code_puppy.messaging.emit_success"),
+        patch("ticca.messaging.emit_success"),
         patch(
-            "code_puppy.command_line.model_picker_completion.update_model_in_input",
+            "ticca.command_line.model_picker_completion.update_model_in_input",
             return_value="some_model",
         ),
         patch(
-            "code_puppy.command_line.model_picker_completion.get_active_model",
+            "ticca.command_line.model_picker_completion.get_active_model",
             return_value="gpt-9001",
         ),
     ):
@@ -118,11 +118,11 @@ def test_m_unrecognized_model_lists_options():
     try:
         with (
             patch(
-                "code_puppy.command_line.model_picker_completion.update_model_in_input",
+                "ticca.command_line.model_picker_completion.update_model_in_input",
                 return_value=None,
             ),
             patch(
-                "code_puppy.command_line.model_picker_completion.load_model_names",
+                "ticca.command_line.model_picker_completion.load_model_names",
                 return_value=["a", "b", "c"],
             ),
         ):
@@ -148,9 +148,9 @@ def test_set_config_value_equals():
 
     try:
         with (
-            patch("code_puppy.config.set_config_value") as mock_set_cfg,
+            patch("ticca.config.set_config_value") as mock_set_cfg,
             patch(
-                "code_puppy.config.get_config_keys", return_value=["pony", "rainbow"]
+                "ticca.config.get_config_keys", return_value=["pony", "rainbow"]
             ),
         ):
             result = handle_command("/set pony=rainbow")
@@ -171,9 +171,9 @@ def test_set_config_value_space():
 
     try:
         with (
-            patch("code_puppy.config.set_config_value") as mock_set_cfg,
+            patch("ticca.config.set_config_value") as mock_set_cfg,
             patch(
-                "code_puppy.config.get_config_keys", return_value=["pony", "rainbow"]
+                "ticca.config.get_config_keys", return_value=["pony", "rainbow"]
             ),
         ):
             result = handle_command("/set pony rainbow")
@@ -194,8 +194,8 @@ def test_set_config_only_key():
 
     try:
         with (
-            patch("code_puppy.config.set_config_value") as mock_set_cfg,
-            patch("code_puppy.config.get_config_keys", return_value=["key"]),
+            patch("ticca.config.set_config_value") as mock_set_cfg,
+            patch("ticca.config.get_config_keys", return_value=["key"]),
         ):
             result = handle_command("/set pony")
             assert result is True
@@ -216,12 +216,12 @@ def test_show_status():
     try:
         with (
             patch(
-                "code_puppy.command_line.model_picker_completion.get_active_model",
+                "ticca.command_line.model_picker_completion.get_active_model",
                 return_value="MODEL-X",
             ),
-            patch("code_puppy.config.get_owner_name", return_value="Ivan"),
-            patch("code_puppy.config.get_puppy_name", return_value="Biscuit"),
-            patch("code_puppy.config.get_yolo_mode", return_value=True),
+            patch("ticca.config.get_owner_name", return_value="Ivan"),
+            patch("ticca.config.get_puppy_name", return_value="Biscuit"),
+            patch("ticca.config.get_yolo_mode", return_value=True),
         ):
             result = handle_command("/show")
             assert result is True
@@ -258,7 +258,7 @@ def test_bare_slash_shows_current_model():
 
     try:
         with patch(
-            "code_puppy.command_line.model_picker_completion.get_active_model",
+            "ticca.command_line.model_picker_completion.get_active_model",
             return_value="yarn",
         ):
             result = handle_command("/")
@@ -277,7 +277,7 @@ def test_set_no_args_prints_usage():
     mock_emit_warning = mocks["emit_warning"].start()
 
     try:
-        with patch("code_puppy.config.get_config_keys", return_value=["foo", "bar"]):
+        with patch("ticca.config.get_config_keys", return_value=["foo", "bar"]):
             result = handle_command("/set")
             assert result is True
             mock_emit_warning.assert_called()
@@ -295,7 +295,7 @@ def test_set_missing_key_errors():
 
     try:
         # This will enter the 'else' branch printing 'You must supply a key.'
-        with patch("code_puppy.config.get_config_keys", return_value=["foo", "bar"]):
+        with patch("ticca.config.get_config_keys", return_value=["foo", "bar"]):
             result = handle_command("/set =value")
             assert result is True
             mock_emit_error.assert_called_with("You must supply a key.")
@@ -315,7 +315,7 @@ def test_bare_slash_with_spaces():
 
     try:
         with patch(
-            "code_puppy.command_line.model_picker_completion.get_active_model",
+            "ticca.command_line.model_picker_completion.get_active_model",
             return_value="zoom",
         ):
             result = handle_command("/    ")
@@ -345,19 +345,19 @@ def test_agent_switch_triggers_autosave_rotation():
 
         with (
             patch(
-                "code_puppy.agents.get_current_agent",
+                "ticca.agents.get_current_agent",
                 side_effect=[current_agent, new_agent],
             ),
             patch(
-                "code_puppy.agents.get_available_agents",
+                "ticca.agents.get_available_agents",
                 return_value={"code-puppy": "Code Puppy", "reviewer": "Reviewer"},
             ),
             patch(
-                "code_puppy.command_line.core_commands.finalize_autosave_session",
+                "ticca.command_line.core_commands.finalize_autosave_session",
                 return_value="fresh_id",
             ) as mock_finalize,
             patch(
-                "code_puppy.agents.set_current_agent",
+                "ticca.agents.set_current_agent",
                 return_value=True,
             ) as mock_set,
         ):
@@ -387,18 +387,18 @@ def test_agent_switch_same_agent_skips_rotation():
         current_agent = SimpleNamespace(name="code-puppy", display_name="Code Puppy")
         with (
             patch(
-                "code_puppy.agents.get_current_agent",
+                "ticca.agents.get_current_agent",
                 return_value=current_agent,
             ),
             patch(
-                "code_puppy.agents.get_available_agents",
+                "ticca.agents.get_available_agents",
                 return_value={"code-puppy": "Code Puppy"},
             ),
             patch(
-                "code_puppy.command_line.core_commands.finalize_autosave_session",
+                "ticca.command_line.core_commands.finalize_autosave_session",
             ) as mock_finalize,
             patch(
-                "code_puppy.agents.set_current_agent",
+                "ticca.agents.set_current_agent",
             ) as mock_set,
         ):
             result = handle_command("/agent code-puppy")
@@ -420,14 +420,14 @@ def test_agent_switch_unknown_agent_skips_rotation():
     try:
         with (
             patch(
-                "code_puppy.agents.get_available_agents",
+                "ticca.agents.get_available_agents",
                 return_value={"code-puppy": "Code Puppy"},
             ),
             patch(
-                "code_puppy.command_line.core_commands.finalize_autosave_session",
+                "ticca.command_line.core_commands.finalize_autosave_session",
             ) as mock_finalize,
             patch(
-                "code_puppy.agents.set_current_agent",
+                "ticca.agents.set_current_agent",
             ) as mock_set,
         ):
             result = handle_command("/agent reviewer")
@@ -474,7 +474,7 @@ def test_tools_file_not_found():
     try:
         # Since we now use tools_content.py, we just verify that tools are displayed
         # without needing to read from a file
-        with patch("code_puppy.tools.tools_content.tools_content", "# Mock content"):
+        with patch("ticca.tools.tools_content.tools_content", "# Mock content"):
             result = handle_command("/tools")
             assert result is True
             mock_emit_info.assert_called_once()
@@ -496,7 +496,7 @@ def test_tools_read_error():
         # Test handling when there's an issue with tools_content - it should still work
         # by falling back to an empty or default string if the imported content fails
         with patch(
-            "code_puppy.command_line.core_commands.tools_content",
+            "ticca.command_line.core_commands.tools_content",
             "# Fallback content",
         ):
             result = handle_command("/tools")
@@ -514,7 +514,7 @@ def test_tools_read_error():
 
 def test_exit_command():
     """Test that /exit command works and shows Goodbye message."""
-    with patch("code_puppy.messaging.emit_success") as mock_success:
+    with patch("ticca.messaging.emit_success") as mock_success:
         result = handle_command("/exit")
         assert result is True
         mock_success.assert_called_once_with("Goodbye!")
@@ -522,7 +522,7 @@ def test_exit_command():
 
 def test_quit_command():
     """Test that /quit command works via alias and shows Goodbye message."""
-    with patch("code_puppy.messaging.emit_success") as mock_success:
+    with patch("ticca.messaging.emit_success") as mock_success:
         result = handle_command("/quit")
         assert result is True
         mock_success.assert_called_once_with("Goodbye!")
@@ -539,21 +539,21 @@ class TestRegistryIntegration:
     def test_registry_command_is_executed(self):
         """Test that registered commands are executed via registry."""
         # /help is registered - verify it's handled
-        with patch("code_puppy.messaging.emit_info") as mock_emit:
+        with patch("ticca.messaging.emit_info") as mock_emit:
             result = handle_command("/help")
             assert result is True
             mock_emit.assert_called()
 
     def test_command_alias_works(self):
         """Test that command aliases work (e.g., /h for /help)."""
-        with patch("code_puppy.messaging.emit_info") as mock_emit:
+        with patch("ticca.messaging.emit_info") as mock_emit:
             result = handle_command("/h")
             assert result is True
             mock_emit.assert_called()
 
     def test_unregistered_command_shows_warning(self):
         """Test that unregistered commands show warning."""
-        with patch("code_puppy.messaging.emit_warning") as mock_warn:
+        with patch("ticca.messaging.emit_warning") as mock_warn:
             result = handle_command("/totallyfakecommand")
             assert result is True
             mock_warn.assert_called()
@@ -570,13 +570,13 @@ class TestSessionCommand:
     def test_session_show_current_id(self):
         """Test /session shows current session ID."""
         with (
-            patch("code_puppy.config.get_current_autosave_id", return_value="test-id"),
+            patch("ticca.config.get_current_autosave_id", return_value="test-id"),
             patch(
-                "code_puppy.config.get_current_autosave_session_name",
+                "ticca.config.get_current_autosave_session_name",
                 return_value="test-session",
             ),
-            patch("code_puppy.config.AUTOSAVE_DIR", "/tmp/autosave"),
-            patch("code_puppy.messaging.emit_info") as mock_emit,
+            patch("ticca.config.AUTOSAVE_DIR", "/tmp/autosave"),
+            patch("ticca.messaging.emit_info") as mock_emit,
         ):
             result = handle_command("/session")
             assert result is True
@@ -587,13 +587,13 @@ class TestSessionCommand:
     def test_session_id_subcommand(self):
         """Test /session id shows current session ID."""
         with (
-            patch("code_puppy.config.get_current_autosave_id", return_value="test-id"),
+            patch("ticca.config.get_current_autosave_id", return_value="test-id"),
             patch(
-                "code_puppy.config.get_current_autosave_session_name",
+                "ticca.config.get_current_autosave_session_name",
                 return_value="test-session",
             ),
-            patch("code_puppy.config.AUTOSAVE_DIR", "/tmp/autosave"),
-            patch("code_puppy.messaging.emit_info") as mock_emit,
+            patch("ticca.config.AUTOSAVE_DIR", "/tmp/autosave"),
+            patch("ticca.messaging.emit_info") as mock_emit,
         ):
             result = handle_command("/session id")
             assert result is True
@@ -603,9 +603,9 @@ class TestSessionCommand:
         """Test /session new creates new session."""
         with (
             patch(
-                "code_puppy.config.rotate_autosave_id", return_value="new-id"
+                "ticca.config.rotate_autosave_id", return_value="new-id"
             ) as mock_rotate,
-            patch("code_puppy.messaging.emit_success") as mock_success,
+            patch("ticca.messaging.emit_success") as mock_success,
         ):
             result = handle_command("/session new")
             assert result is True
@@ -616,7 +616,7 @@ class TestSessionCommand:
 
     def test_session_invalid_subcommand(self):
         """Test /session with invalid subcommand shows usage."""
-        with patch("code_puppy.messaging.emit_warning") as mock_warn:
+        with patch("ticca.messaging.emit_warning") as mock_warn:
             result = handle_command("/session invalid")
             assert result is True
             mock_warn.assert_called_once()
@@ -626,13 +626,13 @@ class TestSessionCommand:
     def test_session_alias_works(self):
         """Test /s alias works for /session."""
         with (
-            patch("code_puppy.config.get_current_autosave_id", return_value="test-id"),
+            patch("ticca.config.get_current_autosave_id", return_value="test-id"),
             patch(
-                "code_puppy.config.get_current_autosave_session_name",
+                "ticca.config.get_current_autosave_session_name",
                 return_value="test",
             ),
-            patch("code_puppy.config.AUTOSAVE_DIR", "/tmp"),
-            patch("code_puppy.messaging.emit_info") as mock_emit,
+            patch("ticca.config.AUTOSAVE_DIR", "/tmp"),
+            patch("ticca.messaging.emit_info") as mock_emit,
         ):
             result = handle_command("/s")
             assert result is True
@@ -657,16 +657,16 @@ class TestCompactCommand:
 
         with (
             patch(
-                "code_puppy.agents.agent_manager.get_current_agent",
+                "ticca.agents.agent_manager.get_current_agent",
                 return_value=mock_agent,
             ),
             patch(
-                "code_puppy.config.get_compaction_strategy",
+                "ticca.config.get_compaction_strategy",
                 return_value="summarization",
             ),
-            patch("code_puppy.config.get_protected_token_count", return_value=1000),
-            patch("code_puppy.messaging.emit_info"),
-            patch("code_puppy.messaging.emit_success") as mock_success,
+            patch("ticca.config.get_protected_token_count", return_value=1000),
+            patch("ticca.messaging.emit_info"),
+            patch("ticca.messaging.emit_success") as mock_success,
         ):
             result = handle_command("/compact")
             assert result is True
@@ -680,10 +680,10 @@ class TestCompactCommand:
 
         with (
             patch(
-                "code_puppy.agents.agent_manager.get_current_agent",
+                "ticca.agents.agent_manager.get_current_agent",
                 return_value=mock_agent,
             ),
-            patch("code_puppy.messaging.emit_warning") as mock_warn,
+            patch("ticca.messaging.emit_warning") as mock_warn,
         ):
             result = handle_command("/compact")
             assert result is True
@@ -702,15 +702,15 @@ class TestCompactCommand:
 
         with (
             patch(
-                "code_puppy.agents.agent_manager.get_current_agent",
+                "ticca.agents.agent_manager.get_current_agent",
                 return_value=mock_agent,
             ),
             patch(
-                "code_puppy.config.get_compaction_strategy", return_value="truncation"
+                "ticca.config.get_compaction_strategy", return_value="truncation"
             ),
-            patch("code_puppy.config.get_protected_token_count", return_value=1000),
-            patch("code_puppy.messaging.emit_info"),
-            patch("code_puppy.messaging.emit_success"),
+            patch("ticca.config.get_protected_token_count", return_value=1000),
+            patch("ticca.messaging.emit_info"),
+            patch("ticca.messaging.emit_success"),
         ):
             result = handle_command("/compact")
             assert result is True
@@ -725,13 +725,13 @@ class TestReasoningCommand:
         mock_agent = MagicMock()
 
         with (
-            patch("code_puppy.config.set_openai_reasoning_effort") as mock_set,
-            patch("code_puppy.config.get_openai_reasoning_effort", return_value="low"),
+            patch("ticca.config.set_openai_reasoning_effort") as mock_set,
+            patch("ticca.config.get_openai_reasoning_effort", return_value="low"),
             patch(
-                "code_puppy.agents.agent_manager.get_current_agent",
+                "ticca.agents.agent_manager.get_current_agent",
                 return_value=mock_agent,
             ),
-            patch("code_puppy.messaging.emit_success") as mock_success,
+            patch("ticca.messaging.emit_success") as mock_success,
         ):
             result = handle_command("/reasoning low")
             assert result is True
@@ -743,10 +743,10 @@ class TestReasoningCommand:
         """Test /reasoning with invalid level shows error."""
         with (
             patch(
-                "code_puppy.config.set_openai_reasoning_effort",
+                "ticca.config.set_openai_reasoning_effort",
                 side_effect=ValueError("Invalid"),
             ),
-            patch("code_puppy.messaging.emit_error") as mock_error,
+            patch("ticca.messaging.emit_error") as mock_error,
         ):
             result = handle_command("/reasoning invalid")
             assert result is True
@@ -754,7 +754,7 @@ class TestReasoningCommand:
 
     def test_reasoning_no_argument(self):
         """Test /reasoning without argument shows usage."""
-        with patch("code_puppy.messaging.emit_warning") as mock_warn:
+        with patch("ticca.messaging.emit_warning") as mock_warn:
             result = handle_command("/reasoning")
             assert result is True
             mock_warn.assert_called_once()
@@ -776,10 +776,10 @@ class TestTruncateCommand:
 
         with (
             patch(
-                "code_puppy.agents.agent_manager.get_current_agent",
+                "ticca.agents.agent_manager.get_current_agent",
                 return_value=mock_agent,
             ),
-            patch("code_puppy.messaging.emit_success") as mock_success,
+            patch("ticca.messaging.emit_success") as mock_success,
         ):
             result = handle_command("/truncate 2")
             assert result is True
@@ -788,7 +788,7 @@ class TestTruncateCommand:
 
     def test_truncate_no_argument(self):
         """Test /truncate without argument shows error."""
-        with patch("code_puppy.messaging.emit_error") as mock_error:
+        with patch("ticca.messaging.emit_error") as mock_error:
             result = handle_command("/truncate")
             assert result is True
             mock_error.assert_called_once()
@@ -796,7 +796,7 @@ class TestTruncateCommand:
 
     def test_truncate_invalid_number(self):
         """Test /truncate with non-integer shows error."""
-        with patch("code_puppy.messaging.emit_error") as mock_error:
+        with patch("ticca.messaging.emit_error") as mock_error:
             result = handle_command("/truncate abc")
             assert result is True
             mock_error.assert_called_once()
@@ -804,7 +804,7 @@ class TestTruncateCommand:
 
     def test_truncate_negative_number(self):
         """Test /truncate with negative number shows error."""
-        with patch("code_puppy.messaging.emit_error") as mock_error:
+        with patch("ticca.messaging.emit_error") as mock_error:
             result = handle_command("/truncate -5")
             assert result is True
             mock_error.assert_called_once()
@@ -816,10 +816,10 @@ class TestTruncateCommand:
 
         with (
             patch(
-                "code_puppy.agents.agent_manager.get_current_agent",
+                "ticca.agents.agent_manager.get_current_agent",
                 return_value=mock_agent,
             ),
-            patch("code_puppy.messaging.emit_warning") as mock_warn,
+            patch("ticca.messaging.emit_warning") as mock_warn,
         ):
             result = handle_command("/truncate 10")
             assert result is True
@@ -835,10 +835,10 @@ class TestTruncateCommand:
 
         with (
             patch(
-                "code_puppy.agents.agent_manager.get_current_agent",
+                "ticca.agents.agent_manager.get_current_agent",
                 return_value=mock_agent,
             ),
-            patch("code_puppy.messaging.emit_info") as mock_info,
+            patch("ticca.messaging.emit_info") as mock_info,
         ):
             result = handle_command("/truncate 10")
             assert result is True
@@ -861,7 +861,7 @@ class TestMotdCommand:
     def test_motd_command_calls_print_motd(self):
         """Test that /motd calls print_motd with force=True."""
         # Patch where it's imported in core_commands
-        with patch("code_puppy.command_line.core_commands.print_motd") as mock_motd:
+        with patch("ticca.command_line.core_commands.print_motd") as mock_motd:
             result = handle_command("/motd")
             assert result is True
             mock_motd.assert_called_once_with(force=True)
@@ -872,7 +872,7 @@ class TestGetCommandsHelp:
 
     def test_help_includes_registered_commands(self):
         """Test that help text includes registered commands."""
-        from code_puppy.command_line.command_handler import get_commands_help
+        from ticca.command_line.command_handler import get_commands_help
 
         help_text = str(get_commands_help())
         assert "help" in help_text.lower() or "Help" in help_text
@@ -880,7 +880,7 @@ class TestGetCommandsHelp:
 
     def test_help_includes_categories(self):
         """Test that help organizes into Built-in and Custom sections."""
-        from code_puppy.command_line.command_handler import get_commands_help
+        from ticca.command_line.command_handler import get_commands_help
 
         help_text = str(get_commands_help())
         # Should have Built-in Commands section
@@ -891,10 +891,10 @@ class TestGetCommandsHelp:
     def test_help_parses_tuple_format(self):
         """Test that help system parses single tuple format."""
         from unittest.mock import patch
-        from code_puppy.command_line.command_handler import get_commands_help
+        from ticca.command_line.command_handler import get_commands_help
 
         # Mock a plugin that returns a single tuple
-        with patch("code_puppy.callbacks.on_custom_command_help") as mock_callback:
+        with patch("ticca.callbacks.on_custom_command_help") as mock_callback:
             mock_callback.return_value = [("testcmd", "Test command description")]
             help_text = str(get_commands_help())
             assert "/testcmd" in help_text
@@ -903,10 +903,10 @@ class TestGetCommandsHelp:
     def test_help_parses_list_of_tuples_format(self):
         """Test that help system parses list of tuples format."""
         from unittest.mock import patch
-        from code_puppy.command_line.command_handler import get_commands_help
+        from ticca.command_line.command_handler import get_commands_help
 
         # Mock a plugin that returns a list of tuples
-        with patch("code_puppy.callbacks.on_custom_command_help") as mock_callback:
+        with patch("ticca.callbacks.on_custom_command_help") as mock_callback:
             mock_callback.return_value = [
                 [("cmd1", "First command"), ("cmd2", "Second command")]
             ]
@@ -919,10 +919,10 @@ class TestGetCommandsHelp:
     def test_help_parses_list_of_strings_format(self):
         """Test that help system parses legacy list of strings format."""
         from unittest.mock import patch
-        from code_puppy.command_line.command_handler import get_commands_help
+        from ticca.command_line.command_handler import get_commands_help
 
         # Mock a plugin that returns a list of strings (legacy format)
-        with patch("code_puppy.callbacks.on_custom_command_help") as mock_callback:
+        with patch("ticca.callbacks.on_custom_command_help") as mock_callback:
             mock_callback.return_value = [
                 [
                     "/legacy_cmd - Legacy command description",
@@ -938,10 +938,10 @@ class TestGetCommandsHelp:
     def test_help_handles_mixed_formats(self):
         """Test that help system handles multiple plugins with different formats."""
         from unittest.mock import patch
-        from code_puppy.command_line.command_handler import get_commands_help
+        from ticca.command_line.command_handler import get_commands_help
 
         # Mock multiple plugins returning different formats
-        with patch("code_puppy.callbacks.on_custom_command_help") as mock_callback:
+        with patch("ticca.callbacks.on_custom_command_help") as mock_callback:
             mock_callback.return_value = [
                 ("tuple_cmd", "Tuple format command"),  # Single tuple
                 [("list_cmd", "List format command")],  # List of tuples
@@ -958,10 +958,10 @@ class TestGetCommandsHelp:
     def test_help_ignores_invalid_formats(self):
         """Test that help system gracefully ignores invalid formats."""
         from unittest.mock import patch
-        from code_puppy.command_line.command_handler import get_commands_help
+        from ticca.command_line.command_handler import get_commands_help
 
         # Mock a plugin that returns invalid formats
-        with patch("code_puppy.callbacks.on_custom_command_help") as mock_callback:
+        with patch("ticca.callbacks.on_custom_command_help") as mock_callback:
             mock_callback.return_value = [
                 None,  # Should be ignored
                 [],  # Empty list, should be ignored

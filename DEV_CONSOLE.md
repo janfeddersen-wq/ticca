@@ -16,10 +16,10 @@ Woof! Here’s the scoop on built-in dev-console `~` meta-commands and exactly h
 
 ## How to Add a New Meta-Command
 
-All `~meta` commands are handled in **`code_puppy/command_line/meta_command_handler.py`** inside the `handle_meta_command` function. Follow these steps:
+All `~meta` commands are handled in **`ticca/command_line/meta_command_handler.py`** inside the `handle_meta_command` function. Follow these steps:
 
 ### 1. Edit the Command Handler
-- Open `code_puppy/command_line/meta_command_handler.py`.
+- Open `ticca/command_line/meta_command_handler.py`.
 - Locate the `handle_meta_command(command: str, console: Console) -> bool` function.
 - Add a new `if command.startswith("~yourcmd"):` block (do this _above_ the "unknown command" fallback).
     - Use .startswith for prefix commands (e.g., `~foo bar`), or full equality if you want only the bare command to match.
@@ -40,8 +40,8 @@ All `~meta` commands are handled in **`code_puppy/command_line/meta_command_hand
 As you type `~set`, tab completion pops up with available config keys so you don’t have to remember them like a boring human.
 
 If your new command needs tab completion/prompt support, check these files:
-- `code_puppy/command_line/prompt_toolkit_completion.py` (has completer logic)
-- `code_puppy/command_line/model_picker_completion.py`, `file_path_completion.py` (for model/filename completions)
+- `ticca/command_line/prompt_toolkit_completion.py` (has completer logic)
+- `ticca/command_line/model_picker_completion.py`, `file_path_completion.py` (for model/filename completions)
 
 Update them if your command would benefit from better input support. Usually you just need meta_command_handler.py, though!
 

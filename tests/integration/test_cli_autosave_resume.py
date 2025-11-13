@@ -78,5 +78,5 @@ def test_autosave_resume_roundtrip(
         finally:
             harness.cleanup(second_run)
     finally:
-        if os.getenv("CODE_PUPPY_KEEP_TEMP_HOME") not in {"1", "true", "TRUE", "True"}:
+        if os.getenv("ticca_KEEP_TEMP_HOME") not in {"1", "true", "TRUE", "True"}:
             shutil.rmtree(first_run.temp_home, ignore_errors=True)

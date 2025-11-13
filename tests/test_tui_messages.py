@@ -1,4 +1,4 @@
-"""Tests for code_puppy.tui.messages.
+"""Tests for ticca.tui.messages.
 
 This module tests the custom Textual message classes used for
 event communication in the TUI application.
@@ -8,7 +8,7 @@ import importlib.util
 from pathlib import Path
 
 # Load the messages module directly without triggering tui.__init__
-module_path = Path(__file__).parent.parent / "code_puppy" / "tui" / "messages.py"
+module_path = Path(__file__).parent.parent / "ticca" / "tui" / "messages.py"
 spec = importlib.util.spec_from_file_location("messages", module_path)
 messages_module = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(messages_module)

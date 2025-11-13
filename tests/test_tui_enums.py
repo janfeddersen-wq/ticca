@@ -1,4 +1,4 @@
-"""Tests for code_puppy.tui.models.enums.
+"""Tests for ticca.tui.models.enums.
 
 This module tests the TUI enum definitions used throughout
 the TUI interface for message type classification.
@@ -13,7 +13,7 @@ import pytest
 
 # Load the enums module directly without triggering tui.__init__
 module_path = (
-    Path(__file__).parent.parent / "code_puppy" / "tui" / "models" / "enums.py"
+    Path(__file__).parent.parent / "ticca" / "tui" / "models" / "enums.py"
 )
 spec = importlib.util.spec_from_file_location("enums", module_path)
 enums_module = importlib.util.module_from_spec(spec)

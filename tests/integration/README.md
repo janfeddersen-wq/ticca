@@ -12,7 +12,7 @@ This folder contains the reusable pyexpect harness that powers Code Puppy's end-
 | Variable | Purpose | Notes |
 | --- | --- | --- |
 | `CEREBRAS_API_KEY` | Primary provider for live integration coverage | Required for real LLM calls. Leave unset only when running offline smoke tests. |
-| `CODE_PUPPY_TEST_FAST` | Puts the CLI into fast/lean mode | Defaults to `1` inside the fixtures so prompts skip nonessential animation. |
+| `ticca_TEST_FAST` | Puts the CLI into fast/lean mode | Defaults to `1` inside the fixtures so prompts skip nonessential animation. |
 | `MODEL_NAME` | Optional override for the default model | Useful when pointing at alternate providers (OpenAI, Gemini, etc.). |
 | Provider-specific keys | `OPENAI_API_KEY`, `GEMINI_API_KEY`, `SYN_API_KEY`, … | Set whichever keys you expect the CLI to fall back to. The harness deliberately preserves ambient environment variables so you can swap providers without code changes. |
 
@@ -34,8 +34,8 @@ Each spawned CLI writes diagnostic logs to `tmp/.../cli_output.log`. When a test
 
 ## Failure handling
 - The harness retries prompt expectations with exponential backoff (see `RetryPolicy`) to smooth transient delays.
-- Final cleanup terminates the child process and selectively deletes files created during the test run. By default, only test-created files are removed, preserving any pre-existing files in reused HOME directories. If you need to keep artifacts for debugging, set `CODE_PUPPY_KEEP_TEMP_HOME=1` before running pytest; the fixtures honor that flag and skip deletion entirely.
-- To use the original "delete everything" cleanup behavior, set `CODE_PUPPY_SELECTIVE_CLEANUP=false`.
+- Final cleanup terminates the child process and selectively deletes files created during the test run. By default, only test-created files are removed, preserving any pre-existing files in reused HOME directories. If you need to keep artifacts for debugging, set `ticca_KEEP_TEMP_HOME=1` before running pytest; the fixtures honor that flag and skip deletion entirely.
+- To use the original "delete everything" cleanup behavior, set `ticca_SELECTIVE_CLEANUP=false`.
 - Timeout errors surface the last 100 characters captured by pyexpect, making it easier to diagnose mismatched prompts.
 
 ## Customizing the fixtures
