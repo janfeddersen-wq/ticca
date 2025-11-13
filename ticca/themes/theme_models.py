@@ -70,6 +70,10 @@ class Theme:
     modal_background: str  # Modal container background
     modal_overlay: str  # Semi-transparent overlay
 
+    # Diff colors
+    diff_addition: str  # Color for diff additions
+    diff_deletion: str  # Color for diff deletions
+
     def to_dict(self) -> Dict[str, str]:
         """Convert theme to dictionary."""
         return asdict(self)

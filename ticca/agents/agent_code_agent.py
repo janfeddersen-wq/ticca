@@ -24,7 +24,7 @@ class CodeAgent(BaseAgent):
         return [
             "list_agents",
             "invoke_agent",
-            # "ask_human_feedback",  # Disabled for now
+            "ask_human_feedback",
             "list_files",
             "read_file",
             "grep",
@@ -82,6 +82,21 @@ Use `list_agents()` to discover available specialized agents. Delegate to specia
 Use `invoke_agent(agent_name, prompt, session_id)` with unique session IDs (e.g., "feature-auth-x7k9") only when the agent needs conversation context.
 
 Return your final response as plain text.
+"""
+
+        # Add Yolo Mode restriction if enabled
+        from ..config import get_yolo_mode
+        if get_yolo_mode():
+            result += """
+
+## YOLO MODE ENABLED
+
+Work autonomously and minimize interruptions. Only use `ask_human_feedback` when:
+- You encounter a critical decision that could have significant negative consequences
+- The human explicitly requested to review or approve specific changes
+- You need clarification on ambiguous requirements that cannot be reasonably inferred
+
+For routine decisions, implementation choices, and standard workflows, proceed confidently without asking.
 """
 
         prompt_additions = callbacks.on_load_prompt()

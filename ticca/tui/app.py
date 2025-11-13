@@ -787,6 +787,9 @@ class CodePuppyTUI(App):
             # Stop periodic context updates and do a final update
             self._stop_context_updates()
 
+            # Refocus the input field so the user can immediately continue typing
+            self.call_after_refresh(self.focus_input_field)
+
     # Action methods
     def action_clear_chat(self) -> None:
         """Clear the chat history."""

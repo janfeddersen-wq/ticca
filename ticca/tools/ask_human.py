@@ -40,6 +40,13 @@ def ask_human_for_feedback(
             error="Question cannot be empty"
         )
 
+    # Validate options - should have at least 2 for better UX
+    if options is not None and len(options) < 2:
+        return HumanFeedbackOutput(
+            success=False,
+            error="Please provide at least 2 options for the user to choose from"
+        )
+
     # Limit to 3 options max
     if options and len(options) > 3:
         options = options[:3]
@@ -155,7 +162,7 @@ def register_ask_human_feedback_tool(agent):
     def agent_ask_human_for_feedback(
         context: RunContext,
         question: str,
-        options: list[str] | None = None
+        options: list[str]
     ) -> HumanFeedbackOutput:
         """Ask the human for feedback or input when you're unsure about something.
 
@@ -168,16 +175,17 @@ def register_ask_human_feedback_tool(agent):
         Args:
             question: A clear, concise question for the human.
                      Should explain the context and what you need help with.
-            options: Optional list of up to 3 predefined answer options.
-                    The human can also provide a custom answer.
-                    If None, human provides free-form text input.
+            options: List of 2-3 predefined answer options for the human to choose from.
+                    REQUIRED - You must always provide at least 2 suggested options.
+                    The human can also provide a custom answer if none fit.
+                    Maximum 3 options are recommended.
 
         Returns:
             HumanFeedbackOutput: Contains the human's answer if successful,
                                 or an error if the request was cancelled.
 
         Examples:
-            >>> # Ask with predefined options
+            >>> # Ask with predefined options (ALWAYS do this)
             >>> result = agent_ask_human_for_feedback(
             ...     ctx,
             ...     "Should I use TypeScript or JavaScript for this project?",
@@ -186,18 +194,20 @@ def register_ask_human_feedback_tool(agent):
             >>> if result.success:
             ...     print(f"User chose: {result.answer}")
 
-            >>> # Ask with free-form input
+            >>> # Another example with 2 options
             >>> result = agent_ask_human_for_feedback(
             ...     ctx,
-            ...     "What should be the name of the new component?"
+            ...     "Which approach should I take for authentication?",
+            ...     ["JWT tokens", "Session cookies"]
             ... )
             >>> if result.success:
-            ...     print(f"User answered: {result.answer}")
+            ...     print(f"User chose: {result.answer}")
 
         Best Practices:
             - Keep questions clear and concise
+            - ALWAYS provide 2-3 relevant options for the user to choose from
             - Provide context about why you're asking
-            - Limit options to 3 most relevant choices
+            - Options should cover the most likely choices
             - Always check result.success before using result.answer
             - Respect the user's answer and don't ask repeatedly
         """

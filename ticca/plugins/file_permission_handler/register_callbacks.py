@@ -200,6 +200,8 @@ def prompt_for_file_permission(
     operation: str,
     preview: str | None = None,
     message_group: str | None = None,
+    old_content: str | None = None,
+    new_content: str | None = None,
 ) -> tuple[bool, str | None]:
     """Prompt the user for permission to perform a file operation.
 
@@ -210,6 +212,8 @@ def prompt_for_file_permission(
         operation: Description of the operation (e.g., "edit", "delete", "create").
         preview: Optional preview of changes (diff or content preview).
         message_group: Optional message group for organizing output.
+        old_content: Optional original file content (for side-by-side diff in TUI).
+        new_content: Optional modified file content (for side-by-side diff in TUI).
 
     Returns:
         Tuple of (confirmed: bool, user_feedback: str | None)
@@ -232,6 +236,33 @@ def prompt_for_file_permission(
         return False, None
 
     try:
+        # Check if we're in TUI mode and have new content for side-by-side diff
+        # We use the modal for any edit operation where we have new_content,
+        # whether creating a new file (old_content is None/"") or modifying an existing one
+        from ticca.tui_state import is_tui_mode
+
+        if is_tui_mode() and new_content is not None:
+            # Use special TUI modal with side-by-side diff view
+            try:
+                from ticca.tui.approval_helpers import show_tui_file_edit_approval
+
+                # For new files, old_content will be None or empty - that's fine, we show empty OLD side
+                confirmed, user_feedback = show_tui_file_edit_approval(
+                    file_path, old_content or "", new_content
+                )
+
+                # Always return the TUI modal result (don't fall through)
+                # Mark that diff was already shown to avoid duplicate display
+                set_diff_already_shown(True)
+                return confirmed, user_feedback
+
+            except Exception as e:
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.error(f"TUI file edit approval modal failed: {e}", exc_info=True)
+                # Only on exception, fall through to regular approval
+
+        # Standard approval flow (CLI mode or TUI fallback)
         # Build panel content
         panel_content = RichText()
         panel_content.append("🔒 Requesting permission to ", style="bold yellow")
@@ -275,25 +306,54 @@ def handle_edit_file_permission(
         True if permission granted, False if denied
     """
     preview = None
+    old_content = ""  # Default to empty string for new files
+    new_content = None
+
+    # Get old content if file exists
+    file_path_abs = os.path.abspath(file_path)
+    if os.path.exists(file_path_abs) and os.path.isfile(file_path_abs):
+        try:
+            with open(file_path_abs, "r", encoding="utf-8") as f:
+                old_content = f.read()
+        except Exception:
+            old_content = ""  # Fall back to empty if read fails
 
     if operation_type == "write":
         content = operation_data.get("content", "")
         overwrite = operation_data.get("overwrite", False)
         preview = _preview_write_to_file(file_path, content, overwrite)
+        new_content = content
         operation_desc = "write to"
     elif operation_type == "replace":
         replacements = operation_data.get("replacements", [])
         preview = _preview_replace_in_file(file_path, replacements)
+        # Generate new content for side-by-side view
+        if old_content:
+            try:
+                new_content = old_content
+                for rep in replacements:
+                    old_snippet = rep.get("old_str", "")
+                    new_snippet = rep.get("new_str", "")
+                    if old_snippet and old_snippet in new_content:
+                        new_content = new_content.replace(old_snippet, new_snippet)
+            except Exception:
+                new_content = None
         operation_desc = "replace text in"
     elif operation_type == "delete_snippet":
         snippet = operation_data.get("delete_snippet", "")
         preview = _preview_delete_snippet(file_path, snippet)
+        # Generate new content for side-by-side view
+        if old_content and snippet:
+            try:
+                new_content = old_content.replace(snippet, "")
+            except Exception:
+                new_content = None
         operation_desc = "delete snippet from"
     else:
         operation_desc = f"perform {operation_type} operation on"
 
     confirmed, user_feedback = prompt_for_file_permission(
-        file_path, operation_desc, preview, message_group
+        file_path, operation_desc, preview, message_group, old_content, new_content
     )
     # Store feedback in thread-local storage so the tool can access it
     _set_user_feedback(user_feedback)
@@ -348,14 +408,52 @@ def handle_file_permission(
     Returns:
         True if permission granted, False if denied
     """
-    # Generate preview from operation_data if provided
+    old_content = ""
+    new_content = None
+
+    # Get old content if file exists
+    file_path_abs = os.path.abspath(file_path)
+    if os.path.exists(file_path_abs) and os.path.isfile(file_path_abs):
+        try:
+            with open(file_path_abs, "r", encoding="utf-8") as f:
+                old_content = f.read()
+        except Exception:
+            old_content = ""
+
+    # Generate preview AND content from operation_data if provided
     if operation_data is not None:
         preview = _generate_preview_from_operation_data(
             file_path, operation, operation_data
         )
 
+        # Extract new_content based on operation type
+        if operation == "write":
+            new_content = operation_data.get("content", "")
+        elif operation == "replace text in":
+            # Generate new content by applying replacements
+            if old_content:
+                try:
+                    new_content = old_content
+                    replacements = operation_data.get("replacements", [])
+                    for rep in replacements:
+                        old_snippet = rep.get("old_str", "")
+                        new_snippet = rep.get("new_str", "")
+                        if old_snippet and old_snippet in new_content:
+                            new_content = new_content.replace(old_snippet, new_snippet)
+                except Exception:
+                    new_content = None
+        elif operation == "delete snippet from":
+            # Generate new content by removing snippet
+            if old_content:
+                snippet = operation_data.get("snippet", "")
+                if snippet:
+                    try:
+                        new_content = old_content.replace(snippet, "")
+                    except Exception:
+                        new_content = None
+
     confirmed, user_feedback = prompt_for_file_permission(
-        file_path, operation, preview, message_group
+        file_path, operation, preview, message_group, old_content, new_content
     )
     # Store feedback in thread-local storage so the tool can access it
     _set_user_feedback(user_feedback)

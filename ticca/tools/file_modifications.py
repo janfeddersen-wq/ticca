@@ -98,21 +98,35 @@ def _colorize_diff(diff_text: str) -> str:
     This function supports two modes:
     - 'text': ANSI color codes for additions (green) and deletions (red)
     - 'highlighted': Intelligent foreground/background color pairs for maximum contrast
+
+    Diff colors are defined by the active theme.
     """
-    from ticca.config import (
-        get_diff_addition_color,
-        get_diff_deletion_color,
-        get_diff_highlight_style,
-    )
+    from ticca.config import get_diff_highlight_style, get_value
 
     if not diff_text:
         return diff_text
 
     style = get_diff_highlight_style()
 
-    # Highlighted mode - use intelligent color pairs
-    addition_base_color = get_diff_addition_color()
-    deletion_base_color = get_diff_deletion_color()
+    # Get diff colors from the current theme
+    try:
+        from ticca.themes import ThemeManager
+
+        # Get current theme name from config
+        current_theme_name = get_value("tui_theme") or "nord"
+        theme = ThemeManager.get_theme(current_theme_name)
+
+        if theme:
+            addition_base_color = theme.diff_addition
+            deletion_base_color = theme.diff_deletion
+        else:
+            # Fallback to default colors if theme not found
+            addition_base_color = "#a3be8c"  # Nord green
+            deletion_base_color = "#d08770"  # Nord orange
+    except Exception:
+        # Fallback to default colors if theme system unavailable
+        addition_base_color = "#a3be8c"  # Nord green
+        deletion_base_color = "#d08770"  # Nord orange
 
     if style == "text":
         # Plain text mode - use simple Rich markup for additions and deletions

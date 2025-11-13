@@ -41,8 +41,12 @@ def show_tui_approval(
             result_container['result'] = result
             event.set()
 
-        # Show modal with callback
-        app.push_screen(ApprovalModal(title, content, preview), callback)
+        # Use call_from_thread for thread-safe UI operations
+        app.call_from_thread(
+            app.push_screen,
+            ApprovalModal(title, content, preview),
+            callback
+        )
 
         # Block until result is available
         event.wait()
@@ -92,8 +96,12 @@ def show_tui_human_feedback(
             result_container['result'] = result
             event.set()
 
-        # Show modal with callback
-        app.push_screen(HumanFeedbackModal(question, options or []), callback)
+        # Use call_from_thread for thread-safe UI operations
+        app.call_from_thread(
+            app.push_screen,
+            HumanFeedbackModal(question, options or []),
+            callback
+        )
 
         # Block until result is available
         event.wait()
@@ -105,3 +113,59 @@ def show_tui_human_feedback(
         logger = logging.getLogger(__name__)
         logger.error(f"TUI human feedback modal failed: {e}")
         return None
+
+
+def show_tui_file_edit_approval(
+    file_path: str,
+    old_content: str,
+    new_content: str
+) -> Tuple[bool, str | None]:
+    """Show file edit approval dialog with side-by-side diff in TUI mode.
+
+    Args:
+        file_path: Path to the file being edited
+        old_content: Original file content
+        new_content: Modified file content
+
+    Returns:
+        Tuple of (approved: bool, feedback: str | None)
+    """
+    if not is_tui_mode():
+        return False, None
+
+    try:
+        app = get_tui_app_instance()
+        if not app:
+            return False, None
+
+        from ticca.tui.screens.file_edit_approval_modal import FileEditApprovalModal
+
+        # Use threading event to block until modal returns
+        result_container = {}
+        event = threading.Event()
+
+        def callback(result):
+            result_container['result'] = result
+            event.set()
+
+        # Use call_from_thread for thread-safe UI operations
+        app.call_from_thread(
+            app.push_screen,
+            FileEditApprovalModal(file_path, old_content, new_content),
+            callback
+        )
+
+        # Block until result is available
+        event.wait()
+
+        result = result_container.get('result')
+        if result:
+            return result.get("approved", False), result.get("feedback", None)
+        else:
+            return False, None
+
+    except Exception as e:
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"TUI file edit approval modal failed: {e}")
+        return False, None

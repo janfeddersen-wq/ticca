@@ -831,7 +831,10 @@ def set_diff_deletion_color(color: str):
 
 
 def _emit_diff_style_example():
-    """Emit a small diff example showing the current style configuration."""
+    """Emit a small diff example showing the current style configuration.
+
+    Note: Diff colors are now defined by the active theme.
+    """
     try:
         from ticca.messaging import emit_info
         from ticca.tools.file_modifications import _colorize_diff
@@ -847,31 +850,46 @@ def _emit_diff_style_example():
 +added line 4"""
 
         style = get_diff_highlight_style()
-        add_color = get_diff_addition_color()
-        del_color = get_diff_deletion_color()
 
-        # Get the actual color pairs being used
-        from ticca.tools.file_modifications import _get_optimal_color_pair
+        # Get diff colors from the current theme
+        try:
+            from ticca.themes import ThemeManager
 
-        add_fg, add_bg = _get_optimal_color_pair(add_color, "green")
-        del_fg, del_bg = _get_optimal_color_pair(del_color, "orange1")
+            current_theme_name = get_value("tui_theme") or "nord"
+            theme = ThemeManager.get_theme(current_theme_name)
+
+            if theme:
+                add_color = theme.diff_addition
+                del_color = theme.diff_deletion
+            else:
+                add_color = "#a3be8c"  # Nord green
+                del_color = "#d08770"  # Nord orange
+        except Exception:
+            add_color = "#a3be8c"  # Nord green
+            del_color = "#d08770"  # Nord orange
 
         emit_info("\n🎨 [bold]Diff Style Updated![/bold]")
         emit_info(f"Style: {style}", highlight=False)
+        emit_info(f"Colors defined by theme: {get_value('tui_theme') or 'nord'}", highlight=False)
 
         if style == "highlighted":
-            # Show the actual color pairs being used
+            # Get the actual color pairs being used
+            from ticca.tools.file_modifications import _get_optimal_color_pair
+
+            add_fg, add_bg = _get_optimal_color_pair(add_color, "green")
+            del_fg, del_bg = _get_optimal_color_pair(del_color, "orange1")
+
             emit_info(
-                f"Additions: {add_fg} on {add_bg} (requested: {add_color})",
+                f"Additions: {add_fg} on {add_bg} (from theme: {add_color})",
                 highlight=False,
             )
             emit_info(
-                f"Deletions: {del_fg} on {del_bg} (requested: {del_color})",
+                f"Deletions: {del_fg} on {del_bg} (from theme: {del_color})",
                 highlight=False,
             )
         else:
-            emit_info(f"Additions: {add_color} (plain text mode)", highlight=False)
-            emit_info(f"Deletions: {del_color} (plain text mode)", highlight=False)
+            emit_info(f"Additions: {add_color} (plain text mode, from theme)", highlight=False)
+            emit_info(f"Deletions: {del_color} (plain text mode, from theme)", highlight=False)
         emit_info(
             "\n[bold cyan]── DIFF EXAMPLE ───────────────────────────────────[/bold cyan]"
         )

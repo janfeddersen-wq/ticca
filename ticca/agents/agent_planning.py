@@ -29,7 +29,7 @@ class PlanningAgent(BaseAgent):
             "read_file",
             "grep",
             "agent_share_your_reasoning",
-            # "ask_human_feedback",  # Disabled for now
+            "ask_human_feedback",
             "list_agents",
             "invoke_agent",
         ]
@@ -89,6 +89,21 @@ Delegate to specialized agents:
 Only begin implementation when the user explicitly approves (e.g., "execute plan", "go ahead", "start", "proceed"). Until then, focus solely on planning and analysis.
 
 Return your plan as plain text with clear sections for: Objective, Project Analysis, Execution Plan (broken into phases), Risks, and Next Steps.
+"""
+
+        # Add Yolo Mode restriction if enabled
+        from ..config import get_yolo_mode
+        if get_yolo_mode():
+            result += """
+
+## YOLO MODE ENABLED
+
+Work autonomously and minimize interruptions. Only use `ask_human_feedback` when:
+- You encounter a critical decision that could have significant negative consequences
+- The human explicitly requested to review or approve specific changes
+- You need clarification on ambiguous requirements that cannot be reasonably inferred
+
+For routine decisions, implementation choices, and standard workflows, proceed confidently without asking.
 """
 
         prompt_additions = callbacks.on_load_prompt()

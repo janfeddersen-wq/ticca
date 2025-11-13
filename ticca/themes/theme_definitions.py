@@ -55,6 +55,9 @@ NORD_THEME = Theme(
     # Modal
     modal_background="rgba(46, 52, 64, 0.95)",
     modal_overlay="rgba(0, 0, 0, 0.6)",
+    # Diff
+    diff_addition="#a3be8c",  # Nord green
+    diff_deletion="#d08770",  # Nord orange
 )
 
 
@@ -105,6 +108,9 @@ DRACULA_THEME = Theme(
     # Modal
     modal_background="rgba(40, 42, 54, 0.95)",
     modal_overlay="rgba(0, 0, 0, 0.7)",
+    # Diff
+    diff_addition="#50fa7b",  # Dracula green
+    diff_deletion="#ffb86c",  # Dracula orange
 )
 
 
@@ -155,6 +161,9 @@ GRUVBOX_THEME = Theme(
     # Modal
     modal_background="rgba(40, 40, 40, 0.95)",
     modal_overlay="rgba(0, 0, 0, 0.6)",
+    # Diff
+    diff_addition="#b8bb26",  # Gruvbox green
+    diff_deletion="#fe8019",  # Gruvbox orange
 )
 
 
@@ -205,6 +214,9 @@ TOKYO_NIGHT_THEME = Theme(
     # Modal
     modal_background="rgba(26, 27, 38, 0.95)",
     modal_overlay="rgba(0, 0, 0, 0.7)",
+    # Diff
+    diff_addition="#9ece6a",  # Tokyo Night green
+    diff_deletion="#f7768e",  # Tokyo Night red/pink
 )
 
 
@@ -255,6 +267,9 @@ MONOKAI_THEME = Theme(
     # Modal
     modal_background="rgba(39, 40, 34, 0.95)",
     modal_overlay="rgba(0, 0, 0, 0.7)",
+    # Diff
+    diff_addition="#a6e22e",  # Monokai green
+    diff_deletion="#fd971f",  # Monokai orange
 )
 
 
@@ -305,6 +320,9 @@ CATPPUCCIN_MOCHA_THEME = Theme(
     # Modal
     modal_background="rgba(30, 30, 46, 0.95)",
     modal_overlay="rgba(0, 0, 0, 0.7)",
+    # Diff
+    diff_addition="#a6e3a1",  # Catppuccin Mocha green
+    diff_deletion="#f38ba8",  # Catppuccin Mocha red
 )
 
 
@@ -355,6 +373,9 @@ CATPPUCCIN_LATTE_THEME = Theme(
     # Modal
     modal_background="rgba(239, 241, 245, 0.95)",
     modal_overlay="rgba(0, 0, 0, 0.4)",
+    # Diff
+    diff_addition="#40a02b",  # Catppuccin Latte green
+    diff_deletion="#d20f39",  # Catppuccin Latte red
 )
 
 
@@ -405,6 +426,9 @@ SOLARIZED_LIGHT_THEME = Theme(
     # Modal
     modal_background="rgba(253, 246, 227, 0.95)",
     modal_overlay="rgba(0, 0, 0, 0.3)",
+    # Diff
+    diff_addition="#859900",  # Solarized green
+    diff_deletion="#dc322f",  # Solarized red
 )
 
 
@@ -455,6 +479,9 @@ FLEXOKI_THEME = Theme(
     # Modal
     modal_background="rgba(16, 15, 15, 0.95)",
     modal_overlay="rgba(0, 0, 0, 0.7)",
+    # Diff
+    diff_addition="#4c9f70",  # Flexoki green
+    diff_deletion="#af3029",  # Flexoki red
 )
 
 
@@ -505,6 +532,9 @@ TEXTUAL_DARK_THEME = Theme(
     # Modal
     modal_background="rgba(12, 12, 12, 0.95)",
     modal_overlay="rgba(0, 0, 0, 0.7)",
+    # Diff
+    diff_addition="#00d000",  # Textual Dark green
+    diff_deletion="#ff5555",  # Textual Dark red
 )
 
 
@@ -555,6 +585,9 @@ TEXTUAL_LIGHT_THEME = Theme(
     # Modal
     modal_background="rgba(244, 244, 244, 0.95)",
     modal_overlay="rgba(0, 0, 0, 0.3)",
+    # Diff
+    diff_addition="#008000",  # Textual Light green
+    diff_deletion="#cc0000",  # Textual Light red
 )
 
 

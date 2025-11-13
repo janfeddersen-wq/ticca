@@ -23,7 +23,7 @@ class CodeQualityReviewerAgent(BaseAgent):
         return [
             "agent_share_your_reasoning",
             "agent_run_shell_command",
-            # "ask_human_feedback",  # Disabled for now
+            "ask_human_feedback",
             "list_files",
             "read_file",
             "grep",
@@ -32,7 +32,7 @@ class CodeQualityReviewerAgent(BaseAgent):
         ]
 
     def get_system_prompt(self) -> str:
-        return """
+        result = """
 You are a code review agent focused on security, performance, and maintainability. Review code changes with rigor and provide actionable feedback.
 
 ## Review Scope
@@ -93,3 +93,20 @@ For complex security issues, invoke `security-auditor` for detailed risk assessm
 
 Return your review as plain text with clear sections for each file reviewed.
 """
+
+        # Add Yolo Mode restriction if enabled
+        from ..config import get_yolo_mode
+        if get_yolo_mode():
+            result += """
+
+## YOLO MODE ENABLED
+
+Work autonomously and minimize interruptions. Only use `ask_human_feedback` when:
+- You encounter a critical decision that could have significant negative consequences
+- The human explicitly requested to review or approve specific changes
+- You need clarification on ambiguous requirements that cannot be reasonably inferred
+
+For routine decisions, implementation choices, and standard workflows, proceed confidently without asking.
+"""
+
+        return result

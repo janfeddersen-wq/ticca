@@ -125,17 +125,24 @@ class HumanFeedbackModal(ModalScreen):
             # Question
             yield Static(self.question_text, id="feedback-question")
 
-            # Options
-            with Vertical(id="feedback-options"):
-                with RadioSet(id="option-radioset"):
-                    for i, option in enumerate(self.options_list):
-                        yield RadioButton(option, id=f"option-{i}")
-                    yield RadioButton("Other (custom answer)", id="option-custom")
+            # Show options only if we have them
+            if self.options_list and len(self.options_list) > 0:
+                # Options with radio buttons
+                with Vertical(id="feedback-options"):
+                    with RadioSet(id="option-radioset"):
+                        for i, option in enumerate(self.options_list):
+                            yield RadioButton(option, id=f"option-{i}")
+                        yield RadioButton("Other (custom answer)", id="option-custom")
 
-            # Custom input (hidden by default)
-            with Vertical(id="custom-input-container"):
-                yield Label("Enter your custom answer:")
-                yield Input(placeholder="Type your answer here...", id="custom-input")
+                # Custom input (hidden by default)
+                with Vertical(id="custom-input-container"):
+                    yield Label("Enter your custom answer:")
+                    yield Input(placeholder="Type your answer here...", id="custom-input")
+            else:
+                # No options provided - show direct text input
+                with Vertical(id="feedback-options"):
+                    yield Label("Please provide your answer:")
+                    yield Input(placeholder="Type your answer here...", id="direct-input", classes="direct-input")
 
             # Buttons
             with Container(id="feedback-buttons"):
@@ -143,10 +150,16 @@ class HumanFeedbackModal(ModalScreen):
                 yield Button("Cancel", id="cancel-button")
 
     def on_mount(self) -> None:
-        """Select first option by default."""
-        radioset = self.query_one("#option-radioset", RadioSet)
-        if self.options_list:
-            radioset.pressed_button = self.query_one(f"#option-0", RadioButton)
+        """Select first option by default or focus input."""
+        if self.options_list and len(self.options_list) > 0:
+            # Select the first radio button by setting its value to True
+            first_radio = self.query_one(f"#option-0", RadioButton)
+            first_radio.value = True
+        else:
+            # No options - focus the direct input
+            direct_inputs = self.query(".direct-input")
+            if direct_inputs:
+                direct_inputs[0].focus()
 
     @on(RadioSet.Changed)
     def radio_changed(self, event: RadioSet.Changed) -> None:
@@ -162,6 +175,16 @@ class HumanFeedbackModal(ModalScreen):
     @on(Button.Pressed, "#submit-button")
     def submit(self) -> None:
         """Submit the selected option."""
+        # Check if we're in direct input mode (no options provided)
+        direct_inputs = self.query(".direct-input")
+        if direct_inputs:
+            direct_input = direct_inputs[0].value.strip()
+            self.result = direct_input if direct_input else None
+            if self.result:
+                self.dismiss(self.result)
+            return
+
+        # Normal mode with radio buttons
         radioset = self.query_one("#option-radioset", RadioSet)
         pressed = radioset.pressed_button
 

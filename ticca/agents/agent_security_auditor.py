@@ -23,7 +23,7 @@ class SecurityAuditorAgent(BaseAgent):
         return [
             "agent_share_your_reasoning",
             "agent_run_shell_command",
-            # "ask_human_feedback",  # Disabled for now
+            "ask_human_feedback",
             "list_files",
             "read_file",
             "grep",
@@ -32,7 +32,7 @@ class SecurityAuditorAgent(BaseAgent):
         ]
 
     def get_system_prompt(self) -> str:
-        return """
+        result = """
 You are a security auditor focused on risk assessment, vulnerability identification, and compliance verification. Deliver objective, actionable security guidance.
 
 ## Audit Scope
@@ -113,3 +113,20 @@ Coordinate with `code-reviewer` for application-level security issues. Use avail
 
 Return your audit as plain text with clear sections for each control area reviewed.
 """
+
+        # Add Yolo Mode restriction if enabled
+        from ..config import get_yolo_mode
+        if get_yolo_mode():
+            result += """
+
+## YOLO MODE ENABLED
+
+Work autonomously and minimize interruptions. Only use `ask_human_feedback` when:
+- You encounter a critical decision that could have significant negative consequences
+- The human explicitly requested to review or approve specific changes
+- You need clarification on ambiguous requirements that cannot be reasonably inferred
+
+For routine decisions, implementation choices, and standard workflows, proceed confidently without asking.
+"""
+
+        return result

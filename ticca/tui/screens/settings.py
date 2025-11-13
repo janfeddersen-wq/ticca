@@ -304,6 +304,7 @@ class SettingsScreen(ModalScreen):
         background: $primary-darken-1;
         color: $accent;
     }
+
     """
 
     def __init__(self, **kwargs):
@@ -502,31 +503,7 @@ class SettingsScreen(ModalScreen):
                                 classes="setting-input",
                             )
                         yield Static(
-                            "Visual style for diff output.",
-                            classes="input-description",
-                        )
-
-                        with Container(classes="setting-row"):
-                            yield Label("Diff Addition Color:", classes="setting-label")
-                            yield Input(
-                                id="diff-addition-color-input",
-                                classes="setting-input",
-                                placeholder="sea_green1",
-                            )
-                        yield Static(
-                            "Rich color name or hex code for additions (e.g., 'sea_green1').",
-                            classes="input-description",
-                        )
-
-                        with Container(classes="setting-row"):
-                            yield Label("Diff Deletion Color:", classes="setting-label")
-                            yield Input(
-                                id="diff-deletion-color-input",
-                                classes="setting-input",
-                                placeholder="orange1",
-                            )
-                        yield Static(
-                            "Rich color name or hex code for deletions (e.g., 'orange1').",
+                            "Visual style for diff output. Colors are defined by the selected theme.",
                             classes="input-description",
                         )
 
@@ -696,9 +673,7 @@ class SettingsScreen(ModalScreen):
             get_auto_save_session,
             get_compaction_strategy,
             get_compaction_threshold,
-            get_diff_addition_color,
             get_diff_context_lines,
-            get_diff_deletion_color,
             get_diff_highlight_style,
             get_global_model_name,
             get_max_saved_sessions,
@@ -748,12 +723,6 @@ class SettingsScreen(ModalScreen):
             "#suppress-informational-switch", Switch
         ).value = get_suppress_informational_messages()
         self.query_one("#diff-style-select", Select).value = get_diff_highlight_style()
-        self.query_one(
-            "#diff-addition-color-input", Input
-        ).value = get_diff_addition_color()
-        self.query_one(
-            "#diff-deletion-color-input", Input
-        ).value = get_diff_deletion_color()
         self.query_one("#diff-context-lines-input", Input).value = str(
             get_diff_context_lines()
         )
@@ -1017,8 +986,6 @@ class SettingsScreen(ModalScreen):
             get_model_context_length,
             set_auto_save_session,
             set_config_value,
-            set_diff_addition_color,
-            set_diff_deletion_color,
             set_diff_highlight_style,
             set_enable_dbos,
             set_max_saved_sessions,
@@ -1112,12 +1079,6 @@ class SettingsScreen(ModalScreen):
                 "#suppress-informational-switch", Switch
             ).value
             diff_style = self.query_one("#diff-style-select", Select).value
-            diff_addition_color = self.query_one(
-                "#diff-addition-color-input", Input
-            ).value.strip()
-            diff_deletion_color = self.query_one(
-                "#diff-deletion-color-input", Input
-            ).value.strip()
             diff_context_lines = self.query_one(
                 "#diff-context-lines-input", Input
             ).value.strip()
@@ -1126,10 +1087,6 @@ class SettingsScreen(ModalScreen):
             set_suppress_informational_messages(suppress_informational)
             if diff_style:
                 set_diff_highlight_style(diff_style)
-            if diff_addition_color:
-                set_diff_addition_color(diff_addition_color)
-            if diff_deletion_color:
-                set_diff_deletion_color(diff_deletion_color)
             if diff_context_lines.isdigit():
                 lines_value = int(diff_context_lines)
                 if 0 <= lines_value <= 50:
