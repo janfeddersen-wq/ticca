@@ -194,7 +194,7 @@ ticca
 ### From Source
 
 ```bash
-git clone https://github.com/mpfaffenberger/ticca.git
+git clone https://github.com/janfeddersen-wq/ticca.git
 cd ticca
 ./start.sh
 ```
@@ -216,11 +216,18 @@ MIT License - see [LICENSE](LICENSE) for details.
 
 ## Links
 
-- **Repository**: https://github.com/mpfaffenberger/ticca
-- **Issues**: https://github.com/mpfaffenberger/ticca/issues
-- **Discussions**: https://github.com/mpfaffenberger/ticca/discussions
+- **Repository**: https://github.com/janfeddersen-wq/ticca
+- **Issues**: https://github.com/janfeddersen-wq/ticca/issues
+- **Discussions**: https://github.com/janfeddersen-wq/ticca/discussions
 - **AGENT.md**: https://agent.md
 - **MCP**: https://modelcontextprotocol.io
+
+## Acknowledgments
+
+Ticca builds upon the excellent work of:
+
+- **[Code Puppy](https://github.com/mpfaffenberger/code_puppy/)** - The awesome foundation that Ticca is built upon
+- **[gac](https://github.com/cellwebb/gac)** - The awesome git message generator (soon to be integrated)
 
 ---
 

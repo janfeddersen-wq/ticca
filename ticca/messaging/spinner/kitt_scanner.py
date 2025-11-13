@@ -28,13 +28,14 @@ class KittScanner(Horizontal):
 
     KittScanner > Label {
         color: $text;
-        margin: 0 1;
+        margin: 0 2 0 1;
     }
 
     KittScanner > Sparkline {
         width: 1fr;
         height: 1;
         color: $accent;
+        margin: 0 1 0 0;
     }
     """
 

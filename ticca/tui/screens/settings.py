@@ -50,7 +50,7 @@ class SettingsScreen(ModalScreen):
     .setting-row {
         layout: horizontal;
         height: auto;
-        margin: 0 0 1 0;
+        margin: 0 0 0 0;
         align: left middle;
         padding: 0;
     }
@@ -86,7 +86,7 @@ class SettingsScreen(ModalScreen):
 
     /* Special margin for descriptions after input fields */
     .input-description {
-        margin: 0 0 0 31;
+        margin: 0 0 1 31;
     }
 
     .section-header {
@@ -100,7 +100,7 @@ class SettingsScreen(ModalScreen):
         border: round $primary;
         background: $panel;
         color: $foreground;
-        padding: 0 1;
+        padding: 0;
     }
 
     Input:focus {
@@ -298,6 +298,32 @@ class SettingsScreen(ModalScreen):
     }
 
     #claude-code-auth-button:focus {
+        border: wide $panel;
+        border-top: wide $accent;
+        border-left: wide $accent;
+        background: $primary-darken-1;
+        color: $accent;
+    }
+
+    #chatgpt-auth-button {
+        width: 20;
+        min-width: 20;
+        height: 3;
+        border: wide $accent;
+        border-bottom: wide $accent-darken-1;
+        border-right: wide $accent-darken-1;
+        background: $primary;
+        color: $background;
+    }
+
+    #chatgpt-auth-button:hover {
+        border: wide $accent-lighten-1;
+        border-bottom: wide $secondary;
+        border-right: wide $secondary;
+        background: $primary-lighten-1;
+    }
+
+    #chatgpt-auth-button:focus {
         border: wide $panel;
         border-top: wide $accent;
         border-left: wide $accent;
@@ -677,6 +703,16 @@ class SettingsScreen(ModalScreen):
                             yield Button("Authenticate", id="claude-code-auth-button")
                         yield Static(
                             "Authenticate with Claude Code OAuth for enhanced features",
+                            classes="input-description",
+                        )
+
+                        with Container(classes="setting-row"):
+                            yield Label(
+                                "ChatGPT OAuth:", classes="setting-label"
+                            )
+                            yield Button("Authenticate", id="chatgpt-auth-button")
+                        yield Static(
+                            "Authenticate with ChatGPT OAuth to access ChatGPT models",
                             classes="input-description",
                         )
 
@@ -1215,6 +1251,35 @@ class SettingsScreen(ModalScreen):
         except Exception as e:
             from ticca.messaging import emit_error
             emit_error(f"Failed to start OAuth: {str(e)}")
+
+    @on(Button.Pressed, "#chatgpt-auth-button")
+    def handle_chatgpt_auth(self) -> None:
+        """Handle ChatGPT OAuth authentication."""
+        try:
+            # Import the OAuth flow from the chatgpt_oauth plugin
+            from ticca.plugins.chatgpt_oauth.oauth_flow import run_oauth_flow
+
+            # Run the OAuth flow in a separate thread to avoid blocking the UI
+            import threading
+
+            def run_oauth():
+                try:
+                    run_oauth_flow()
+                except Exception as e:
+                    from ticca.messaging import emit_error
+                    emit_error(f"ChatGPT OAuth authentication failed: {str(e)}")
+
+            oauth_thread = threading.Thread(target=run_oauth, daemon=True)
+            oauth_thread.start()
+
+        except ImportError:
+            from ticca.messaging import emit_error
+            emit_error(
+                "ChatGPT OAuth plugin not available. Please install required dependencies."
+            )
+        except Exception as e:
+            from ticca.messaging import emit_error
+            emit_error(f"Failed to start ChatGPT OAuth: {str(e)}")
 
     def on_key(self, event) -> None:
         """Handle key events."""

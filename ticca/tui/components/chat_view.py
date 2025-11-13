@@ -10,9 +10,25 @@ from rich.markdown import Markdown
 from rich.syntax import Syntax
 from rich.text import Text
 from textual.containers import Vertical, VerticalScroll
-from textual.widgets import MarkdownViewer, Static
+from textual.widgets import Markdown as MarkdownWidget, MarkdownViewer, Static
 
 from ..models import ChatMessage, MessageCategory, MessageType, get_message_category
+
+
+class SafeMarkdownViewer(MarkdownViewer):
+    """Custom MarkdownViewer that handles link clicks safely without crashing."""
+
+    def on_markdown_link_clicked(self, message: MarkdownWidget.LinkClicked) -> None:
+        """Handle link clicks with proper error handling."""
+        # Stop the message from propagating to parent handlers
+        message.prevent_default()
+        message.stop()
+
+        # For now, ignore all link clicks to prevent crashes
+        # In the future, we could:
+        # - Open external URLs in a browser
+        # - Navigate to local markdown files safely
+        # - Show an error message for invalid links
 
 
 class ChatView(VerticalScroll):
@@ -303,8 +319,8 @@ class ChatView(VerticalScroll):
         if last_message.type == MessageType.AGENT_RESPONSE:
             # Re-render agent response with updated content as markdown
             try:
-                # For MarkdownViewer, we need to update the markdown property
-                if isinstance(last_widget, MarkdownViewer):
+                # For SafeMarkdownViewer, we need to update the markdown property
+                if isinstance(last_widget, SafeMarkdownViewer):
                     # Access the internal Markdown widget and update its content
                     # Note: This might need adjustment depending on MarkdownViewer's API
                     last_widget.document.update_source(last_message.content)
@@ -504,7 +520,7 @@ class ChatView(VerticalScroll):
                     temp_console.print(message.content)
                     markdown_content = string_io.getvalue().rstrip("\n")
 
-                    message_widget = MarkdownViewer(
+                    message_widget = SafeMarkdownViewer(
                         markdown_content,
                         show_table_of_contents=False,
                         classes=css_class
@@ -535,8 +551,8 @@ class ChatView(VerticalScroll):
             content = message.content
 
             try:
-                # Render as markdown with MarkdownViewer (no table of contents)
-                message_widget = MarkdownViewer(
+                # Render as markdown with SafeMarkdownViewer (no table of contents)
+                message_widget = SafeMarkdownViewer(
                     content,
                     show_table_of_contents=False,
                     classes=css_class
@@ -630,10 +646,10 @@ class ChatView(VerticalScroll):
         self._last_message_category = None  # Reset category tracking
         self._last_widget = None  # Reset widget tracking
         self._last_combined_message = None  # Reset combined message tracking
-        # Remove all message widgets (Static, MarkdownViewer, and Vertical containers)
+        # Remove all message widgets (Static, SafeMarkdownViewer, and Vertical containers)
         for widget in self.query(Static):
             widget.remove()
-        for widget in self.query(MarkdownViewer):
+        for widget in self.query(SafeMarkdownViewer):
             widget.remove()
         for widget in self.query(Vertical):
             widget.remove()
