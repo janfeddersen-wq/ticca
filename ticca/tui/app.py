@@ -215,7 +215,7 @@ class CodePuppyTUI(App):
 
         current_agent_config = get_current_agent()
         new_agent_display = (
-            current_agent_config.display_name if current_agent_config else "code-puppy"
+            current_agent_config.display_name if current_agent_config else "code-agent"
         )
 
         # Update the reactive variable (this will trigger watch_current_agent)
@@ -286,7 +286,7 @@ class CodePuppyTUI(App):
 
         current_agent_config = get_current_agent()
         self.current_agent = (
-            current_agent_config.display_name if current_agent_config else "code-puppy"
+            current_agent_config.display_name if current_agent_config else "code-agent"
         )
 
         # Get effective model (respects agent pinned model)

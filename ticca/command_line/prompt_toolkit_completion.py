@@ -402,7 +402,7 @@ def get_prompt_with_active_model(base: str = ">>> "):
 
     # Get current agent information
     current_agent = get_current_agent()
-    agent_display = current_agent.display_name if current_agent else "code-puppy"
+    agent_display = current_agent.display_name if current_agent else "code-agent"
 
     # Check if current agent has a pinned model
     agent_model = None

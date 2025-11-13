@@ -269,7 +269,7 @@ def get_current_agent_name() -> str:
 
     Returns:
         The name of the current agent for this session.
-        Priority: session agent > config default > 'code-puppy'.
+        Priority: session agent > config default > 'code-agent'.
     """
     _ensure_session_cache_loaded()
     session_id = get_terminal_session_id()
@@ -353,9 +353,9 @@ def load_agent(agent_name: str) -> BaseAgent:
     _discover_agents(message_group_id=message_group_id)
 
     if agent_name not in _AGENT_REGISTRY:
-        # Fallback to code-puppy if agent not found
-        if "code-puppy" in _AGENT_REGISTRY:
-            agent_name = "code-puppy"
+        # Fallback to code-agent if agent not found
+        if "code-agent" in _AGENT_REGISTRY:
+            agent_name = "code-agent"
         else:
             raise ValueError(
                 f"Agent '{agent_name}' not found and no fallback available"

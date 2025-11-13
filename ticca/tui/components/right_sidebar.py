@@ -73,7 +73,7 @@ class RightSidebar(Container):
     message_count = reactive(0)
     session_duration = reactive("0m")
     current_model = reactive("Unknown")
-    agent_name = reactive("code-puppy")
+    agent_name = reactive("code-agent")
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -94,7 +94,7 @@ class RightSidebar(Container):
                     yield RadioButton(agent_display, value=agent_id == current_agent, id=f"agent-{agent_id}")
         except Exception:
             with RadioSet(id="agent-selector"):
-                yield RadioButton("Code Puppy", value=True, id="agent-code-puppy")
+                yield RadioButton("Code Agent", value=True, id="agent-code-agent")
 
         # Status display area
         yield RichLog(id="status-display", wrap=True, highlight=True)

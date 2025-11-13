@@ -4,12 +4,12 @@ from .. import callbacks
 from .base_agent import BaseAgent
 
 
-class CodePuppyAgent(BaseAgent):
+class CodeAgent(BaseAgent):
     """Main programming agent for code generation and modification."""
 
     @property
     def name(self) -> str:
-        return "code-puppy"
+        return "code-agent"
 
     @property
     def display_name(self) -> str:
@@ -20,7 +20,7 @@ class CodePuppyAgent(BaseAgent):
         return "Main programming agent for code generation, modification, and implementation"
 
     def get_available_tools(self) -> list[str]:
-        """Get the list of tools available to Code-Puppy."""
+        """Get the list of tools available to the Code Agent."""
         return [
             "list_agents",
             "invoke_agent",

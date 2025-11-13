@@ -71,7 +71,7 @@ async def main():
         "--agent",
         "-a",
         type=str,
-        help="Specify which agent to use (e.g., --agent code-puppy)",
+        help="Specify which agent to use (e.g., --agent code-agent)",
     )
     parser.add_argument(
         "--model",
@@ -288,7 +288,7 @@ async def main():
             "DBOS_APP_VERSION", f"{current_version}-{int(time.time() * 1000)}"
         )
         dbos_config: DBOSConfig = {
-            "name": "dbos-code-puppy",
+            "name": "dbos-ticca",
             "system_database_url": DBOS_DATABASE_URL,
             "run_admin_server": False,
             "conductor_key": os.environ.get(
@@ -297,7 +297,7 @@ async def main():
             "log_level": os.environ.get(
                 "DBOS_LOG_LEVEL", "ERROR"
             ),  # Default to ERROR level to suppress verbose logs
-            "application_version": dbos_app_version,  # Match DBOS app version to Code Puppy version
+            "application_version": dbos_app_version,  # Match DBOS app version to Ticca version
         }
         try:
             DBOS(config=dbos_config)
