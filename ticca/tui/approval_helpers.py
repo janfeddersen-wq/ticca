@@ -2,8 +2,9 @@
 Helper functions for showing approval dialogs in TUI mode.
 """
 
+import threading
 from typing import Tuple
-from ticca.tui_state import is_tui_mode, get_tui_app
+from ticca.tui_state import is_tui_mode, get_tui_app_instance
 
 
 def show_tui_approval(
@@ -26,17 +27,27 @@ def show_tui_approval(
         return False, None
 
     try:
-        app = get_tui_app()
+        app = get_tui_app_instance()
         if not app:
             return False, None
 
         from ticca.tui.screens.approval_modal import ApprovalModal
 
-        # Show modal and wait for result
-        result = app.push_screen_wait(
-            ApprovalModal(title, content, preview)
-        )
+        # Use threading event to block until modal returns
+        result_container = {}
+        event = threading.Event()
 
+        def callback(result):
+            result_container['result'] = result
+            event.set()
+
+        # Show modal with callback
+        app.push_screen(ApprovalModal(title, content, preview), callback)
+
+        # Block until result is available
+        event.wait()
+
+        result = result_container.get('result')
         if result:
             return result.get("approved", False), result.get("feedback", None)
         else:
@@ -67,18 +78,27 @@ def show_tui_human_feedback(
         return None
 
     try:
-        app = get_tui_app()
+        app = get_tui_app_instance()
         if not app:
             return None
 
         from ticca.tui.screens.human_feedback_modal import HumanFeedbackModal
 
-        # Show modal and wait for result
-        result = app.push_screen_wait(
-            HumanFeedbackModal(question, options or [])
-        )
+        # Use threading event to block until modal returns
+        result_container = {}
+        event = threading.Event()
 
-        return result
+        def callback(result):
+            result_container['result'] = result
+            event.set()
+
+        # Show modal with callback
+        app.push_screen(HumanFeedbackModal(question, options or []), callback)
+
+        # Block until result is available
+        event.wait()
+
+        return result_container.get('result')
 
     except Exception as e:
         import logging

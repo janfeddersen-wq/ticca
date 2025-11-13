@@ -23,7 +23,7 @@ class CodeQualityReviewerAgent(BaseAgent):
         return [
             "agent_share_your_reasoning",
             "agent_run_shell_command",
-            "ask_human_feedback",
+            # "ask_human_feedback",  # Disabled for now
             "list_files",
             "read_file",
             "grep",

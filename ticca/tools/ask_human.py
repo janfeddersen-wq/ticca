@@ -50,27 +50,20 @@ def ask_human_for_feedback(
     if is_tui_mode():
         # Use TUI modal
         try:
-            from ticca.tui_state import get_tui_app
-            app = get_tui_app()
+            from ticca.tui.approval_helpers import show_tui_human_feedback
 
-            if app:
-                from ticca.tui.screens.human_feedback_modal import HumanFeedbackModal
+            result = show_tui_human_feedback(question, options)
 
-                # Show modal and wait for result
-                result = app.push_screen_wait(
-                    HumanFeedbackModal(question, options or [])
+            if result:
+                return HumanFeedbackOutput(
+                    success=True,
+                    answer=result
                 )
-
-                if result:
-                    return HumanFeedbackOutput(
-                        success=True,
-                        answer=result
-                    )
-                else:
-                    return HumanFeedbackOutput(
-                        success=False,
-                        error="User cancelled the feedback request"
-                    )
+            else:
+                return HumanFeedbackOutput(
+                    success=False,
+                    error="User cancelled the feedback request"
+                )
         except Exception as e:
             emit_info(f"[yellow]TUI modal failed, falling back to CLI: {e}[/yellow]")
 
