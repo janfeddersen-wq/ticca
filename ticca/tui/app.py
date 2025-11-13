@@ -18,7 +18,6 @@ from ticca.command_line.command_handler import handle_command
 from ticca.command_line.model_picker_completion import set_active_model
 from ticca.config import (
     get_global_model_name,
-    get_puppy_name,
     initialize_command_history_file,
     save_command_to_history,
 )
@@ -188,7 +187,6 @@ class CodePuppyTUI(App):
 
     # Reactive variables for app state
     current_model = reactive("")
-    puppy_name = reactive("")
     current_agent = reactive("")
     agent_busy = reactive(False)
 
@@ -223,8 +221,14 @@ class CodePuppyTUI(App):
         # Update the reactive variable (this will trigger watch_current_agent)
         self.current_agent = new_agent_display
 
-        # Add a system message to notify the user
-        self.add_system_message(f"🔄 Switched to agent: {new_agent_display}")
+        # Update to show the effective model (respects pinned model)
+        self.current_model = current_agent_config.get_model_name()
+
+        # Update status bar
+        status_bar = self.query_one(StatusBar)
+        status_bar.current_model = self.current_model
+
+        # Don't show duplicate message - the UI handler already shows success message
 
     def __init__(self, initial_command: str = None, **kwargs):
         super().__init__(**kwargs)
@@ -277,9 +281,6 @@ class CodePuppyTUI(App):
         register_callback("agent_reload", self._on_agent_reload)
 
         # Load configuration
-        self.current_model = get_global_model_name()
-        self.puppy_name = get_puppy_name()
-
         # Get current agent information
         from ticca.agents.agent_manager import get_current_agent
 
@@ -288,6 +289,9 @@ class CodePuppyTUI(App):
             current_agent_config.display_name if current_agent_config else "code-puppy"
         )
 
+        # Get effective model (respects agent pinned model)
+        self.current_model = current_agent_config.get_model_name()
+
         # Initial title update
         self._update_title()
 
@@ -295,7 +299,6 @@ class CodePuppyTUI(App):
         # Update status bar
         status_bar = self.query_one(StatusBar)
         status_bar.current_model = self.current_model
-        status_bar.puppy_name = self.puppy_name
         status_bar.agent_status = "Ready"
 
         # Add welcome message with YOLO mode status
@@ -857,18 +860,13 @@ class CodePuppyTUI(App):
 
         def handle_settings_result(result):
             if result and result.get("success"):
-                # Update reactive variables
-                from ticca.config import get_global_model_name, get_puppy_name
-
-                self.puppy_name = get_puppy_name()
-
                 # Handle model change if needed
                 if result.get("model_changed"):
-                    new_model = get_global_model_name()
-                    self.current_model = new_model
                     try:
                         current_agent = get_current_agent()
                         current_agent.reload_code_generation_agent()
+                        # Get the effective model after reload (respects pinned model)
+                        self.current_model = current_agent.get_model_name()
                     except Exception as reload_error:
                         self.add_error_message(
                             f"Failed to reload agent after model change: {reload_error}"
@@ -876,7 +874,6 @@ class CodePuppyTUI(App):
 
                 # Update status bar
                 status_bar = self.query_one(StatusBar)
-                status_bar.puppy_name = self.puppy_name
                 status_bar.current_model = self.current_model
 
                 # Show success message
@@ -924,7 +921,11 @@ class CodePuppyTUI(App):
             if model_name:
                 try:
                     set_active_model(model_name)
-                    self.current_model = model_name
+                    # Reload agent with new model
+                    agent = get_current_agent()
+                    agent.reload_code_generation_agent()
+                    # Get the effective model (respects pinned model)
+                    self.current_model = agent.get_model_name()
                     status_bar = self.query_one(StatusBar)
                     status_bar.current_model = self.current_model
                     self.add_system_message(f"✅ Model switched to: {model_name}")
@@ -1073,7 +1074,6 @@ class CodePuppyTUI(App):
                 message_count=len(message_history),
                 duration=duration_str,
                 model=self.current_model,
-                agent=self.current_agent,
             )
 
         except Exception:
@@ -1146,17 +1146,34 @@ class CodePuppyTUI(App):
             terminal_height = self.size.height if hasattr(self, "size") else 24
             sidebar = self.query_one(Sidebar)
 
-            # Responsive sidebar width based on terminal width
+            # Calculate responsive width based on terminal width
             if terminal_width >= 120:
-                sidebar.styles.width = 40
+                responsive_width = 40
             elif terminal_width >= 100:
-                sidebar.styles.width = 35
+                responsive_width = 35
             elif terminal_width >= 80:
-                sidebar.styles.width = 30
+                responsive_width = 30
             elif terminal_width >= 60:
-                sidebar.styles.width = 25
+                responsive_width = 25
             else:
-                sidebar.styles.width = 20
+                responsive_width = 20
+
+            # Apply same width to left sidebar (history)
+            sidebar.styles.width = responsive_width
+
+            # Apply same width to right sidebar to prevent layout shift
+            try:
+                right_sidebar = self.query_one(RightSidebar)
+                right_sidebar.styles.width = responsive_width
+            except Exception:
+                pass
+
+            # Apply same width to file tree panel to prevent layout shift
+            try:
+                file_tree = self.query_one(FileTreePanel)
+                file_tree.styles.width = responsive_width
+            except Exception:
+                pass
 
             # Auto-hide sidebar on very narrow terminals
             if terminal_width < 50:
@@ -1169,10 +1186,10 @@ class CodePuppyTUI(App):
             # Adjust input area height for very short terminals
             if terminal_height < 20:
                 input_area = self.query_one(InputArea)
-                input_area.styles.height = 7
+                input_area.styles.height = 10
             else:
                 input_area = self.query_one(InputArea)
-                input_area.styles.height = 9
+                input_area.styles.height = 10
 
         except Exception:
             pass
@@ -1198,9 +1215,16 @@ class CodePuppyTUI(App):
             await asyncio.to_thread(agent.reload_code_generation_agent)
 
             # After load, refresh current model (in case of fallback or changes)
-            from ticca.config import get_global_model_name
+            # Use the effective model from the agent (respects pinned model)
+            agent = get_current_agent()
+            self.current_model = agent.get_model_name()
 
-            self.current_model = get_global_model_name()
+            # Update status bar with effective model
+            status_bar = self.query_one(StatusBar)
+            status_bar.current_model = self.current_model
+
+            # Update right sidebar with correct context after agent loads
+            self._update_right_sidebar()
 
             # Let the user know model/agent are ready
             self.add_system_message("✓ Model and agent ready")
@@ -1402,27 +1426,62 @@ class CodePuppyTUI(App):
         sidebar = self.query_one(Sidebar)
         sidebar.display = False
 
+    @on(RightSidebar.AgentChanged)
+    def on_right_sidebar_agent_changed(self, event: RightSidebar.AgentChanged) -> None:
+        """Handle agent change from right sidebar dropdown."""
+        try:
+            agent_name = event.agent_name
+
+            # Use the agent manager to switch agents
+            from ticca.agents.agent_manager import set_current_agent
+
+            success = set_current_agent(agent_name)
+            if not success:
+                self.add_error_message(f"Failed to switch to agent: {agent_name}")
+                return
+
+            # Get the new agent
+            agent = get_current_agent()
+            self.current_agent = agent.display_name
+
+            # Update to show the effective model (respects pinned model)
+            self.current_model = agent.get_model_name()
+
+            # Update status bar
+            status_bar = self.query_one(StatusBar)
+            status_bar.current_model = self.current_model
+
+            # Update right sidebar display
+            self._update_right_sidebar()
+
+            # Show success message
+            self.add_system_message(f"✅ Agent switched to: {agent.display_name}")
+
+        except Exception as e:
+            self.add_error_message(f"Failed to switch agent: {e}")
+
     @on(RightSidebar.ModelChanged)
     def on_right_sidebar_model_changed(self, event: RightSidebar.ModelChanged) -> None:
         """Handle model change from right sidebar dropdown."""
         try:
             model_name = event.model_name
             set_active_model(model_name)
-            self.current_model = model_name
-
-            # Update status bar
-            status_bar = self.query_one(StatusBar)
-            status_bar.current_model = self.current_model
 
             # Reload agent with new model
             try:
                 agent = get_current_agent()
                 agent.reload_code_generation_agent()
+                # Get the effective model after reload (respects pinned model)
+                self.current_model = agent.get_model_name()
             except Exception as reload_error:
                 self.add_error_message(
                     f"Failed to reload agent after model change: {reload_error}"
                 )
                 return
+
+            # Update status bar
+            status_bar = self.query_one(StatusBar)
+            status_bar.current_model = self.current_model
 
             # Update right sidebar display
             self._update_right_sidebar()

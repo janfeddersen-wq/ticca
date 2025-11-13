@@ -22,6 +22,7 @@ from .utils import (
     add_models_to_extra_config,
     assign_redirect_uri,
     build_authorization_url,
+    ensure_valid_token,
     exchange_code_for_tokens,
     fetch_claude_code_models,
     load_claude_models,
@@ -32,6 +33,9 @@ from .utils import (
 )
 
 logger = logging.getLogger(__name__)
+
+# Global lock to prevent multiple OAuth flows from running simultaneously
+_oauth_lock = threading.Lock()
 
 
 class _OAuthResult:
@@ -117,43 +121,52 @@ def _await_callback(context: OAuthContext) -> Optional[str]:
 
     server, result, event = started
     redirect_uri = context.redirect_uri
-    if not redirect_uri:
-        emit_error("Failed to assign redirect URI for OAuth flow")
-        server.shutdown()
-        return None
 
-    auth_url = build_authorization_url(context)
-
-    emit_info("Opening browser for Claude Code OAuth…")
-    emit_info(f"If it doesn't open automatically, visit: {auth_url}")
     try:
-        webbrowser.open(auth_url)
-    except Exception as exc:  # pragma: no cover
-        emit_warning(f"Failed to open browser automatically: {exc}")
-        emit_info(f"Please open the URL manually: {auth_url}")
+        if not redirect_uri:
+            emit_error("Failed to assign redirect URI for OAuth flow")
+            return None
 
-    emit_info(f"Listening for callback on {redirect_uri}")
-    emit_info(
-        "If Claude redirects you to the console callback page, copy the full URL "
-        "and paste it back into Code Puppy."
-    )
+        auth_url = build_authorization_url(context)
 
-    if not event.wait(timeout=timeout):
-        emit_error("OAuth callback timed out. Please try again.")
-        server.shutdown()
-        return None
+        emit_info("Opening browser for Claude Code OAuth…")
+        emit_info(f"If it doesn't open automatically, visit: {auth_url}")
+        try:
+            webbrowser.open(auth_url)
+        except Exception as exc:  # pragma: no cover
+            emit_warning(f"Failed to open browser automatically: {exc}")
+            emit_info(f"Please open the URL manually: {auth_url}")
 
-    server.shutdown()
+        emit_info(f"Listening for callback on {redirect_uri}")
+        emit_info(
+            "If Claude redirects you to the console callback page, copy the full URL "
+            "and paste it back into Code Puppy."
+        )
 
-    if result.error:
-        emit_error(f"OAuth callback error: {result.error}")
-        return None
+        if not event.wait(timeout=timeout):
+            emit_error("OAuth callback timed out. Please try again.")
+            return None
 
-    if result.state != context.state:
-        emit_error("State mismatch detected; aborting authentication.")
-        return None
+        if result.error:
+            emit_error(f"OAuth callback error: {result.error}")
+            return None
 
-    return result.code
+        if result.state != context.state:
+            emit_error("State mismatch detected; aborting authentication.")
+            return None
+
+        return result.code
+
+    finally:
+        # Always clean up the server, even on errors
+        try:
+            server.shutdown()
+            server.server_close()
+            # Give the server thread time to clean up
+            time.sleep(0.1)
+            logger.debug("OAuth callback server shutdown complete")
+        except Exception as e:
+            logger.error(f"Error shutting down OAuth callback server: {e}")
 
 
 def _custom_help() -> List[Tuple[str, str]]:
@@ -171,16 +184,28 @@ def _custom_help() -> List[Tuple[str, str]]:
 
 
 def _perform_authentication() -> None:
-    context = prepare_oauth_context()
-    code = _await_callback(context)
-    if not code:
+    # Prevent multiple OAuth flows from running simultaneously
+    if not _oauth_lock.acquire(blocking=False):
+        emit_error("OAuth authentication already in progress. Please wait.")
         return
+
+    try:
+        context = prepare_oauth_context()
+        code = _await_callback(context)
+        if not code:
+            return
+    finally:
+        _oauth_lock.release()
 
     emit_info("Exchanging authorization code for tokens…")
     tokens = exchange_code_for_tokens(code, context)
     if not tokens:
         emit_error("Token exchange failed. Please retry the authentication flow.")
         return
+
+    # Calculate and add expires_at timestamp
+    if "expires_in" in tokens:
+        tokens["expires_at"] = time.time() + tokens["expires_in"]
 
     if not save_tokens(tokens):
         emit_error(

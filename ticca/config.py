@@ -34,7 +34,7 @@ def get_use_dbos() -> bool:
 
 
 DEFAULT_SECTION = "puppy"
-REQUIRED_KEYS = ["puppy_name", "owner_name"]
+REQUIRED_KEYS = []
 
 # Runtime-only autosave session ID (per-process)
 _CURRENT_AUTOSAVE_ID: Optional[str] = None
@@ -57,31 +57,15 @@ def ensure_config_exists():
     config = configparser.ConfigParser()
     if exists:
         config.read(CONFIG_FILE)
-    missing = []
     if DEFAULT_SECTION not in config:
         config[DEFAULT_SECTION] = {}
-    for key in REQUIRED_KEYS:
-        if not config[DEFAULT_SECTION].get(key):
-            missing.append(key)
-    if missing:
-        print("🐾 Let's get your Puppy ready!")
-        for key in missing:
-            if key == "puppy_name":
-                val = input("What should we name the puppy? ").strip()
-            elif key == "owner_name":
-                val = input(
-                    "What's your name (so Code Puppy knows its owner)? "
-                ).strip()
-            else:
-                val = input(f"Enter {key}: ").strip()
-            config[DEFAULT_SECTION][key] = val
 
     # Set default values for important config keys if they don't exist
     if not config[DEFAULT_SECTION].get("auto_save_session"):
         config[DEFAULT_SECTION]["auto_save_session"] = "true"
 
     # Write the config if we made any changes
-    if missing or not exists:
+    if not exists:
         with open(CONFIG_FILE, "w") as f:
             config.write(f)
     return config
@@ -92,14 +76,6 @@ def get_value(key: str):
     config.read(CONFIG_FILE)
     val = config.get(DEFAULT_SECTION, key, fallback=None)
     return val
-
-
-def get_puppy_name():
-    return get_value("puppy_name") or "Puppy"
-
-
-def get_owner_name():
-    return get_value("owner_name") or "Master"
 
 
 # Legacy function removed - message history limit is no longer used

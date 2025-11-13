@@ -215,12 +215,39 @@ class ModelFactory:
             provider = AnthropicProvider(anthropic_client=anthropic_client)
             return AnthropicModel(model_name=model_config["name"], provider=provider)
         elif model_type == "claude_code":
-            url, headers, verify, api_key = get_custom_config(model_config)
-            if not api_key:
-                emit_warning(
-                    f"API key is not set for Claude Code endpoint; skipping model '{model_config.get('name')}'."
-                )
-                return None
+            # Handle OAuth-based Claude Code models - load token from OAuth file
+            if model_config.get("oauth_source") == "claude-code-plugin":
+                try:
+                    from ticca.plugins.claude_code_oauth.utils import ensure_valid_token
+                    from ticca.plugins.claude_code_oauth.config import CLAUDE_CODE_OAUTH_CONFIG
+
+                    # Get fresh token (auto-refreshes if expired)
+                    api_key = ensure_valid_token()
+                    if not api_key:
+                        emit_warning(
+                            f"Could not obtain valid OAuth token for Claude Code model '{model_config.get('name')}'; skipping model."
+                        )
+                        return None
+
+                    # Get URL and headers from config
+                    custom_config = model_config.get("custom_endpoint", {})
+                    url = custom_config.get("url", CLAUDE_CODE_OAUTH_CONFIG["api_base_url"])
+                    headers = custom_config.get("headers", {"anthropic-beta": "oauth-2025-04-20"})
+                    verify = None
+
+                except Exception as e:
+                    emit_warning(
+                        f"Failed to load OAuth token for Claude Code model '{model_config.get('name')}': {e}"
+                    )
+                    return None
+            else:
+                # Non-OAuth claude_code model - use standard config resolution
+                url, headers, verify, api_key = get_custom_config(model_config)
+                if not api_key:
+                    emit_warning(
+                        f"API key is not set for Claude Code endpoint; skipping model '{model_config.get('name')}'."
+                    )
+                    return None
 
             # Use a dedicated client wrapper that injects cache_control on /v1/messages
             if verify is None:

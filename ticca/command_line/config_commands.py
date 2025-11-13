@@ -35,16 +35,12 @@ def handle_show_command(command: str) -> bool:
         get_compaction_threshold,
         get_default_agent,
         get_openai_reasoning_effort,
-        get_owner_name,
         get_protected_token_count,
-        get_puppy_name,
         get_use_dbos,
         get_yolo_mode,
     )
     from ticca.messaging import emit_info
 
-    puppy_name = get_puppy_name()
-    owner_name = get_owner_name()
     model = get_active_model()
     yolo_mode = get_yolo_mode()
     auto_save = get_auto_save_session()
@@ -56,10 +52,8 @@ def handle_show_command(command: str) -> bool:
     current_agent = get_current_agent()
     default_agent = get_default_agent()
 
-    status_msg = f"""[bold magenta]🐶 Puppy Status[/bold magenta]
+    status_msg = f"""[bold magenta]✨ Ticca Status[/bold magenta]
 
-[bold]puppy_name:[/bold]            [cyan]{puppy_name}[/cyan]
-[bold]owner_name:[/bold]            [cyan]{owner_name}[/cyan]
 [bold]current_agent:[/bold]         [magenta]{current_agent.display_name}[/magenta]
 [bold]default_agent:[/bold]        [cyan]{default_agent}[/cyan]
 [bold]model:[/bold]                 [green]{model}[/green]

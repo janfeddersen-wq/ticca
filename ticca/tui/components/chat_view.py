@@ -31,13 +31,13 @@ class ChatView(VerticalScroll):
     }
 
     .user-message {
-        background: #434c5e;
+        background: #2e3440;
         color: #eceff4;
         margin: 1 0 1 0;
         padding: 1 2;
         height: auto;
         text-wrap: wrap;
-        border: round #88c0d0;
+        border: round $panel;
         text-style: bold;
     }
 
@@ -48,27 +48,27 @@ class ChatView(VerticalScroll):
         padding: 1 2;
         height: auto;
         text-wrap: wrap;
-        border: round #4c566a;
+        border: round $panel;
     }
 
     .system-message {
-        background: #3b4252;
+        background: #2e3440;
         color: #88c0d0;
         margin: 1 0 1 0;
         padding: 1 2;
         height: auto;
         text-wrap: wrap;
-        border: round #5e81ac;
+        border: round $panel;
     }
 
     .error-message {
-        background: #3b4252;
+        background: #2e3440;
         color: #bf616a;
         margin: 1 0 1 0;
         padding: 1 2;
         height: auto;
         text-wrap: wrap;
-        border: round #bf616a;
+        border: round $panel;
     }
 
     .agent_reasoning-message {
@@ -79,7 +79,7 @@ class ChatView(VerticalScroll):
         height: auto;
         text-wrap: wrap;
         text-style: italic;
-        border: round #b48ead;
+        border: round $panel;
     }
 
     .planned_next_steps-message {
@@ -90,7 +90,7 @@ class ChatView(VerticalScroll):
         height: auto;
         text-wrap: wrap;
         text-style: italic;
-        border: round #8fbcbb;
+        border: round $panel;
     }
 
     .agent_response-message {
@@ -100,7 +100,7 @@ class ChatView(VerticalScroll):
         padding: 1 2;
         height: auto;
         text-wrap: wrap;
-        border: round #81a1c1;
+        border: round $panel;
     }
 
     .info-message {
@@ -110,7 +110,7 @@ class ChatView(VerticalScroll):
         padding: 1 2;
         height: auto;
         text-wrap: wrap;
-        border: round #5e81ac;
+        border: round $panel;
     }
 
     .success-message {
@@ -120,17 +120,17 @@ class ChatView(VerticalScroll):
         padding: 1 2;
         height: auto;
         text-wrap: wrap;
-        border: round #a3be8c;
+        border: round $panel;
     }
 
     .warning-message {
-        background: #3b4252;
+        background: #2e3440;
         color: #ebcb8b;
         margin: 1 0 1 0;
         padding: 1 2;
         height: auto;
         text-wrap: wrap;
-        border: round #d08770;
+        border: round $panel;
     }
 
     .tool_output-message {
@@ -140,17 +140,17 @@ class ChatView(VerticalScroll):
         padding: 1 2;
         height: auto;
         text-wrap: wrap;
-        border: round #5e81ac;
+        border: round $panel;
     }
 
     .command_output-message {
-        background: #3b4252;
+        background: #2e3440;
         color: #ebcb8b;
         margin: 1 0 1 0;
         padding: 1 2;
         height: auto;
         text-wrap: wrap;
-        border: round #ebcb8b;
+        border: round $panel;
     }
 
     .message-container {
@@ -465,15 +465,8 @@ class ChatView(VerticalScroll):
         css_class = f"{message.type.value}-message"
 
         if message.type == MessageType.USER:
-            # Add user indicator and make it stand out
-            content_lines = message.content.split("\n")
-            if len(content_lines) > 1:
-                # Multi-line user message
-                formatted_content = f"╔══ USER ══╗\n{message.content}\n╚══════════╝"
-            else:
-                # Single line user message
-                formatted_content = f"▶ USER: {message.content}"
-
+            # Simple user message display
+            formatted_content = message.content
             message_widget = Static(Text(formatted_content), classes=css_class)
             # User messages are not collapsible - mount directly
             self.mount(message_widget)

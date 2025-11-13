@@ -317,22 +317,6 @@ class SettingsScreen(ModalScreen):
                 # Tab 1: General
                 with TabPane("General", id="general"):
                     with VerticalScroll(classes="tab-scroll"):
-                        with Container(classes="setting-row"):
-                            yield Label("Puppy's Name:", classes="setting-label")
-                            yield Input(id="puppy-name-input", classes="setting-input")
-                        yield Static(
-                            "Your puppy's name, shown in the status bar.",
-                            classes="input-description",
-                        )
-
-                        with Container(classes="setting-row"):
-                            yield Label("Owner's Name:", classes="setting-label")
-                            yield Input(id="owner-name-input", classes="setting-input")
-                        yield Static(
-                            "Your name, for a personal touch.",
-                            classes="input-description",
-                        )
-
                         with Container(classes="switch-row"):
                             yield Label(
                                 "YOLO Mode (auto-confirm):", classes="setting-label"
@@ -712,9 +696,7 @@ class SettingsScreen(ModalScreen):
             get_max_saved_sessions,
             get_mcp_disabled,
             get_openai_reasoning_effort,
-            get_owner_name,
             get_protected_token_count,
-            get_puppy_name,
             get_suppress_informational_messages,
             get_suppress_thinking_messages,
             get_use_dbos,
@@ -723,8 +705,6 @@ class SettingsScreen(ModalScreen):
         )
 
         # Tab 1: General
-        self.query_one("#puppy-name-input", Input).value = get_puppy_name() or ""
-        self.query_one("#owner-name-input", Input).value = get_owner_name() or ""
         self.query_one("#yolo-mode-switch", Switch).value = get_yolo_mode()
         self.query_one("#allow-recursion-switch", Switch).value = get_allow_recursion()
 
@@ -1009,15 +989,9 @@ class SettingsScreen(ModalScreen):
 
         try:
             # Tab 1: General
-            puppy_name = self.query_one("#puppy-name-input", Input).value.strip()
-            owner_name = self.query_one("#owner-name-input", Input).value.strip()
             yolo_mode = self.query_one("#yolo-mode-switch", Switch).value
             allow_recursion = self.query_one("#allow-recursion-switch", Switch).value
 
-            if puppy_name:
-                set_config_value("puppy_name", puppy_name)
-            if owner_name:
-                set_config_value("owner_name", owner_name)
             set_config_value("yolo_mode", "true" if yolo_mode else "false")
             set_config_value("allow_recursion", "true" if allow_recursion else "false")
 

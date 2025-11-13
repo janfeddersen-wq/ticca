@@ -19,20 +19,19 @@ class StatusBar(Static):
         height: 1;
         background: $accent;
         color: $text;
-        text-align: right;
+        text-align: center;
         padding: 0 1;
         border: none;
     }
 
     #status-content {
-        text-align: right;
+        text-align: center;
         width: 100%;
         color: $text;
     }
     """
 
     current_model = reactive("")
-    puppy_name = reactive("")
     connection_status = reactive("Connected")
     agent_status = reactive("Ready")
     progress_visible = reactive(False)
@@ -44,9 +43,6 @@ class StatusBar(Static):
         yield Static(id="status-content")
 
     def watch_current_model(self) -> None:
-        self.update_status()
-
-    def watch_puppy_name(self) -> None:
         self.update_status()
 
     def watch_connection_status(self) -> None:
@@ -125,7 +121,7 @@ class StatusBar(Static):
         if terminal_width >= 140:
             # Extra wide - show full path and all info including tokens
             rich_text.append(
-                f"📁 {cwd} | 🐶 {self.puppy_name} | Model: {self.current_model} | "
+                f"📁 {cwd} | Model: {self.current_model} | "
             )
             if token_status:
                 rich_text.append(f"{token_status} | ", style=token_color)
@@ -135,7 +131,7 @@ class StatusBar(Static):
         elif terminal_width >= 100:
             # Full status display for wide terminals
             rich_text.append(
-                f"📁 {cwd_short} | 🐶 {self.puppy_name} | Model: {self.current_model} | "
+                f"📁 {cwd_short} | Model: {self.current_model} | "
             )
             rich_text.append(
                 f"{status_indicator} {self.agent_status}", style=status_color
@@ -148,7 +144,7 @@ class StatusBar(Static):
                 else self.current_model
             )
             rich_text.append(
-                f"📁 {cwd_short} | 🐶 {self.puppy_name} | {model_display} | "
+                f"📁 {cwd_short} | {model_display} | "
             )
             if token_status:
                 rich_text.append(f"{token_status} | ", style=token_color)
@@ -157,17 +153,12 @@ class StatusBar(Static):
             )
         elif terminal_width >= 60:
             # Compact display - use abbreviations
-            puppy_short = (
-                self.puppy_name[:8] + "..."
-                if len(self.puppy_name) > 10
-                else self.puppy_name
-            )
             model_short = (
                 self.current_model[:12] + "..."
                 if len(self.current_model) > 15
                 else self.current_model
             )
-            rich_text.append(f"📁 {cwd_short} | 🐶 {puppy_short} | {model_short} | ")
+            rich_text.append(f"📁 {cwd_short} | {model_short} | ")
             rich_text.append(f"{status_indicator}", style=status_color)
         else:
             # Minimal display for very narrow terminals
@@ -175,7 +166,7 @@ class StatusBar(Static):
             rich_text.append(f"📁 {cwd_mini} | ")
             rich_text.append(f"{status_indicator}", style=status_color)
 
-        rich_text.justify = "right"
+        rich_text.justify = "center"
         status_widget.update(rich_text)
 
     def update_token_info(

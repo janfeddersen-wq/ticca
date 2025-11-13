@@ -659,9 +659,7 @@ def get_user_approval(
     from ticca.tools.command_runner import set_awaiting_user_input
 
     if puppy_name is None:
-        from ticca.config import get_puppy_name
-
-        puppy_name = get_puppy_name().title()
+        puppy_name = "Ticca"
 
     # Build panel content
     if isinstance(content, str):

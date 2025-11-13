@@ -624,11 +624,6 @@ def run_shell_command(
 
         command_displayed = True
 
-        # Get puppy name for personalized messages
-        from ticca.config import get_puppy_name
-
-        puppy_name = get_puppy_name().title()
-
         # Build panel content
         panel_content = Text()
         panel_content.append("⚡ Requesting permission to run:\n", style="bold yellow")
@@ -646,7 +641,7 @@ def run_shell_command(
             content=panel_content,
             preview=None,
             border_style="dim white",
-            puppy_name=puppy_name,
+            puppy_name="Ticca",
         )
 
         # Release lock after approval

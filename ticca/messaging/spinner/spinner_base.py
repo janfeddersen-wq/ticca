@@ -5,8 +5,6 @@ Base spinner implementation to be extended for different UI modes.
 from abc import ABC, abstractmethod
 from threading import Lock
 
-from ticca.config import get_puppy_name
-
 
 class SpinnerBase(ABC):
     """Abstract base class for spinner implementations."""
@@ -23,13 +21,12 @@ class SpinnerBase(ABC):
         "( 🐶   ) ",
         "(🐶    ) ",
     ]
-    puppy_name = get_puppy_name().title()
 
     # Default message when processing
-    THINKING_MESSAGE = f"{puppy_name} is thinking... "
+    THINKING_MESSAGE = "Ticca is thinking... "
 
     # Message when waiting for user input
-    WAITING_MESSAGE = f"{puppy_name} is waiting... "
+    WAITING_MESSAGE = "Ticca is waiting... "
 
     # Current message - starts with thinking by default
     MESSAGE = THINKING_MESSAGE

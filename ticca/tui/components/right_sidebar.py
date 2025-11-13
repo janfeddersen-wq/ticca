@@ -9,7 +9,7 @@ from textual import on
 from textual.app import ComposeResult
 from textual.containers import Container, Vertical
 from textual.reactive import reactive
-from textual.widgets import Static, Select
+from textual.widgets import RichLog, RadioSet, RadioButton
 from textual.message import Message
 
 
@@ -20,6 +20,12 @@ class RightSidebar(Container):
         """Model was changed in selector."""
         def __init__(self, model_name: str) -> None:
             self.model_name = model_name
+            super().__init__()
+
+    class AgentChanged(Message):
+        """Agent was changed in selector."""
+        def __init__(self, agent_name: str) -> None:
+            self.agent_name = agent_name
             super().__init__()
 
     DEFAULT_CSS = """
@@ -34,35 +40,29 @@ class RightSidebar(Container):
         layout: vertical;
     }
 
-    RightSidebar #model-selector {
+    RightSidebar #agent-selector {
         width: 100%;
         margin-bottom: 1;
         height: auto;
-        min-height: 1;
-        border: none !important;
-        background: #3b4252;
-        color: #eceff4;
-        padding: 0 !important;
+        background: transparent;
+        border: none;
+        padding: 0 1;
     }
 
-    RightSidebar #model-selector:focus {
-        border: none !important;
-        background: #434c5e;
-    }
-
-    RightSidebar #model-selector:hover {
-        border: none !important;
-        background: #434c5e;
-    }
-
-    RightSidebar #model-selector > * {
-        border: none !important;
-        padding: 0 !important;
+    RightSidebar RadioButton {
+        width: 100%;
+        height: auto;
+        background: transparent;
+        padding: 0;
+        margin: 0;
     }
 
     RightSidebar #status-display {
         width: 100%;
         height: 1fr;
+        background: $background;
+        border: none;
+        scrollbar-size: 1 1;
     }
     """
 
@@ -78,39 +78,29 @@ class RightSidebar(Container):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.id = "right-sidebar"
-        self._model_options = []
+        self._agent_options = []
 
     def compose(self) -> ComposeResult:
         """Compose the sidebar layout."""
-        # Get available models
+        # Get available agents
         try:
-            from ticca.model_factory import get_available_models
-            models = get_available_models()
-            self._model_options = [(name, name) for name in models]
-        except Exception:
-            self._model_options = [("default", "default")]
+            from ticca.agents.agent_manager import get_available_agents, get_current_agent_name
+            agents = get_available_agents()
+            current_agent = get_current_agent_name()
 
-        # Model selector dropdown
-        yield Select(
-            options=self._model_options,
-            prompt="Select Model",
-            id="model-selector",
-            allow_blank=False
-        )
+            # Agent selector radio buttons
+            with RadioSet(id="agent-selector"):
+                for agent_id, agent_display in agents.items():
+                    yield RadioButton(agent_display, value=agent_id == current_agent, id=f"agent-{agent_id}")
+        except Exception:
+            with RadioSet(id="agent-selector"):
+                yield RadioButton("Code Puppy", value=True, id="agent-code-puppy")
 
         # Status display area
-        yield Static("", id="status-display")
+        yield RichLog(id="status-display", wrap=True, highlight=True)
 
     def on_mount(self) -> None:
         """Initialize the sidebar and start auto-refresh."""
-        # Set initial model value
-        try:
-            model_select = self.query_one("#model-selector", Select)
-            if self.current_model and self.current_model != "Unknown":
-                model_select.value = self.current_model
-        except Exception:
-            pass
-
         self._update_display()
         # Auto-refresh every second for live updates
         self.set_interval(1.0, self._update_display)
@@ -129,13 +119,6 @@ class RightSidebar(Container):
 
     def watch_current_model(self) -> None:
         """Update display when model changes."""
-        # Update the Select widget value if model changed externally
-        try:
-            model_select = self.query_one("#model-selector", Select)
-            if self.current_model and self.current_model != model_select.value:
-                model_select.value = self.current_model
-        except Exception:
-            pass
         self._update_display()
 
     def watch_agent_name(self) -> None:
@@ -146,19 +129,21 @@ class RightSidebar(Container):
         """Update display when session duration changes."""
         self._update_display()
 
-    @on(Select.Changed, "#model-selector")
-    def on_model_selector_changed(self, event: Select.Changed) -> None:
-        """Handle model selection change."""
-        if event.value and event.value != Select.BLANK:
-            # Update our current_model reactive variable
-            self.current_model = event.value
+    @on(RadioSet.Changed, "#agent-selector")
+    def on_agent_selector_changed(self, event: RadioSet.Changed) -> None:
+        """Handle agent selection change."""
+        if event.pressed and event.pressed.id:
+            # Extract agent ID from button ID (format: "agent-{agent_id}")
+            agent_id = event.pressed.id.replace("agent-", "")
+            # Update our agent_name reactive variable
+            self.agent_name = agent_id
             # Notify parent app of the change
-            self.post_message(self.ModelChanged(event.value))
+            self.post_message(self.AgentChanged(agent_id))
 
     def _update_display(self) -> None:
         """Update the entire sidebar display with Rich Text."""
         try:
-            status_display = self.query_one("#status-display", Static)
+            status_display = self.query_one("#status-display", RichLog)
         except Exception:
             # Widget not ready yet
             return
@@ -223,7 +208,9 @@ class RightSidebar(Container):
         status_text.append(f"  {tokens_k:.1f}k/{max_k:.0f}k ", style=stat_color)
         status_text.append(f"({percentage:.0f}%)\n", style="dim")
 
-        status_display.update(status_text)
+        # Clear and write to RichLog
+        status_display.clear()
+        status_display.write(status_text)
 
     def update_context(self, used: int, total: int) -> None:
         """Update context usage values.
@@ -236,7 +223,7 @@ class RightSidebar(Container):
         self.context_total = total
 
     def update_session_info(
-        self, message_count: int, duration: str, model: str, agent: str
+        self, message_count: int, duration: str, model: str
     ) -> None:
         """Update session information.
 
@@ -244,9 +231,7 @@ class RightSidebar(Container):
             message_count: Number of messages in session
             duration: Session duration as formatted string
             model: Current model name
-            agent: Current agent name
         """
         self.message_count = message_count
         self.session_duration = duration
         self.current_model = model
-        self.agent_name = agent

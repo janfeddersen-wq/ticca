@@ -248,8 +248,6 @@ def add_models_to_extra_config(models: List[str]) -> bool:
         # Start fresh - overwrite the file on every auth instead of loading existing
         claude_models = {}
         added = 0
-        tokens = load_stored_tokens()
-        access_token = tokens["access_token"]
 
         for model_name in models:
             prefixed = f"{CLAUDE_CODE_OAUTH_CONFIG['prefix']}{model_name}"
@@ -258,7 +256,6 @@ def add_models_to_extra_config(models: List[str]) -> bool:
                 "name": model_name,
                 "custom_endpoint": {
                     "url": CLAUDE_CODE_OAUTH_CONFIG["api_base_url"],
-                    "api_key": access_token,
                     "headers": {"anthropic-beta": "oauth-2025-04-20"},
                 },
                 "context_length": CLAUDE_CODE_OAUTH_CONFIG["default_context_length"],
@@ -271,6 +268,118 @@ def add_models_to_extra_config(models: List[str]) -> bool:
     except Exception as exc:  # pragma: no cover - defensive logging
         logger.error("Error adding models to config: %s", exc)
     return False
+
+
+def refresh_access_token() -> Optional[Dict[str, Any]]:
+    """Refresh the access token using the stored refresh token.
+
+    Returns:
+        Updated token dict if successful, None otherwise
+    """
+    try:
+        tokens = load_stored_tokens()
+        if not tokens or "refresh_token" not in tokens:
+            logger.error("No refresh token available")
+            return None
+
+        refresh_token = tokens["refresh_token"]
+
+        payload = {
+            "grant_type": "refresh_token",
+            "client_id": CLAUDE_CODE_OAUTH_CONFIG["client_id"],
+            "refresh_token": refresh_token,
+        }
+
+        headers = {
+            "Content-Type": "application/json",
+            "Accept": "application/json",
+            "anthropic-beta": "oauth-2025-04-20",
+        }
+
+        logger.info("Refreshing access token: %s", CLAUDE_CODE_OAUTH_CONFIG["token_url"])
+        response = requests.post(
+            CLAUDE_CODE_OAUTH_CONFIG["token_url"],
+            json=payload,
+            headers=headers,
+            timeout=30,
+        )
+
+        logger.info("Token refresh response: %s", response.status_code)
+        if response.status_code == 200:
+            new_tokens = response.json()
+            # Calculate expires_at if expires_in is present
+            if "expires_in" in new_tokens:
+                new_tokens["expires_at"] = time.time() + new_tokens["expires_in"]
+
+            # Preserve refresh_token if not returned (some APIs don't send it again)
+            if "refresh_token" not in new_tokens:
+                new_tokens["refresh_token"] = refresh_token
+
+            # Save the refreshed tokens
+            if save_tokens(new_tokens):
+                logger.info("Access token refreshed successfully")
+                return new_tokens
+            else:
+                logger.error("Failed to save refreshed tokens")
+                return None
+        else:
+            logger.error("Token refresh failed: %s - %s", response.status_code, response.text)
+            return None
+
+    except Exception as exc:  # pragma: no cover - defensive logging
+        logger.error("Token refresh error: %s", exc)
+        return None
+
+
+def is_token_expired() -> bool:
+    """Check if the current access token is expired or will expire soon.
+
+    Returns:
+        True if token is expired or will expire in < 5 minutes
+    """
+    try:
+        tokens = load_stored_tokens()
+        if not tokens:
+            return True
+
+        expires_at = tokens.get("expires_at")
+        if not expires_at:
+            # No expiration info, assume not expired (legacy tokens)
+            return False
+
+        # Consider token expired if it expires in less than 5 minutes
+        buffer_seconds = 300
+        return time.time() >= (expires_at - buffer_seconds)
+    except Exception as exc:  # pragma: no cover - defensive logging
+        logger.error("Error checking token expiration: %s", exc)
+        return True
+
+
+def ensure_valid_token() -> Optional[str]:
+    """Ensure we have a valid access token, refreshing if needed.
+
+    Returns:
+        Valid access token or None if unable to obtain one
+    """
+    try:
+        tokens = load_stored_tokens()
+        if not tokens:
+            logger.error("No tokens stored")
+            return None
+
+        # Check if token is expired
+        if is_token_expired():
+            logger.info("Access token expired, refreshing...")
+            refreshed_tokens = refresh_access_token()
+            if not refreshed_tokens:
+                logger.error("Failed to refresh token")
+                return None
+            tokens = refreshed_tokens
+
+        return tokens.get("access_token")
+    except Exception as exc:  # pragma: no cover - defensive logging
+        logger.error("Error ensuring valid token: %s", exc)
+        return None
 
 
 def remove_claude_code_models() -> int:

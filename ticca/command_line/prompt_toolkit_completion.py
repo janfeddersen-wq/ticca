@@ -39,7 +39,6 @@ from ticca.command_line.utils import list_directory
 from ticca.config import (
     COMMAND_HISTORY_FILE,
     get_config_keys,
-    get_puppy_name,
     get_value,
 )
 
@@ -399,7 +398,6 @@ class SlashCompleter(Completer):
 def get_prompt_with_active_model(base: str = ">>> "):
     from ticca.agents.agent_manager import get_current_agent
 
-    puppy = get_puppy_name()
     global_model = get_active_model() or "(default)"
 
     # Get current agent information
@@ -430,8 +428,8 @@ def get_prompt_with_active_model(base: str = ">>> "):
         cwd_display = cwd
     return FormattedText(
         [
-            ("bold", "🐶 "),
-            ("class:puppy", f"{puppy}"),
+            ("bold", "✨ "),
+            ("class:puppy", "Ticca"),
             ("", " "),
             ("class:agent", f"[{agent_display}] "),
             ("class:model", model_display + " "),

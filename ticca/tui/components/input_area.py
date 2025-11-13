@@ -3,7 +3,7 @@ Input area component for message input.
 """
 
 from textual.app import ComposeResult
-from textual.containers import Container, Horizontal
+from textual.containers import Container, Vertical
 from textual.message import Message
 from textual.reactive import reactive
 from textual.widgets import Button, Static
@@ -28,6 +28,7 @@ class SubmitCancelButton(Button):
         height: 3;
         content-align: center middle;
         border: none;
+        padding: 0 0 0 0;
         background: $background;
     }
 
@@ -70,19 +71,20 @@ class InputArea(Container):
     DEFAULT_CSS = """
     InputArea {
         dock: bottom;
-        height: 9;
-        min-height: 9;
-        max-height: 9;
-        margin: 0 1 1 0;
+        height: 15;
+        margin: 0 0 0 0;
         background: $background;
         border-top: solid $panel;
+        layout: vertical;
+        overflow-y: auto;
     }
 
     #spinner {
         height: 1;
         min-height: 1;
         width: 1fr;
-        margin: 0 3 0 1;
+        margin: 0 0 0 0;
+        padding: 0 0 0 0;
         content-align: left middle;
         text-align: left;
         color: transparent;
@@ -93,22 +95,18 @@ class InputArea(Container):
         color: #88c0d0;
     }
 
-    #input-container {
-        height: 5;
-        width: 1fr;
-        margin: 1 2 0 1;
-        align: center middle;
-        background: transparent;
-    }
-
     #input-field {
-        height: 5;
+        height: 2;
+        max-height: 2;
         width: 1fr;
+        margin: 0 0 0 0 ;
+        padding: 0 0 0 0;
         border: tall $primary;
         border-title-align: left;
         background: $panel;
         color: $text;
         padding: 0 1;
+        overflow-y: auto;
     }
 
     #input-field:focus {
@@ -119,9 +117,10 @@ class InputArea(Container):
 
     #submit-cancel-button {
         height: 3;
-        width: 10;
-        min-width: 10;
-        margin: 1 0 0 1;
+        min-height: 3;
+        width: 1fr;
+        padding: 0 1 0 1;
+        margin: 0 1 0 1;
         content-align: center middle;
         border: wide #88c0d0;
         border-bottom: wide #3b4252;
@@ -152,7 +151,8 @@ class InputArea(Container):
     #input-help {
         height: 1;
         width: 1fr;
-        margin: 1 2 1 1;
+        margin: 0 0 0 0;
+        padding: 0 0 0 0;
         color: $text-muted;
         text-align: center;
         text-style: italic dim;
@@ -168,9 +168,8 @@ class InputArea(Container):
 
     def compose(self) -> ComposeResult:
         yield SimpleSpinnerWidget(id="spinner")
-        with Horizontal(id="input-container"):
-            yield CustomTextArea(id="input-field", show_line_numbers=False)
-            yield SubmitCancelButton()
+        yield CustomTextArea(id="input-field", show_line_numbers=False)
+        yield SubmitCancelButton()
         yield Static(
             "Enter to send • Shift+Enter for new line • Ctrl+1 for help",
             id="input-help",
