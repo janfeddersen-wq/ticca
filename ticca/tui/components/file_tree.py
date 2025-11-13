@@ -28,9 +28,9 @@ class FileTreePanel(Container):
         background: $background;
         padding: 1;
         scrollbar-background: transparent;
-        scrollbar-color: #5e81ac;
-        scrollbar-color-hover: #81a1c1;
-        scrollbar-color-active: #88c0d0;
+        scrollbar-color: $primary;
+        scrollbar-color-hover: $primary-lighten-1;
+        scrollbar-color-active: $accent;
         scrollbar-size: 1 1;
     }
 
@@ -40,18 +40,18 @@ class FileTreePanel(Container):
 
     /* Style for selected/highlighted items */
     FileTreePanel .tree--cursor {
-        background: #434c5e;
-        color: #eceff4;
+        background: $secondary;
+        color: $text;
     }
 
     FileTreePanel .tree--highlight {
-        background: #4c566a;
-        color: #88c0d0;
+        background: $border;
+        color: $accent;
     }
 
     FileTreePanel .tree--cursor.tree--highlight {
-        background: #5e81ac;
-        color: #eceff4;
+        background: $primary;
+        color: $text;
         text-style: bold;
     }
     """

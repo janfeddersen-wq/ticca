@@ -54,9 +54,9 @@ class Sidebar(Container):
         height: 1fr;
         background: $background;
         scrollbar-background: transparent;
-        scrollbar-color: #5e81ac;
-        scrollbar-color-hover: #81a1c1;
-        scrollbar-color-active: #88c0d0;
+        scrollbar-color: $primary;
+        scrollbar-color-hover: $primary-lighten-1;
+        scrollbar-color-active: $accent;
         scrollbar-size: 1 1;
         padding: 0;
     }

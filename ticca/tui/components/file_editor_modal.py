@@ -43,8 +43,8 @@ class FileEditorModal(ModalScreen):
         max-width: 120;
         height: 80%;
         min-height: 30;
-        background: rgba(46, 52, 64, 0.5);
-        border: solid #5e81ac;
+        background: $surface;
+        border: solid $primary;
         padding: 1 2;
         layout: vertical;
     }
@@ -52,7 +52,7 @@ class FileEditorModal(ModalScreen):
     #file-title {
         width: 100%;
         margin-bottom: 0;
-        color: #88c0d0;
+        color: $accent;
         text-align: center;
         text-style: bold;
         height: 1;
@@ -61,7 +61,7 @@ class FileEditorModal(ModalScreen):
     #file-info {
         width: 100%;
         margin-bottom: 1;
-        color: #81a1c1;
+        color: $primary-lighten-1;
         text-align: center;
         height: 1;
         text-style: dim italic;
@@ -87,33 +87,33 @@ class FileEditorModal(ModalScreen):
         margin: 0 1;
         min-width: 15;
         content-align: center middle;
-        border: wide #88c0d0;
-        border-bottom: wide #3b4252;
-        border-right: wide #3b4252;
-        background: #5e81ac;
-        color: #eceff4;
+        border: wide $accent;
+        border-bottom: wide $accent-darken-1;
+        border-right: wide $accent-darken-1;
+        background: $primary;
+        color: $background;
         text-style: bold;
     }
 
     #save-button:hover, #cancel-button:hover {
-        border: wide #a3d5d9;
-        border-bottom: wide #3b4252;
-        border-right: wide #3b4252;
-        background: #81a1c1;
-        color: #eceff4;
+        border: wide $accent-lighten-1;
+        border-bottom: wide $accent-darken-1;
+        border-right: wide $accent-darken-1;
+        background: $primary-lighten-1;
+        color: $background;
     }
 
     #save-button:focus, #cancel-button:focus {
-        border: wide #3b4252;
-        border-top: wide #88c0d0;
-        border-left: wide #88c0d0;
-        background: #4c566a;
-        color: #88c0d0;
+        border: wide $accent-darken-1;
+        border-top: wide $accent;
+        border-left: wide $accent;
+        background: $primary-darken-1;
+        color: $accent;
     }
 
     #hint-text {
         width: 100%;
-        color: #d8dee9;
+        color: $text;
         text-align: center;
         height: 1;
         margin-top: 1;

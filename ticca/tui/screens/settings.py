@@ -30,15 +30,15 @@ class SettingsScreen(ModalScreen):
     #settings-dialog {
         width: 110;
         height: 40;
-        border: round #5e81ac;
-        background: rgba(46, 52, 64, 0.5);
+        border: round $primary;
+        background: $surface;
         padding: 1 2;
     }
 
     #settings-title {
         text-align: center;
         text-style: bold;
-        color: #88c0d0;
+        color: $accent;
         margin: 0 0 1 0;
     }
 
@@ -91,21 +91,21 @@ class SettingsScreen(ModalScreen):
 
     .section-header {
         text-style: bold;
-        color: #81a1c1;
+        color: $primary-lighten-1;
         margin: 1 0 0 0;
     }
 
     Input {
         width: 100%;
-        border: round #5e81ac;
-        background: #3b4252;
-        color: #eceff4;
+        border: round $primary;
+        background: $panel;
+        color: $foreground;
         padding: 0 1;
     }
 
     Input:focus {
-        border: round #88c0d0;
-        background: #434c5e;
+        border: round $accent;
+        background: $secondary;
     }
 
     Select {
@@ -113,19 +113,19 @@ class SettingsScreen(ModalScreen):
         height: 1;
         min-height: 1;
         border: none !important;
-        background: #3b4252;
-        color: #eceff4;
+        background: $panel;
+        color: $foreground;
         padding: 0 !important;
     }
 
     Select:focus {
         border: none !important;
-        background: #434c5e;
+        background: $secondary;
     }
 
     Select:hover {
         border: none !important;
-        background: #434c5e;
+        background: $secondary;
     }
 
     Select > * {
@@ -201,25 +201,25 @@ class SettingsScreen(ModalScreen):
     }
 
     #save-button {
-        border: wide #88c0d0;
-        background: #5e81ac;
-        color: #eceff4;
+        border: wide $accent;
+        background: $primary;
+        color: $background;
     }
 
     #save-button:hover {
-        border: wide #a3d5d9;
-        background: #81a1c1;
+        border: wide $accent-lighten-1;
+        background: $primary-lighten-1;
     }
 
     #cancel-button {
-        border: wide #5e81ac;
-        background: #434c5e;
-        color: #d8dee9;
+        border: wide $primary;
+        background: $secondary;
+        color: $text;
     }
 
     #cancel-button:hover {
-        border: wide #81a1c1;
-        background: #4c566a;
+        border: wide $primary-lighten-1;
+        background: $border;
     }
 
     TabPane {
@@ -283,26 +283,26 @@ class SettingsScreen(ModalScreen):
         width: 20;
         min-width: 20;
         height: 3;
-        border: wide #88c0d0;
-        border-bottom: wide #3b4252;
-        border-right: wide #3b4252;
-        background: #5e81ac;
-        color: #eceff4;
+        border: wide $accent;
+        border-bottom: wide $accent-darken-1;
+        border-right: wide $accent-darken-1;
+        background: $primary;
+        color: $background;
     }
 
     #claude-code-auth-button:hover {
-        border: wide #a3d5d9;
-        border-bottom: wide #434c5e;
-        border-right: wide #434c5e;
-        background: #81a1c1;
+        border: wide $accent-lighten-1;
+        border-bottom: wide $secondary;
+        border-right: wide $secondary;
+        background: $primary-lighten-1;
     }
 
     #claude-code-auth-button:focus {
-        border: wide #3b4252;
-        border-top: wide #88c0d0;
-        border-left: wide #88c0d0;
-        background: #4c566a;
-        color: #88c0d0;
+        border: wide $panel;
+        border-top: wide $accent;
+        border-left: wide $accent;
+        background: $primary-darken-1;
+        color: $accent;
     }
     """
 
@@ -338,6 +338,14 @@ class SettingsScreen(ModalScreen):
                                 "Permits agents to call other agents to complete tasks.",
                                 classes="setting-description",
                             )
+
+                        with Container(classes="setting-row"):
+                            yield Label("UI Theme:", classes="setting-label")
+                            yield Select([], id="theme-select", classes="setting-input")
+                        yield Static(
+                            "Color theme for the TUI (applies instantly).",
+                            classes="input-description",
+                        )
 
                 # Tab 2: Models & AI
                 with TabPane("Models & AI", id="models"):
@@ -707,6 +715,7 @@ class SettingsScreen(ModalScreen):
         # Tab 1: General
         self.query_one("#yolo-mode-switch", Switch).value = get_yolo_mode()
         self.query_one("#allow-recursion-switch", Switch).value = get_allow_recursion()
+        self.load_theme_options()
 
         # Tab 2: Models & AI
         self.load_model_options()
@@ -793,6 +802,39 @@ class SettingsScreen(ModalScreen):
             fallback = [("gpt-5 (openai)", "gpt-5")]
             self.query_one("#model-select", Select).set_options(fallback)
             self.query_one("#vqa-model-select", Select).set_options(fallback)
+
+    def load_theme_options(self):
+        """Load available themes into the theme select widget."""
+        try:
+            from ticca.themes import ThemeManager
+            from ticca.config import get_value
+
+            # Get all available themes
+            themes = ThemeManager.list_themes()
+
+            # Create options as (display_name, theme_name) tuples
+            theme_options = [(display_name, theme_name) for theme_name, display_name in themes.items()]
+
+            # Sort by display name
+            theme_options.sort(key=lambda x: x[0])
+
+            # Set options
+            self.query_one("#theme-select", Select).set_options(theme_options)
+
+            # Get current theme from config
+            try:
+                current_theme = get_value("tui_theme") or "nord"
+            except Exception:
+                current_theme = "nord"
+
+            # Set the current value
+            self.query_one("#theme-select", Select).value = current_theme
+
+        except Exception:
+            # Fallback to basic options if loading fails
+            fallback = [("Nord", "nord")]
+            self.query_one("#theme-select", Select).set_options(fallback)
+            self.query_one("#theme-select", Select).value = "nord"
 
     def load_agent_pinning_table(self):
         """Load agent model pinning dropdowns."""
@@ -991,9 +1033,21 @@ class SettingsScreen(ModalScreen):
             # Tab 1: General
             yolo_mode = self.query_one("#yolo-mode-switch", Switch).value
             allow_recursion = self.query_one("#allow-recursion-switch", Switch).value
+            selected_theme = self.query_one("#theme-select", Select).value
 
             set_config_value("yolo_mode", "true" if yolo_mode else "false")
             set_config_value("allow_recursion", "true" if allow_recursion else "false")
+
+            # Save theme selection and apply instantly
+            theme_changed = False
+            if selected_theme:
+                from ticca.config import get_value
+                current_theme = get_value("tui_theme") or "nord"
+                if selected_theme != current_theme:
+                    set_config_value("tui_theme", selected_theme)
+                    # Apply theme instantly using Textual's theme system
+                    self.app.theme = selected_theme
+                    theme_changed = True
 
             # Tab 2: Models & AI
             selected_model = self.query_one("#model-select", Select).value
@@ -1131,11 +1185,15 @@ class SettingsScreen(ModalScreen):
             if model_changed:
                 message += f"\n🔄 Model switched to: {selected_model}"
 
+            if theme_changed:
+                message += f"\n🎨 Theme changed to: {selected_theme}"
+
             self.dismiss(
                 {
                     "success": True,
                     "message": message,
                     "model_changed": model_changed,
+                    "theme_changed": theme_changed,
                 }
             )
 

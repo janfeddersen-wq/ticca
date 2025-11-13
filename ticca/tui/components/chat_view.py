@@ -22,17 +22,17 @@ class ChatView(VerticalScroll):
     ChatView {
         background: $background;
         scrollbar-background: transparent;
-        scrollbar-color: #5e81ac;
-        scrollbar-color-hover: #81a1c1;
-        scrollbar-color-active: #88c0d0;
+        scrollbar-color: $primary;
+        scrollbar-color-hover: $primary-lighten-1;
+        scrollbar-color-active: $accent;
         scrollbar-size: 1 1;
         margin: 0 0 1 0;
         padding: 1 1 1 0;
     }
 
     .user-message {
-        background: #2e3440;
-        color: #eceff4;
+        background: $surface;
+        color: $text;
         margin: 1 0 1 0;
         padding: 1 2;
         height: auto;
@@ -42,8 +42,8 @@ class ChatView(VerticalScroll):
     }
 
     .agent-message {
-        background: #2e3440;
-        color: #d8dee9;
+        background: $surface;
+        color: $text;
         margin: 1 0 1 0;
         padding: 1 2;
         height: auto;
@@ -52,8 +52,8 @@ class ChatView(VerticalScroll):
     }
 
     .system-message {
-        background: #2e3440;
-        color: #88c0d0;
+        background: $surface;
+        color: $accent;
         margin: 1 0 1 0;
         padding: 1 2;
         height: auto;
@@ -62,8 +62,8 @@ class ChatView(VerticalScroll):
     }
 
     .error-message {
-        background: #2e3440;
-        color: #bf616a;
+        background: $surface;
+        color: $error;
         margin: 1 0 1 0;
         padding: 1 2;
         height: auto;
@@ -72,8 +72,8 @@ class ChatView(VerticalScroll):
     }
 
     .agent_reasoning-message {
-        background: #2e3440;
-        color: #b48ead;
+        background: $surface;
+        color: $warning;
         margin: 1 0 1 0;
         padding: 1 2;
         height: auto;
@@ -83,8 +83,8 @@ class ChatView(VerticalScroll):
     }
 
     .planned_next_steps-message {
-        background: #2e3440;
-        color: #8fbcbb;
+        background: $surface;
+        color: $success;
         margin: 1 0 1 0;
         padding: 1 2;
         height: auto;
@@ -94,8 +94,8 @@ class ChatView(VerticalScroll):
     }
 
     .agent_response-message {
-        background: #2e3440;
-        color: #d8dee9;
+        background: $surface;
+        color: $text;
         margin: 1 0 1 0;
         padding: 1 2;
         height: auto;
@@ -104,8 +104,8 @@ class ChatView(VerticalScroll):
     }
 
     .info-message {
-        background: #2e3440;
-        color: #81a1c1;
+        background: $surface;
+        color: $accent;
         margin: 1 0 1 0;
         padding: 1 2;
         height: auto;
@@ -114,8 +114,8 @@ class ChatView(VerticalScroll):
     }
 
     .success-message {
-        background: #2e3440;
-        color: #a3be8c;
+        background: $surface;
+        color: $success;
         margin: 1 0 1 0;
         padding: 1 2;
         height: auto;
@@ -124,8 +124,8 @@ class ChatView(VerticalScroll):
     }
 
     .warning-message {
-        background: #2e3440;
-        color: #ebcb8b;
+        background: $surface;
+        color: $warning;
         margin: 1 0 1 0;
         padding: 1 2;
         height: auto;
@@ -134,8 +134,8 @@ class ChatView(VerticalScroll):
     }
 
     .tool_output-message {
-        background: #2e3440;
-        color: #8fbcbb;
+        background: $surface;
+        color: $success;
         margin: 1 0 1 0;
         padding: 1 2;
         height: auto;
@@ -144,8 +144,8 @@ class ChatView(VerticalScroll):
     }
 
     .command_output-message {
-        background: #2e3440;
-        color: #ebcb8b;
+        background: $surface;
+        color: $accent;
         margin: 1 0 1 0;
         padding: 1 2;
         height: auto;

@@ -92,7 +92,7 @@ class InputArea(Container):
     }
 
     #spinner.visible {
-        color: #88c0d0;
+        color: $accent;
     }
 
     #input-field {
@@ -111,7 +111,7 @@ class InputArea(Container):
 
     #input-field:focus {
         border: tall $primary-lighten-1;
-        background: $panel-lighten-1;
+        background: $secondary;
         color: $text;
     }
 
@@ -122,29 +122,29 @@ class InputArea(Container):
         padding: 0 1 0 1;
         margin: 0 1 0 1;
         content-align: center middle;
-        border: wide #88c0d0;
-        border-bottom: wide #3b4252;
-        border-right: wide #3b4252;
-        background: #5e81ac;
-        color: #eceff4;
+        border: wide $accent;
+        border-bottom: wide $accent-darken-1;
+        border-right: wide $accent-darken-1;
+        background: $primary;
+        color: $background;
         text-style: bold;
     }
 
     #submit-cancel-button:hover {
-        border: wide #a3d5d9;
-        border-bottom: wide #3b4252;
-        border-right: wide #3b4252;
-        background: #81a1c1;
-        color: #eceff4;
+        border: wide $accent-lighten-1;
+        border-bottom: wide $accent-darken-1;
+        border-right: wide $accent-darken-1;
+        background: $primary-lighten-1;
+        color: $background;
         text-style: bold;
     }
 
     #submit-cancel-button:focus {
-        border: wide #3b4252;
-        border-top: wide #88c0d0;
-        border-left: wide #88c0d0;
-        background: #4c566a;
-        color: #88c0d0;
+        border: wide $accent-darken-1;
+        border-top: wide $accent;
+        border-left: wide $accent;
+        background: $primary-darken-1;
+        color: $accent;
         text-style: bold;
     }
 

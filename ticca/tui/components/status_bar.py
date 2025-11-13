@@ -17,7 +17,7 @@ class StatusBar(Static):
     StatusBar {
         dock: top;
         height: 1;
-        background: $accent;
+        background: $secondary;
         color: $text;
         text-align: center;
         padding: 0 1;

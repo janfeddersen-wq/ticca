@@ -21,7 +21,6 @@ from ticca.config import (
     initialize_command_history_file,
     save_command_to_history,
 )
-
 # Import our message queue system
 from ticca.messaging import TUIRenderer, get_global_queue
 from ticca.tui.components import (
@@ -53,11 +52,7 @@ class CodePuppyTUI(App):
     TITLE = "Ticca - Terminal Injected Coding CLI Assistant"
     SUB_TITLE = "TUI Mode"
 
-    # Enable beautiful Nord theme by default
-    # Available themes: "textual-dark", "textual-light", "nord", "gruvbox",
-    # "catppuccin-mocha", "catppuccin-latte", "dracula", "tokyo-night", "monokai", etc.
-    DEFAULT_THEME = "nord"
-
+    # Base CSS structure - no theme CSS needed, Textual handles it!
     CSS = """
     Screen {
         layout: horizontal;
@@ -72,9 +67,9 @@ class CodePuppyTUI(App):
     /* Global scrollbar styling - slim and subtle */
     * {
         scrollbar-background: transparent;
-        scrollbar-color: #5e81ac;
-        scrollbar-color-hover: #81a1c1;
-        scrollbar-color-active: #88c0d0;
+        scrollbar-color: $primary;
+        scrollbar-color-hover: $primary-lighten-1;
+        scrollbar-color-active: $accent;
         scrollbar-size: 1 1;
     }
 
@@ -111,8 +106,8 @@ class CodePuppyTUI(App):
     /* Status bar at top - dark background for better readability */
     StatusBar {
         height: 1;
-        background: #2e3440;
-        color: #d8dee9;
+        background: $background;
+        color: $text;
         padding: 0 1;
         dock: top;
         text-style: bold;
@@ -170,8 +165,8 @@ class CodePuppyTUI(App):
     /* Footer (bottom keybinding bar) - dark background for better readability */
     Footer {
         height: 1;
-        background: #2e3440;
-        color: #d8dee9;
+        background: $background;
+        color: $text;
         dock: bottom;
     }
     """
@@ -188,6 +183,7 @@ class CodePuppyTUI(App):
         Binding("ctrl+6", "focus_chat", "Focus Response"),
         Binding("ctrl+7", "toggle_right_sidebar", "Status"),
         Binding("ctrl+t", "open_mcp_wizard", "MCP Install Wizard"),
+        Binding("ctrl+backslash", "command_palette", "Command Palette"),
     ]
 
     # Reactive variables for app state
@@ -240,10 +236,6 @@ class CodePuppyTUI(App):
         self._current_worker = None
         self.initial_command = initial_command
 
-        # Set the theme - you can change this to any Textual built-in theme
-        # Try: "nord", "gruvbox", "dracula", "tokyo-night", "monokai", etc.
-        self.theme = self.DEFAULT_THEME
-
         # Initialize message queue renderer
         self.message_queue = get_global_queue()
         self.message_renderer = TUIRenderer(self.message_queue, self)
@@ -260,6 +252,34 @@ class CodePuppyTUI(App):
         # Track double-click timing for history list
         self._last_history_click_time = None
         self._last_history_click_index = None
+
+    def _register_themes(self) -> None:
+        """Register all custom themes with Textual."""
+        from ticca.themes import ThemeManager
+        from ticca.themes.css_generator import create_textual_theme
+        from ticca.config import get_value
+
+        # Initialize theme manager
+        ThemeManager.initialize()
+
+        # Get all available themes
+        themes = ThemeManager.list_themes()
+
+        # Register each theme
+        for theme_name in themes.keys():
+            theme_obj = ThemeManager.get_theme(theme_name)
+            if theme_obj:
+                textual_theme = create_textual_theme(theme_obj)
+                self.register_theme(textual_theme)
+
+        # Set the current theme from config
+        try:
+            current_theme_name = get_value("tui_theme") or "nord"
+        except Exception:
+            current_theme_name = "nord"
+
+        # Apply the theme
+        self.theme = current_theme_name
 
     def compose(self) -> ComposeResult:
         """Create the UI layout."""
@@ -279,6 +299,9 @@ class CodePuppyTUI(App):
         from ticca.tui_state import set_tui_app_instance
 
         set_tui_app_instance(self)
+
+        # Register all custom themes
+        self._register_themes()
 
         # Register callback for agent reload events
         from ticca.callbacks import register_callback
