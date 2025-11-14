@@ -32,10 +32,6 @@ class RightSidebar(Container):
         """Commit button was clicked."""
         pass
 
-    class CommitMessageRequested(Message):
-        """Commit message button was clicked."""
-        pass
-
     class GitPullRequested(Message):
         """Git pull button was clicked."""
         pass
@@ -88,7 +84,7 @@ class RightSidebar(Container):
         layout: vertical;
     }
 
-    RightSidebar #commit-button, RightSidebar #commit-message-button,
+    RightSidebar #commit-button,
     RightSidebar #git-pull-button, RightSidebar #git-push-button {
         width: 100%;
         height: 3;
@@ -104,7 +100,7 @@ class RightSidebar(Container):
         text-style: bold;
     }
 
-    RightSidebar #commit-button:hover, RightSidebar #commit-message-button:hover,
+    RightSidebar #commit-button:hover,
     RightSidebar #git-pull-button:hover, RightSidebar #git-push-button:hover {
         border: wide $accent-lighten-1;
         border-bottom: wide $accent-darken-1;
@@ -114,7 +110,7 @@ class RightSidebar(Container):
         text-style: bold;
     }
 
-    RightSidebar #commit-button:focus, RightSidebar #commit-message-button:focus,
+    RightSidebar #commit-button:focus,
     RightSidebar #git-pull-button:focus, RightSidebar #git-push-button:focus {
         border: wide $accent-darken-1;
         border-top: wide $accent;
@@ -158,7 +154,6 @@ class RightSidebar(Container):
         # Git action buttons
         with Vertical(id="git-actions"):
             yield Button("Commit", id="commit-button")
-            yield Button("Commit Message", id="commit-message-button")
             yield Button("Git Pull", id="git-pull-button")
             yield Button("Git Push", id="git-push-button")
 
@@ -332,11 +327,6 @@ class RightSidebar(Container):
     def on_commit_button_pressed(self) -> None:
         """Handle commit button press."""
         self.post_message(self.CommitRequested())
-
-    @on(Button.Pressed, "#commit-message-button")
-    def on_commit_message_button_pressed(self) -> None:
-        """Handle commit message button press."""
-        self.post_message(self.CommitMessageRequested())
 
     @on(Button.Pressed, "#git-pull-button")
     def on_git_pull_button_pressed(self) -> None:
