@@ -9,7 +9,7 @@ from textual import on
 from textual.app import ComposeResult
 from textual.containers import Container, Vertical
 from textual.reactive import reactive
-from textual.widgets import RichLog, RadioSet, RadioButton
+from textual.widgets import RichLog, RadioSet, RadioButton, Button
 from textual.message import Message
 
 
@@ -27,6 +27,14 @@ class RightSidebar(Container):
         def __init__(self, agent_name: str) -> None:
             self.agent_name = agent_name
             super().__init__()
+
+    class CommitRequested(Message):
+        """Commit button was clicked."""
+        pass
+
+    class CommitMessageRequested(Message):
+        """Commit message button was clicked."""
+        pass
 
     DEFAULT_CSS = """
     RightSidebar {
@@ -64,6 +72,36 @@ class RightSidebar(Container):
         border: none;
         scrollbar-size: 1 1;
     }
+
+    RightSidebar #git-actions {
+        width: 100%;
+        height: auto;
+        margin-bottom: 1;
+        layout: vertical;
+    }
+
+    RightSidebar #commit-button, RightSidebar #commit-message-button {
+        width: 100%;
+        height: auto;
+        min-height: 3;
+        margin: 0 0 1 0;
+        padding: 0 1;
+        background: $primary;
+        color: $background;
+        border: solid $accent;
+        text-style: bold;
+    }
+
+    RightSidebar #commit-button:hover, RightSidebar #commit-message-button:hover {
+        background: $primary-lighten-1;
+        border: solid $accent-lighten-1;
+    }
+
+    RightSidebar #commit-button:focus, RightSidebar #commit-message-button:focus {
+        background: $primary-darken-1;
+        border: solid $accent-darken-1;
+        color: $accent;
+    }
     """
 
     # Reactive variables
@@ -95,6 +133,11 @@ class RightSidebar(Container):
         except Exception:
             with RadioSet(id="agent-selector"):
                 yield RadioButton("Code Agent", value=True, id="agent-code-agent")
+
+        # Git action buttons
+        with Vertical(id="git-actions"):
+            yield Button("🚀 Commit", id="commit-button")
+            yield Button("💭 Commit Message", id="commit-message-button")
 
         # Status display area
         yield RichLog(id="status-display", wrap=True, highlight=True)
@@ -261,3 +304,13 @@ class RightSidebar(Container):
         self.message_count = message_count
         self.session_duration = duration
         self.current_model = model
+
+    @on(Button.Pressed, "#commit-button")
+    def on_commit_button_pressed(self) -> None:
+        """Handle commit button press."""
+        self.post_message(self.CommitRequested())
+
+    @on(Button.Pressed, "#commit-message-button")
+    def on_commit_message_button_pressed(self) -> None:
+        """Handle commit message button press."""
+        self.post_message(self.CommitMessageRequested())

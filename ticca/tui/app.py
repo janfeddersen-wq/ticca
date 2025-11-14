@@ -1534,6 +1534,50 @@ class CodePuppyTUI(App):
         except Exception as e:
             self.add_error_message(f"Failed to switch model: {e}")
 
+    @on(RightSidebar.CommitRequested)
+    def on_right_sidebar_commit_requested(self, event: RightSidebar.CommitRequested) -> None:
+        """Handle commit button click from right sidebar."""
+        try:
+            from ticca.plugins.gac.gac_wrapper import generate_commit_message
+            from .components.commit_message_modal import CommitMessageModal
+
+            # Show loading message
+            self.add_system_message("🚀 Generating commit message...")
+
+            # Generate the commit message (automatically stage all changes)
+            message = generate_commit_message(stage_all=True)
+
+            if message:
+                # Show the modal with the generated message (will create commit)
+                self.push_screen(CommitMessageModal(message, create_commit=True))
+            else:
+                self.add_error_message("Failed to generate commit message")
+
+        except Exception as e:
+            self.add_error_message(f"Error generating commit message: {e}")
+
+    @on(RightSidebar.CommitMessageRequested)
+    def on_right_sidebar_commit_message_requested(self, event: RightSidebar.CommitMessageRequested) -> None:
+        """Handle commit message button click from right sidebar."""
+        try:
+            from ticca.plugins.gac.gac_wrapper import generate_commit_message
+            from .components.commit_message_modal import CommitMessageModal
+
+            # Show loading message
+            self.add_system_message("💭 Generating commit message...")
+
+            # Generate the commit message (automatically stage all changes)
+            message = generate_commit_message(stage_all=True)
+
+            if message:
+                # Show the modal with the generated message (no commit)
+                self.push_screen(CommitMessageModal(message, create_commit=False))
+            else:
+                self.add_error_message("Failed to generate commit message")
+
+        except Exception as e:
+            self.add_error_message(f"Error generating commit message: {e}")
+
     async def on_unmount(self):
         """Clean up when the app is unmounted."""
         try:

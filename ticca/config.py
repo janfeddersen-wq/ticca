@@ -1169,3 +1169,49 @@ def set_default_agent(agent_name: str) -> None:
         agent_name: The name of the agent to set as default.
     """
     set_config_value("default_agent", agent_name)
+
+
+def get_gac_enabled() -> bool:
+    """
+    Get whether the GAC (Git Auto Commit) plugin is enabled.
+
+    Returns:
+        bool: True if GAC is enabled, False otherwise. Defaults to True.
+    """
+    true_vals = {"1", "true", "yes", "on"}
+    cfg_val = get_value("gac_enabled")
+    if cfg_val is not None:
+        if str(cfg_val).strip().lower() in true_vals:
+            return True
+        return False
+    return True  # Default to enabled
+
+
+def set_gac_enabled(enabled: bool) -> None:
+    """
+    Enable or disable the GAC (Git Auto Commit) plugin.
+
+    Args:
+        enabled: Whether to enable GAC
+    """
+    set_config_value("gac_enabled", "true" if enabled else "false")
+
+
+def get_gac_model() -> str:
+    """
+    Get the model to use for GAC commit message generation.
+
+    Returns:
+        str: The model name for GAC, or empty string to use global model
+    """
+    return get_value("gac_model") or ""
+
+
+def set_gac_model(model: str) -> None:
+    """
+    Set the model to use for GAC commit message generation.
+
+    Args:
+        model: Model name to use for GAC, or empty string to use global model
+    """
+    set_config_value("gac_model", model or "")

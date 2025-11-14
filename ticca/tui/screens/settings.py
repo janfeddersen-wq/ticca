@@ -573,6 +573,32 @@ class SettingsScreen(ModalScreen):
                         )
                         yield Container(id="agent-pinning-container")
 
+                        yield Label("GAC Plugin", classes="section-header")
+                        yield Static(
+                            "Configure AI-powered git commit message generation.",
+                            classes="setting-description",
+                        )
+
+                        with Container(classes="switch-row"):
+                            yield Label(
+                                "Enable GAC Plugin:", classes="setting-label"
+                            )
+                            yield Switch(
+                                id="gac-enabled-switch", classes="setting-input"
+                            )
+                            yield Static(
+                                "Enable AI-powered commit message generation with /commit commands.",
+                                classes="setting-description",
+                            )
+
+                        with Container(classes="setting-row"):
+                            yield Label("GAC Model:", classes="setting-label")
+                            yield Select([], id="gac-model-select", classes="setting-input")
+                        yield Static(
+                            "Model to use for commit message generation. Select '(default)' to use global model.",
+                            classes="input-description",
+                        )
+
                         yield Label("MCP & DBOS", classes="section-header")
 
                         with Container(classes="switch-row"):
@@ -729,6 +755,8 @@ class SettingsScreen(ModalScreen):
             get_compaction_threshold,
             get_diff_context_lines,
             get_diff_highlight_style,
+            get_gac_enabled,
+            get_gac_model,
             get_global_model_name,
             get_max_saved_sessions,
             get_mcp_disabled,
@@ -785,6 +813,10 @@ class SettingsScreen(ModalScreen):
 
         # Tab 5: Agents & Integrations
         self.load_agent_pinning_table()
+        self.load_gac_model_options()
+        self.query_one("#gac-enabled-switch", Switch).value = get_gac_enabled()
+        gac_model = get_gac_model()
+        self.query_one("#gac-model-select", Select).value = gac_model if gac_model else ""
         self.query_one("#disable-mcp-switch", Switch).value = get_mcp_disabled()
         self.query_one("#enable-dbos-switch", Switch).value = get_use_dbos()
 
@@ -860,6 +892,28 @@ class SettingsScreen(ModalScreen):
             fallback = [("Nord", "nord")]
             self.query_one("#theme-select", Select).set_options(fallback)
             self.query_one("#theme-select", Select).value = "nord"
+
+    def load_gac_model_options(self):
+        """Load available models into the GAC model select widget."""
+        try:
+            from ticca.model_factory import ModelFactory
+
+            models_data = ModelFactory.load_config()
+
+            # Create options with "(default)" as first option
+            model_options = [("(use global model)", "")]
+            for model_name, model_config in models_data.items():
+                model_type = model_config.get("type", "unknown")
+                display_name = f"{model_name} ({model_type})"
+                model_options.append((display_name, model_name))
+
+            # Set options on select widget
+            self.query_one("#gac-model-select", Select).set_options(model_options)
+
+        except Exception:
+            # Fallback to basic options if loading fails
+            fallback = [("(use global model)", "")]
+            self.query_one("#gac-model-select", Select).set_options(fallback)
 
     def load_agent_pinning_table(self):
         """Load agent model pinning dropdowns."""
@@ -1044,6 +1098,8 @@ class SettingsScreen(ModalScreen):
             set_config_value,
             set_diff_highlight_style,
             set_enable_dbos,
+            set_gac_enabled,
+            set_gac_model,
             set_max_saved_sessions,
             set_model_name,
             set_openai_reasoning_effort,
@@ -1169,6 +1225,12 @@ class SettingsScreen(ModalScreen):
                 except Exception:
                     # Skip if widget not found
                     pass
+
+            # Save GAC settings
+            gac_enabled = self.query_one("#gac-enabled-switch", Switch).value
+            gac_model = self.query_one("#gac-model-select", Select).value
+            set_gac_enabled(gac_enabled)
+            set_gac_model(gac_model if gac_model else "")
 
             disable_mcp = self.query_one("#disable-mcp-switch", Switch).value
             enable_dbos = self.query_one("#enable-dbos-switch", Switch).value
