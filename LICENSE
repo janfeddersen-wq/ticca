@@ -169,3 +169,12 @@ Copyright (c) 2024 Jan Feddersen (Luminon GmbH)
 This work is licensed under the Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License.
 To view a copy of this license, visit https://creativecommons.org/licenses/by-nc-sa/4.0/
 or send a letter to Creative Commons, PO Box 1866, Mountain View, CA 94042, USA.
+
+---
+
+Special thanks and attribution to:
+
+- https://github.com/mpfaffenberger/code_puppy for their awesome AI code generation framework that inspired this project
+- https://github.com/cellwebb/gac for their excellent commit message generation utilities
+
+This work builds upon and derives inspiration from these outstanding open-source projects.

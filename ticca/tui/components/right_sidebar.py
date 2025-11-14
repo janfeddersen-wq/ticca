@@ -89,7 +89,7 @@ class RightSidebar(Container):
         width: 100%;
         height: 3;
         min-height: 3;
-        margin: 0 0 1 0;
+        margin: 0;
         padding: 0 1;
         content-align: center middle;
         border: wide $accent;
