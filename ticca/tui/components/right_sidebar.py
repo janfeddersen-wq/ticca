@@ -36,6 +36,14 @@ class RightSidebar(Container):
         """Commit message button was clicked."""
         pass
 
+    class GitPullRequested(Message):
+        """Git pull button was clicked."""
+        pass
+
+    class GitPushRequested(Message):
+        """Git push button was clicked."""
+        pass
+
     DEFAULT_CSS = """
     RightSidebar {
         dock: right;
@@ -80,7 +88,8 @@ class RightSidebar(Container):
         layout: vertical;
     }
 
-    RightSidebar #commit-button, RightSidebar #commit-message-button {
+    RightSidebar #commit-button, RightSidebar #commit-message-button,
+    RightSidebar #git-pull-button, RightSidebar #git-push-button {
         width: 100%;
         height: 3;
         min-height: 3;
@@ -95,7 +104,8 @@ class RightSidebar(Container):
         text-style: bold;
     }
 
-    RightSidebar #commit-button:hover, RightSidebar #commit-message-button:hover {
+    RightSidebar #commit-button:hover, RightSidebar #commit-message-button:hover,
+    RightSidebar #git-pull-button:hover, RightSidebar #git-push-button:hover {
         border: wide $accent-lighten-1;
         border-bottom: wide $accent-darken-1;
         border-right: wide $accent-darken-1;
@@ -104,7 +114,8 @@ class RightSidebar(Container):
         text-style: bold;
     }
 
-    RightSidebar #commit-button:focus, RightSidebar #commit-message-button:focus {
+    RightSidebar #commit-button:focus, RightSidebar #commit-message-button:focus,
+    RightSidebar #git-pull-button:focus, RightSidebar #git-push-button:focus {
         border: wide $accent-darken-1;
         border-top: wide $accent;
         border-left: wide $accent;
@@ -148,6 +159,8 @@ class RightSidebar(Container):
         with Vertical(id="git-actions"):
             yield Button("Commit", id="commit-button")
             yield Button("Commit Message", id="commit-message-button")
+            yield Button("Git Pull", id="git-pull-button")
+            yield Button("Git Push", id="git-push-button")
 
         # Status display area
         yield RichLog(id="status-display", wrap=True, highlight=True)
@@ -324,3 +337,13 @@ class RightSidebar(Container):
     def on_commit_message_button_pressed(self) -> None:
         """Handle commit message button press."""
         self.post_message(self.CommitMessageRequested())
+
+    @on(Button.Pressed, "#git-pull-button")
+    def on_git_pull_button_pressed(self) -> None:
+        """Handle git pull button press."""
+        self.post_message(self.GitPullRequested())
+
+    @on(Button.Pressed, "#git-push-button")
+    def on_git_push_button_pressed(self) -> None:
+        """Handle git push button press."""
+        self.post_message(self.GitPushRequested())

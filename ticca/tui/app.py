@@ -1644,6 +1644,66 @@ class CodePuppyTUI(App):
         except Exception as e:
             self.add_error_message(f"Error generating commit message: {e}")
 
+    @on(RightSidebar.GitPullRequested)
+    def on_right_sidebar_git_pull_requested(self, event: RightSidebar.GitPullRequested) -> None:
+        """Handle git pull button click from right sidebar."""
+        try:
+            import subprocess
+
+            self.add_system_message("Pulling from remote...")
+
+            result = subprocess.run(
+                ["git", "pull"],
+                capture_output=True,
+                text=True,
+                check=False
+            )
+
+            if result.returncode == 0:
+                output = result.stdout.strip()
+                if output:
+                    self.add_system_message(f"✓ Git pull successful:\n{output}")
+                else:
+                    self.add_system_message("✓ Git pull successful")
+            else:
+                error = result.stderr.strip() or result.stdout.strip()
+                self.add_error_message(f"Git pull failed:\n{error}")
+
+        except FileNotFoundError:
+            self.add_error_message("git command not found. Please ensure git is installed.")
+        except Exception as e:
+            self.add_error_message(f"Error during git pull: {e}")
+
+    @on(RightSidebar.GitPushRequested)
+    def on_right_sidebar_git_push_requested(self, event: RightSidebar.GitPushRequested) -> None:
+        """Handle git push button click from right sidebar."""
+        try:
+            import subprocess
+
+            self.add_system_message("Pushing to remote...")
+
+            result = subprocess.run(
+                ["git", "push"],
+                capture_output=True,
+                text=True,
+                check=False
+            )
+
+            if result.returncode == 0:
+                output = result.stdout.strip() or result.stderr.strip()  # git push outputs to stderr
+                if output:
+                    self.add_system_message(f"✓ Git push successful:\n{output}")
+                else:
+                    self.add_system_message("✓ Git push successful")
+            else:
+                error = result.stderr.strip() or result.stdout.strip()
+                self.add_error_message(f"Git push failed:\n{error}")
+
+        except FileNotFoundError:
+            self.add_error_message("git command not found. Please ensure git is installed.")
+        except Exception as e:
+            self.add_error_message(f"Error during git push: {e}")
+
     async def on_unmount(self):
         """Clean up when the app is unmounted."""
         try:
