@@ -954,10 +954,8 @@ class SettingsScreen(ModalScreen):
             agent_row.mount(agent_select)
 
     def load_api_keys(self):
-        """Load API keys from .env (priority) or puppy.cfg (fallback) into input fields."""
-        from pathlib import Path
-
-        # Priority order: .env file > environment variables > puppy.cfg
+        """Load API keys from environment variables or ~/.ticca/puppy.cfg into input fields."""
+        # Priority order: environment variables > puppy.cfg
         api_key_names = {
             "OPENAI_API_KEY": "#openai-api-key-input",
             "GEMINI_API_KEY": "#gemini-api-key-input",
@@ -968,39 +966,21 @@ class SettingsScreen(ModalScreen):
             "AZURE_OPENAI_ENDPOINT": "#azure-endpoint-input",
         }
 
-        # Load from .env file if it exists
-        env_file = Path.cwd() / ".env"
-        env_values = {}
-        if env_file.exists():
-            try:
-                with open(env_file, "r") as f:
-                    for line in f:
-                        line = line.strip()
-                        if line and not line.startswith("#") and "=" in line:
-                            key, value = line.split("=", 1)
-                            env_values[key.strip()] = value.strip()
-            except Exception:
-                pass
-
-        # Load each key with priority: .env > environment > puppy.cfg
+        # Load each key with priority: environment > puppy.cfg
         from ticca.config import get_api_key
 
         for key_name, input_id in api_key_names.items():
-            # Priority 1: .env file
-            if key_name in env_values:
-                value = env_values[key_name]
-            # Priority 2: environment variable
-            elif key_name in os.environ and os.environ[key_name]:
+            # Priority 1: environment variable
+            if key_name in os.environ and os.environ[key_name]:
                 value = os.environ[key_name]
-            # Priority 3: puppy.cfg
+            # Priority 2: puppy.cfg
             else:
                 value = get_api_key(key_name)
 
             self.query_one(input_id, Input).value = value or ""
 
     def save_api_keys(self):
-        """Save API keys to .env file (primary) and puppy.cfg (backup) and update environment variables."""
-        from pathlib import Path
+        """Save API keys to ~/.ticca/puppy.cfg and update environment variables."""
         from ticca.config import set_api_key
 
         # Get values from input fields
@@ -1033,59 +1013,7 @@ class SettingsScreen(ModalScreen):
             elif key in os.environ:
                 del os.environ[key]
 
-        # Save to .env file (highest priority source)
-        env_file = Path.cwd() / ".env"
-        try:
-            # Read existing .env content to preserve comments and other variables
-            existing_lines = []
-            existing_keys = set()
-            if env_file.exists():
-                with open(env_file, "r") as f:
-                    for line in f:
-                        stripped = line.strip()
-                        # Track which keys exist
-                        if (
-                            stripped
-                            and not stripped.startswith("#")
-                            and "=" in stripped
-                        ):
-                            key = stripped.split("=", 1)[0].strip()
-                            existing_keys.add(key)
-                        existing_lines.append(line)
-
-            # Update or add API keys
-            updated_lines = []
-            for line in existing_lines:
-                stripped = line.strip()
-                if stripped and not stripped.startswith("#") and "=" in stripped:
-                    key = stripped.split("=", 1)[0].strip()
-                    if key in api_keys:
-                        # Update this key
-                        if api_keys[key]:
-                            updated_lines.append(f"{key}={api_keys[key]}\n")
-                        # else: skip it (delete if empty)
-                        existing_keys.discard(key)  # Mark as processed
-                    else:
-                        # Keep other variables
-                        updated_lines.append(line)
-                else:
-                    # Keep comments and empty lines
-                    updated_lines.append(line)
-
-            # Add new keys that weren't in the file
-            for key, value in api_keys.items():
-                if value and key not in existing_keys:
-                    updated_lines.append(f"{key}={value}\n")
-
-            # Write back to .env
-            with open(env_file, "w") as f:
-                f.writelines(updated_lines)
-
-        except Exception:
-            # If .env fails, fall back to puppy.cfg only
-            pass
-
-        # Also save to puppy.cfg as backup
+        # Save to ~/.ticca/puppy.cfg
         for key, value in api_keys.items():
             set_api_key(key, value)
 
@@ -1239,7 +1167,7 @@ class SettingsScreen(ModalScreen):
             set_enable_dbos(enable_dbos)
 
             # Tab 6: API Keys & Status
-            # Save API keys to environment and .env file
+            # Save API keys to environment and ~/.ticca/puppy.cfg
             self.save_api_keys()
 
             # Reload agent if model changed
@@ -1254,11 +1182,9 @@ class SettingsScreen(ModalScreen):
 
             # Return success message with file locations
             from ticca.config import CONFIG_FILE
-            from pathlib import Path
 
             message = "✅ Settings saved successfully!\n"
-            message += f"📁 Config: {CONFIG_FILE}\n"
-            message += f"📁 API Keys: {Path.cwd() / '.env'}"
+            message += f"📁 Config & API Keys: {CONFIG_FILE}"
 
             if model_changed:
                 message += f"\n🔄 Model switched to: {selected_model}"
