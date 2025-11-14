@@ -90,11 +90,6 @@ class TextualSpinner(Container):
             # Show thinking message during normal processing
             message = SpinnerBase.THINKING_MESSAGE
 
-        # Add context info if available
-        context_info = SpinnerBase.get_context_info()
-        if context_info:
-            message = f"{message} {context_info}"
-
         self.scanner.update_message(message)
 
     def pause(self):

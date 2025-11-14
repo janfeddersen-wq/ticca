@@ -270,31 +270,6 @@ class RightSidebar(Container):
             display_clean = self.agent_name.replace("-agent", "").title()
             status_text.append(f"  ● {display_clean}: idle ({self.message_count} msg)\n", style="white")
 
-        # Context Window Section (compact)
-        status_text.append("\n")
-        status_text.append("Context:\n", style="bold")
-
-        # Calculate percentage
-        if self.context_total > 0:
-            percentage = (self.context_used / self.context_total) * 100
-        else:
-            percentage = 0
-
-        # Show stats in k format (more compact)
-        tokens_k = self.context_used / 1000
-        max_k = self.context_total / 1000
-
-        # Choose color based on usage
-        if percentage < 50:
-            stat_color = "green"
-        elif percentage < 75:
-            stat_color = "yellow"
-        else:
-            stat_color = "red"
-
-        status_text.append(f"  {tokens_k:.1f}k/{max_k:.0f}k ", style=stat_color)
-        status_text.append(f"({percentage:.0f}%)\n", style="dim")
-
         # Clear and write to RichLog
         status_display.clear()
         status_display.write(status_text)
