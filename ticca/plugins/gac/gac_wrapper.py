@@ -7,12 +7,27 @@ to use its own model configuration and API keys to generate git commit messages.
 
 import os
 import subprocess
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional
 
 from ticca.config import get_global_model_name, get_gac_model, get_gac_enabled
 from ticca.messaging import emit_error, emit_info, emit_warning
 from ticca.model_factory import ModelFactory
+
+
+@dataclass
+class CommitMessageResult:
+    """Result of commit message generation with optional security warnings."""
+    message: Optional[str]
+    secrets: list = None  # List of detected secrets
+    affected_files: list = None  # List of files with secrets
+
+    def __post_init__(self):
+        if self.secrets is None:
+            self.secrets = []
+        if self.affected_files is None:
+            self.affected_files = []
 
 
 def _get_gac_provider_and_model(model_name: str) -> tuple[Optional[str], Optional[str]]:
@@ -98,6 +113,36 @@ def _check_git_repository() -> bool:
         return False
 
 
+def unstage_files(files: list[str]) -> bool:
+    """Unstage specified files from the git staging area.
+
+    Args:
+        files: List of file paths to unstage
+
+    Returns:
+        True if successful, False otherwise
+    """
+    try:
+        for file_path in files:
+            result = subprocess.run(
+                ["git", "reset", "HEAD", file_path],
+                capture_output=True,
+                text=True,
+                check=False
+            )
+
+            if result.returncode == 0:
+                emit_info(f"✓ Unstaged: {file_path}")
+            else:
+                emit_error(f"Failed to unstage {file_path}: {result.stderr.strip()}")
+                return False
+
+        return True
+    except Exception as e:
+        emit_error(f"Failed to unstage files: {e}")
+        return False
+
+
 def _check_staged_changes() -> bool:
     """Check if there are any staged changes."""
     try:
@@ -157,7 +202,7 @@ def generate_commit_message(
     language: str = "en",
     hint: Optional[str] = None,
     stage_all: bool = False
-) -> Optional[str]:
+) -> Optional[CommitMessageResult]:
     """
     Generate a commit message using GAC with ticca's model configuration.
 
@@ -169,7 +214,7 @@ def generate_commit_message(
         stage_all: Whether to stage all changes before generating (default: False)
 
     Returns:
-        Generated commit message or None if generation failed
+        CommitMessageResult with the generated message and any detected secrets, or None if generation failed
     """
     # Check if gac is enabled
     if not get_gac_enabled():
@@ -220,6 +265,7 @@ def generate_commit_message(
         from gac.git import get_diff, get_staged_status
         from gac.prompt import build_prompt
         from gac.main import generate_commit_message as gac_generate
+        from gac.security import scan_staged_diff, get_affected_files
 
         # Get the staged diff using GAC's git module
         diff_text = get_diff(staged=True, color=False)
@@ -227,6 +273,50 @@ def generate_commit_message(
             emit_error("No staged changes to generate message from")
             return None
 
+        # Security scan for secrets/API keys
+        emit_info("Scanning staged changes for potential secrets...")
+        secrets = scan_staged_diff(diff_text)
+
+        # If secrets are found, return them for user decision (don't abort automatically)
+        if secrets:
+            affected_files = get_affected_files(secrets)
+            emit_warning(f"⚠️  Found {len(secrets)} potential secret(s) in staged changes!")
+
+            # Show summary
+            for secret in secrets:
+                location = f"{secret.file_path}:{secret.line_number}" if secret.line_number else secret.file_path
+                emit_warning(f"  • {secret.secret_type} in {location}")
+
+            # Still generate the message, but return it with security warnings
+            # Get the status summary
+            status_text = get_staged_status()
+
+            # Build the prompt using GAC's prompt builder
+            system_prompt, user_prompt = build_prompt(
+                status=status_text,
+                processed_diff=diff_text,
+                diff_stat="",  # Optional diff statistics
+                one_liner=one_liner,
+                hint=hint or "",
+                language=language if language != "en" else None,
+            )
+
+            # Generate the commit message using GAC
+            message = gac_generate(
+                model=gac_model_string,
+                prompt=(system_prompt, user_prompt),
+                quiet=True,  # Suppress GAC's own output
+                skip_success_message=True,
+            )
+
+            # Return result with security warnings
+            return CommitMessageResult(
+                message=message.strip() if message else None,
+                secrets=secrets,
+                affected_files=affected_files
+            )
+
+        # No secrets detected - proceed normally
         # Get the status summary
         status_text = get_staged_status()
 
@@ -249,7 +339,7 @@ def generate_commit_message(
         )
 
         if message:
-            return message.strip()
+            return CommitMessageResult(message=message.strip())
         else:
             emit_error("GAC returned empty commit message")
             return None

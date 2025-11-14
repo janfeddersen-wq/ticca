@@ -1538,20 +1538,53 @@ class CodePuppyTUI(App):
     def on_right_sidebar_commit_requested(self, event: RightSidebar.CommitRequested) -> None:
         """Handle commit button click from right sidebar."""
         try:
-            from ticca.plugins.gac.gac_wrapper import generate_commit_message
+            from ticca.plugins.gac.gac_wrapper import generate_commit_message, unstage_files
             from .components.commit_message_modal import CommitMessageModal
+            from .components.security_warning_modal import SecurityWarningModal
 
             # Show loading message
-            self.add_system_message("🚀 Generating commit message...")
+            self.add_system_message("Generating commit message...")
 
             # Generate the commit message (automatically stage all changes)
-            message = generate_commit_message(stage_all=True)
+            result = generate_commit_message(stage_all=True)
 
-            if message:
-                # Show the modal with the generated message (will create commit)
-                self.push_screen(CommitMessageModal(message, create_commit=True))
-            else:
+            if not result:
                 self.add_error_message("Failed to generate commit message")
+                return
+
+            # Check for security warnings
+            if result.secrets:
+                # Show security warning modal
+                def handle_security_decision(decision):
+                    if decision == "continue":
+                        # User wants to proceed despite warnings
+                        self.add_system_message("⚠️  Continuing with potential secrets in commit")
+                        if result.message:
+                            self.push_screen(CommitMessageModal(result.message, create_commit=True))
+                    elif decision == "unstage":
+                        # Unstage affected files and regenerate commit with remaining files
+                        if unstage_files(result.affected_files):
+                            self.add_system_message(f"✓ Unstaged {len(result.affected_files)} file(s) with secrets")
+                            # Regenerate commit message for remaining staged files
+                            self.add_system_message("Regenerating commit message for remaining files...")
+                            new_result = generate_commit_message(stage_all=False)
+                            if new_result and new_result.message:
+                                self.push_screen(CommitMessageModal(new_result.message, create_commit=True))
+                            else:
+                                self.add_error_message("No staged changes remaining after unstaging files")
+                        else:
+                            self.add_error_message("Failed to unstage some files")
+                    # else: cancel - do nothing
+
+                self.push_screen(
+                    SecurityWarningModal(result.secrets, result.affected_files),
+                    handle_security_decision
+                )
+            elif result.message:
+                # No secrets - proceed with commit
+                self.push_screen(CommitMessageModal(result.message, create_commit=True))
+            else:
+                self.add_error_message("No commit message generated")
 
         except Exception as e:
             self.add_error_message(f"Error generating commit message: {e}")
@@ -1560,20 +1593,53 @@ class CodePuppyTUI(App):
     def on_right_sidebar_commit_message_requested(self, event: RightSidebar.CommitMessageRequested) -> None:
         """Handle commit message button click from right sidebar."""
         try:
-            from ticca.plugins.gac.gac_wrapper import generate_commit_message
+            from ticca.plugins.gac.gac_wrapper import generate_commit_message, unstage_files
             from .components.commit_message_modal import CommitMessageModal
+            from .components.security_warning_modal import SecurityWarningModal
 
             # Show loading message
-            self.add_system_message("💭 Generating commit message...")
+            self.add_system_message("Generating commit message...")
 
             # Generate the commit message (automatically stage all changes)
-            message = generate_commit_message(stage_all=True)
+            result = generate_commit_message(stage_all=True)
 
-            if message:
-                # Show the modal with the generated message (no commit)
-                self.push_screen(CommitMessageModal(message, create_commit=False))
-            else:
+            if not result:
                 self.add_error_message("Failed to generate commit message")
+                return
+
+            # Check for security warnings
+            if result.secrets:
+                # Show security warning modal
+                def handle_security_decision(decision):
+                    if decision == "continue":
+                        # User wants to proceed despite warnings
+                        self.add_system_message("⚠️  Continuing with potential secrets in commit")
+                        if result.message:
+                            self.push_screen(CommitMessageModal(result.message, create_commit=False))
+                    elif decision == "unstage":
+                        # Unstage affected files and regenerate commit message for remaining files
+                        if unstage_files(result.affected_files):
+                            self.add_system_message(f"✓ Unstaged {len(result.affected_files)} file(s) with secrets")
+                            # Regenerate commit message for remaining staged files
+                            self.add_system_message("Regenerating commit message for remaining files...")
+                            new_result = generate_commit_message(stage_all=False)
+                            if new_result and new_result.message:
+                                self.push_screen(CommitMessageModal(new_result.message, create_commit=False))
+                            else:
+                                self.add_error_message("No staged changes remaining after unstaging files")
+                        else:
+                            self.add_error_message("Failed to unstage some files")
+                    # else: cancel - do nothing
+
+                self.push_screen(
+                    SecurityWarningModal(result.secrets, result.affected_files),
+                    handle_security_decision
+                )
+            elif result.message:
+                # No secrets - proceed with showing the message
+                self.push_screen(CommitMessageModal(result.message, create_commit=False))
+            else:
+                self.add_error_message("No commit message generated")
 
         except Exception as e:
             self.add_error_message(f"Error generating commit message: {e}")

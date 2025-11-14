@@ -82,25 +82,35 @@ class RightSidebar(Container):
 
     RightSidebar #commit-button, RightSidebar #commit-message-button {
         width: 100%;
-        height: auto;
+        height: 3;
         min-height: 3;
         margin: 0 0 1 0;
         padding: 0 1;
+        content-align: center middle;
+        border: wide $accent;
+        border-bottom: wide $accent-darken-1;
+        border-right: wide $accent-darken-1;
         background: $primary;
         color: $background;
-        border: solid $accent;
         text-style: bold;
     }
 
     RightSidebar #commit-button:hover, RightSidebar #commit-message-button:hover {
+        border: wide $accent-lighten-1;
+        border-bottom: wide $accent-darken-1;
+        border-right: wide $accent-darken-1;
         background: $primary-lighten-1;
-        border: solid $accent-lighten-1;
+        color: $background;
+        text-style: bold;
     }
 
     RightSidebar #commit-button:focus, RightSidebar #commit-message-button:focus {
+        border: wide $accent-darken-1;
+        border-top: wide $accent;
+        border-left: wide $accent;
         background: $primary-darken-1;
-        border: solid $accent-darken-1;
         color: $accent;
+        text-style: bold;
     }
     """
 
@@ -136,8 +146,8 @@ class RightSidebar(Container):
 
         # Git action buttons
         with Vertical(id="git-actions"):
-            yield Button("🚀 Commit", id="commit-button")
-            yield Button("💭 Commit Message", id="commit-message-button")
+            yield Button("Commit", id="commit-button")
+            yield Button("Commit Message", id="commit-message-button")
 
         # Status display area
         yield RichLog(id="status-display", wrap=True, highlight=True)
