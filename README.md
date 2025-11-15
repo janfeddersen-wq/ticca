@@ -1,304 +1,344 @@
 # Ticca - Terminal Injected Coding CLI Assistant ⚡
 
-[![Python](https://img.shields.io/badge/Python-3.11+-blue.svg)](https://python.org)
-[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-[![Tests](https://img.shields.io/badge/Tests-Pass-brightgreen.svg)](tests/)
+A powerful AI-powered coding assistant that runs directly in your terminal. Ticca combines the convenience of a CLI tool with the intelligence of multiple LLM models, featuring a rich text-based user interface, extensive file management capabilities, browser automation, and extensible plugin architecture.
 
-Ticca is a powerful, terminal-based AI coding assistant that brings intelligent development capabilities directly to your command line. With support for multiple AI agents, browser automation, file operations, and seamless integration with various LLM providers, Ticca transforms your terminal into an intelligent development environment.
+![Ticca](https://img.shields.io/badge/Ticca-0.1.4-blue)
+![Python](https://img.shields.io/badge/Python-3.11+-green)
+![License](https://img.shields.io/badge/License-MIT-yellow)
 
-## ✨ Features
+## ✨ Key Features
 
-### 🤖 Multi-Agent System
-- **Code Puppy** - Specialized code generation and modification agent
-- **Code Reviewers** - Language-specific reviewers (Python, JavaScript, TypeScript, C++, Go, C)
-- **Security Auditor** - Automated security analysis and vulnerability detection
-- **Planning Agent** - Strategic project planning and architecture design
-- **Custom Agents** - Extensible JSON-based agent configuration system
+- 🤖 **Multi-Agent System**: Specialized agents for code review, security auditing, planning, and more
+- 🖥️ **Rich TUI Interface**: Modern terminal UI built with Textual framework
+- 📁 **Full File Management**: Read, edit, search, and manage files with intelligent approval system
+- 🌐 **Browser Automation**: Built-in Playwright/Camoufox integration for web interaction testing
+- 🔌 **Plugin Architecture**: Extensible system for OAuth providers, custom commands, and more
+- 💾 **Session Management**: Autosave and resume your work sessions
+- 🔄 **MCP Integration**: Model Context Protocol support for extending functionality
+- 📊 **Performance Monitoring**: Built-in profiling and performance tracking
+- 🛠️ **Dev Tools Integration**: Git hooks, linting, formatting with ruff
+- 🔐 **Secure Operations**: Approval system for file modifications and command execution
 
-### 🌐 Browser Automation
-- **Web Interaction** - Click, type, navigate, and extract data from web pages
-- **Visual QA** - Screenshot capture and AI-powered visual analysis
-- **Workflow Recording** - Record and replay browser automation sequences
-- **Multiple Locators** - Find elements by role, text, label, XPath, and more
-
-### 💻 Development Tools
-- **File Operations** - Read, write, edit, and search files with intelligent diff generation
-- **Command Execution** - Safe shell command execution with confirmation prompts
-- **Session Management** - Auto-save and restore conversation states
-- **Command History** - Persistent command history with search capabilities
-
-### 🎨 Terminal User Interface
-- **Modern TUI** - Rich terminal interface built with Textual
-- **Real-time Chat** - Interactive conversation with AI agents
-- **File Browser** - Navigate and explore project structure
-- **Configuration Panels** - Interactive settings and model selection
-
-### 🔌 Model Support
-- **Multiple Providers** - OpenAI, Anthropic, Cerebras, and custom endpoints
-- **Advanced Models** - GPT-5, Claude 4.x, GLM-4.6, DeepSeek, and more
-- **Flexible Configuration** - Easy model switching and per-agent model pinning
-- **Context Management** - Intelligent message history compression
-
-### 🔧 MCP Integration
-- **Server Management** - Built-in MCP server lifecycle management
-- **Status Monitoring** - Real-time server health tracking
-- **Configuration Wizard** - Interactive server setup and discovery
-- **Error Recovery** - Automatic retry and circuit breaker patterns
-
-## 🚀 Installation
+## 🚀 Quick Start
 
 ### Prerequisites
-- Python 3.11 or higher
-- UV (recommended) or pip package manager
 
-### Quick Install
+- Python 3.11, 3.12, or 3.13
+- UV (recommended) or pip
+
+### Installation
+
+#### Option 1: Using UV (Recommended)
 ```bash
-# Install with UV (recommended)
-pip install uv
-uv add ticca
-
-# Or install with pip
-pip install ticca
-```
-
-### Development Install
-```bash
+# Clone the repository
 git clone https://github.com/janfeddersen-wq/ticca.git
 cd ticca
+
+# Install dependencies
 uv sync
+
+# Run Ticca
+uv run ticca
 ```
 
-## 🎯 Quick Start
-
-### Launch Ticca
+#### Option 2: Alternative Methods
 ```bash
-# Start with TUI interface (recommended)
-ticca
-
-# Or use the short command
-tic
-
-# Start with performance profiling
+# Using the provided launcher script (with profiling)
 ./start.sh
 
-# Start without profiling
-./start.sh --no-profile
+# Or directly with Python
+python -m ticca
+
+# If installed as a package
+ticca
 ```
 
-### Basic Usage
+### First Run
+
+1. Launch Ticca using one of the methods above
+2. Follow the setup wizard to configure your preferred AI model
+3. Start chatting with the AI assistant!
+
+## 🛠️ Core Capabilities
+
+### File Operations
 ```bash
-# Chat with the default Code Puppy agent
-ticca "Write a Python function to process JSON data"
+# List files with intelligent filtering
+@ls
 
-# Use a specific agent
-ticca --agent security-auditor "Review this code for vulnerabilities"
+# Read file contents
+@read path/to/file.py
 
-# Enable TUI mode for interactive sessions
-ticca --tui
+# Search across files
+@grep "function_name" --type python
 
-# Execute with a specific model
-ticca --model claude-4-5-sonnet "Analyze this React component"
+# Edit files with approval workflow
+@edit path/to/file.py --start-line 10 --num-lines 5
+```
+
+### Shell Commands
+```bash
+# Run commands with approval
+!ls -la
+!git status
+!python -m pytest
+```
+
+### Browser Automation
+```bash
+# Initialize browser
+/browser_initialize
+
+# Navigate to a URL
+/browser_navigate https://example.com
+
+# Find and interact with elements
+/browser_find_by_text "Submit"
+/browser_click element_id
+
+# Take screenshots
+/browser_screenshot_analyze
+```
+
+### Agent System
+```bash
+# List available agents
+/list_agents
+
+# Switch to specialized agent
+/invoke_agent code_reviewer
+
+# Get security audit
+/invoke_agent security_auditor
 ```
 
 ## ⚙️ Configuration
 
-Ticca stores configuration in `~/.ticca/`:
+### Model Configuration
+Ticca supports multiple AI models through the `models.json` configuration:
 
-### Main Configuration (`~/.ticca/puppy.cfg`)
-```ini
-[default]
-model = claude-4-5-sonnet
-enable_tui = true
-enable_dbos = false
-enable_mcp = true
-
-[agents]
-code_puppy = code-agent
-security = security-auditor
-planning = planning-agent
-```
-
-### Model Configuration (`~/.ticca/models.json`)
-```json
-{
-  "claude-4-5-sonnet": {
-    "type": "anthropic",
-    "name": "claude-sonnet-4-5-20250929",
-    "context_length": 200000
-  },
-  "gpt-5": {
-    "type": "openai", 
-    "name": "gpt-5",
-    "context_length": 272000
-  }
-}
-```
+- OpenAI models (GPT-4, GPT-4o, o1, etc.)
+- Custom OpenAI-compatible endpoints
+- Local models via Ollama
+- Specialized reasoning models
 
 ### Environment Variables
+Key environment variables for configuration:
+
 ```bash
 # API Keys
-export OPENAI_API_KEY="your-openai-key"
-export ANTHROPIC_API_KEY="your-anthropic-key"
-export CEREBRAS_API_KEY="your-cerebras-key"
+export OPENAI_API_KEY="your-key-here"
+export ANTHROPIC_API_KEY="your-key-here"
 
-# Optional
-export TICCA_PROFILE=1          # Enable performance profiling
-export DBOS_SYSTEM_DATABASE_URL="postgresql://..."  # DBOS database
+# Performance
+export TICCA_PROFILE=1  # Enable profiling
+
+# Database (optional)
+export DBOS_DATABASE_URL="sqlite:///ticca.db"
 ```
 
-## 🛠️ Available Agents
+### Session Settings
+Configure session behavior, auto-save intervals, model preferences, and UI themes through the settings interface.
 
-| Agent | Description | Specialization |
-|-------|-------------|----------------|
-| `code-agent` | Code Puppy | General code generation and modification |
-| `security-auditor` | Security Expert | Vulnerability detection and security analysis |
-| `planning-agent` | Project Planner | Architecture design and planning |
-| `code-reviewer` | Code Reviewer | General code review and quality analysis |
-| `python-reviewer` | Python Specialist | Python-specific code review |
-| `javascript-reviewer` | JavaScript Specialist | JavaScript/TypeScript review |
-| `cpp-reviewer` | C++ Specialist | C++ code review and optimization |
+## 🔌 Plugin Development
 
-## 🌐 Browser Automation
+Ticca's plugin system allows you to extend functionality:
 
-Ticca includes powerful browser automation capabilities:
-
+### OAuth Plugins
+Add support for new AI providers:
 ```python
-# Initialize browser (in TUI mode or via commands)
-browser_initialize()
-browser_navigate("https://example.com")
-browser_find_by_text("Submit")
-browser_click(element)
-browser_take_screenshot_and_analyze("What's on this page?")
+# plugins/my_provider/oauth_flow.py
+def register_oauth_provider():
+    # Implementation
+    pass
 ```
 
-### Supported Browsers
-- Chromium (via Playwright)
-- Firefox (via Camoufox)
-- Headless and headed modes
+### Custom Commands
+Create custom commands:
+```python
+# plugins/custom_commands/register_callbacks.py
+from ticca.command_line import register_command
+
+@register_command("my_command")
+def handle_my_command(args):
+    # Implementation
+    pass
+```
+
+### File Handlers
+Add custom file permission handlers:
+```python
+# plugins/file_handler/register_callbacks.py
+def custom_permission_handler(file_path, operation):
+    # Implementation
+    return True  # or False
+```
+
+## 🏗️ Architecture
+
+### Core Components
+
+- **`ticca/agents/`**: Agent system with base classes and specialized implementations
+- **`ticca/tools/`**: Extensive tool library for file operations, shell commands, browser automation
+- **`ticca/tui/`**: Textual-based terminal user interface
+- **`ticca/mcp_/`**: Model Context Protocol server management
+- **`ticca/plugins/`**: Plugin architecture and built-in plugins
+- **`ticca/config.py`**: Configuration management system
+
+### Agent System
+Ticca uses a sophisticated multi-agent architecture:
+- **BaseAgent**: Core functionality with tool registration, message management
+- **Specialized Agents**: CodeReviewer, SecurityAuditor, PlanningAgent, etc.
+- **Agent Manager**: Coordinates agent switching and lifecycle
+
+### Tool System
+Modular tool registration system supporting:
+- File operations (read, write, search, modify)
+- Shell command execution with approval
+- Browser automation via Playwright/Camoufox
+- Agent invocation and management
+- Human feedback collection
 
 ## 🧪 Testing
 
+### Run Tests
 ```bash
 # Run all tests
 uv run pytest
 
 # Run with coverage
-uv run pytest --cov=ticca --cov-report=term-missing
+uv run pytest --cov=ticca
 
-# Run specific test categories
-uv run pytest tests/unit/
+# Run specific test file
+uv run pytest tests/test_file_operations.py
+```
+
+### Integration Tests
+```bash
+# Run CLI integration tests
 uv run pytest tests/integration/
-uv run pytest tests/tools/
+
+# Run smoke tests
+uv run pytest tests/integration/test_smoke.py
 ```
 
-## 🔌 Plugin System
+## 🎯 Development Workflow
 
-Ticca supports extensible plugins:
+### Code Quality
+```bash
+# Check code formatting and linting
+pnpm check
 
-### Available Plugins
-- **OAuth Authentication** - ChatGPT and Claude Code OAuth
-- **Custom Commands** - Define your own meta-commands
-- **File Permissions** - Advanced file permission handling
-- **Git Integration** - Enhanced Git workflow automation
+# Auto-fix issues
+ruff check --fix
 
-### Creating Custom Plugins
-
-```python
-# ~/.ticca/plugins/my_plugin.py
-def register_callbacks():
-    """Register plugin callbacks."""
-    # Add your plugin initialization here
-    pass
+# Format code
+ruff format .
 ```
 
-## 📊 Performance
+### Git Hooks
+Ticca uses lefthook for pre-commit hooks:
+- Code formatting with ruff
+- Linting checks
+- Test execution on commits
 
-Ticca includes built-in performance profiling:
-
+### Performance Profiling
 ```bash
 # Enable profiling
 export TICCA_PROFILE=1
+
+# Run with profiling
+./start.sh
 
 # View performance report
 cat ~/.ticca/perf_report.txt
 ```
 
-### Optimization Features
-- Intelligent message history compression
-- Lazy loading of heavy components
-- Efficient token usage monitoring
-- Session auto-save and restore
+## 📚 Advanced Usage
 
-## 🤝 Contributing
-
-We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
-
-### Development Workflow
+### MCP Servers
+Extend Ticca with custom MCP servers:
 ```bash
-# Clone and setup
-git clone https://github.com/janfeddersen-wq/ticca.git
-cd ticca
-uv sync
+# Install an MCP server
+/mcp install my-mcp-server
 
-# Run linting and formatting
-ruff check --fix
-ruff format .
+# List installed servers
+/mcp list
 
-# Run tests before committing
-uv run pytest
-
-# Check everything works
-pnpm check  # or git pre-commit hook
+# Start/stop servers
+/mcp start my-mcp-server
+/mcp stop my-mcp-server
 ```
 
-### Code Style Guidelines
-- Follow DRY, YAGNI, SOLID principles
-- Keep files under 600 lines
-- Use type hints everywhere
-- Write comprehensive tests
-- Use ruff for linting and formatting
+### Session Management
+```bash
+# Save current session
+/session save my-session
 
-## 📚 Documentation
+# List saved sessions
+/session list
 
-- [Agents Guide](docs/AGENTS.md) - Detailed agent documentation
-- [Environment Variables](docs/ENVIRONMENT_VARIABLES.md) - Configuration options
-- [Performance Guide](docs/PERFORMANCE.md) - Performance optimization
-- [MCP Integration](docs/MCP.md) - Model Context Protocol setup
-- [Browser Automation](docs/BROWSER.md) - Web automation examples
+# Resume session
+/session resume my-session
+```
 
-## 🔧 Troubleshooting
+### Custom Workflows
+Create browser automation workflows:
+```python
+# Save browser interaction sequence
+/browser_save_workflow my_workflow
+
+# List workflows
+/browser_list_workflows
+
+# Execute workflow
+/browser_read_workflow my_workflow
+```
+
+## 🐛 Troubleshooting
 
 ### Common Issues
 
-**Q: Ticca can't find my API keys**
-```bash
-# Ensure environment variables are set
-echo $OPENAI_API_KEY
-echo $ANTHROPIC_API_KEY
+1. **Import Errors**: Ensure all dependencies are installed with `uv sync`
+2. **Permission Errors**: Check file permissions in your working directory
+3. **Model Connection**: Verify API keys and network connectivity
+4. **Browser Issues**: Ensure Playwright browsers are installed (`playwright install`)
 
-# Or set them in puppy.cfg
-[api_keys]
-openai = sk-...
-anthropic = sk-ant-...
+### Debug Mode
+```bash
+# Enable debug logging
+export TICCA_DEBUG=1
+
+# Run with debug output
+ticca --debug
 ```
 
-**Q: Browser automation isn't working**
+### Performance Issues
+1. Enable profiling with `TICCA_PROFILE=1`
+2. Check the performance report at `~/.ticca/perf_report.txt`
+3. Consider increasing model context limits for large files
+
+## 🤝 Contributing
+
+We welcome contributions! Please follow these steps:
+
+1. Fork the repository
+2. Create a feature branch: `git checkout -b feature-name`
+3. Make your changes and ensure tests pass
+4. Run code quality checks: `pnpm check`
+5. Submit a pull request
+
+### Development Setup
 ```bash
-# Install required browsers
-playwright install
-playwright install-deps
+# Clone your fork
+git clone https://github.com/yourusername/ticca.git
+cd ticca
 
-# Or use camoufox
-pip install camoufox
-```
+# Install in development mode
+uv sync --dev
 
-**Q: TUI mode crashes**
-```bash
-# Try CLI mode
-ticca --no-tui
-
-# Check terminal compatibility
-ticca --help
+# Run tests
+uv run pytest
 ```
 
 ## 📄 License
@@ -307,17 +347,18 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 🙏 Acknowledgments
 
-- Built with [Pydantic AI](https://pydantic-ai.com/) for agent management
-- TUI powered by [Textual](https://textual.textual.io/)
-- Browser automation via [Playwright](https://playwright.dev/) and [Camoufox](https://camoufox.org/)
-- Model integration with [DBOS](https://www.dbos.dev/) for persistence
+- Built with [pydantic-ai](https://github.com/pydantic-ai/pydantic-ai) for AI agent management
+- UI powered by [Textual](https://github.com/Textualize/textual)
+- Browser automation via [Playwright](https://playwright.dev/)
+- Performance tracking with [DBOS](https://www.dbos.dev/)
+- Code quality with [Ruff](https://github.com/astral-sh/ruff)
 
 ## 📞 Support
 
-- 📖 [Documentation](docs/)
+- 📖 [Documentation](https://github.com/janfeddersen-wq/ticca)
 - 🐛 [Issue Tracker](https://github.com/janfeddersen-wq/ticca/issues)
 - 💬 [Discussions](https://github.com/janfeddersen-wq/ticca/discussions)
 
 ---
 
-**Ticca** - Making your terminal smarter, one command at a time! 🚀
+**Ticca** - Your terminal-embedded coding companion. 🐶✨
