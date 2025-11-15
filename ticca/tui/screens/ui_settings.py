@@ -215,6 +215,10 @@ class UISettingsScreen(ModalScreen):
         super().__init__(**kwargs)
 
     def compose(self) -> ComposeResult:
+        from ticca.config import get_easy_mode
+
+        easy_mode = get_easy_mode()
+
         with Container(id="ui-settings-dialog"):
             yield Label("🎨 UI Settings", id="ui-settings-title")
 
@@ -223,11 +227,12 @@ class UISettingsScreen(ModalScreen):
                 with TabPane("General", id="general"):
                     with VerticalScroll(classes="tab-scroll"):
                         with Container(classes="switch-row"):
-                            yield Label("Easy Mode:", classes="setting-label")
+                            yield Label("[bold]Easy Mode:[/bold]", classes="setting-label", markup=True)
                             yield Switch(id="easy-mode-switch", classes="setting-input")
                             yield Static(
-                                "Simplified interface (hides agent selector, forces code-agent).",
+                                "[bold]Simplified interface (hides agent selector, forces code-agent).[/bold]",
                                 classes="setting-description",
+                                markup=True,
                             )
 
                         with Container(classes="switch-row"):
@@ -293,67 +298,68 @@ class UISettingsScreen(ModalScreen):
                                 classes="setting-description",
                             )
 
-                # Tab 3: History & Context
-                with TabPane("History & Context", id="history"):
-                    with VerticalScroll(classes="tab-scroll"):
-                        with Container(classes="setting-row"):
-                            yield Label("Compaction Strategy:", classes="setting-label")
-                            yield Select(
-                                [
-                                    ("Summarization", "summarization"),
-                                    ("Truncation", "truncation"),
-                                ],
-                                id="compaction-strategy-select",
-                                classes="setting-input",
-                            )
-                        yield Static(
-                            "How to compress context when it gets too large.",
-                            classes="input-description",
-                        )
-
-                        with Container(classes="setting-row"):
-                            yield Label("Compaction Threshold:", classes="setting-label")
-                            yield Input(
-                                id="compaction-threshold-input",
-                                classes="setting-input",
-                                placeholder="0.85",
-                            )
-                        yield Static(
-                            "Percentage of context usage that triggers compaction (0.80-0.95).",
-                            classes="input-description",
-                        )
-
-                        with Container(classes="setting-row"):
-                            yield Label("Protected Recent Tokens:", classes="setting-label")
-                            yield Input(
-                                id="protected-tokens-input",
-                                classes="setting-input",
-                                placeholder="50000",
-                            )
-                        yield Static(
-                            "Number of recent tokens to preserve during compaction.",
-                            classes="input-description",
-                        )
-
-                        with Container(classes="switch-row"):
-                            yield Label("Auto-Save Session:", classes="setting-label")
-                            yield Switch(id="auto-save-switch", classes="setting-input")
+                # Tab 3: History & Context - only show if NOT in Easy Mode
+                if not easy_mode:
+                    with TabPane("History & Context", id="history"):
+                        with VerticalScroll(classes="tab-scroll"):
+                            with Container(classes="setting-row"):
+                                yield Label("Compaction Strategy:", classes="setting-label")
+                                yield Select(
+                                    [
+                                        ("Summarization", "summarization"),
+                                        ("Truncation", "truncation"),
+                                    ],
+                                    id="compaction-strategy-select",
+                                    classes="setting-input",
+                                )
                             yield Static(
-                                "Automatically save the session after each LLM response.",
-                                classes="setting-description",
+                                "How to compress context when it gets too large.",
+                                classes="input-description",
                             )
 
-                        with Container(classes="setting-row"):
-                            yield Label("Max Autosaved Sessions:", classes="setting-label")
-                            yield Input(
-                                id="max-autosaves-input",
-                                classes="setting-input",
-                                placeholder="20",
+                            with Container(classes="setting-row"):
+                                yield Label("Compaction Threshold:", classes="setting-label")
+                                yield Input(
+                                    id="compaction-threshold-input",
+                                    classes="setting-input",
+                                    placeholder="0.85",
+                                )
+                            yield Static(
+                                "Percentage of context usage that triggers compaction (0.80-0.95).",
+                                classes="input-description",
                             )
-                        yield Static(
-                            "Maximum number of autosaves to keep (0 for unlimited).",
-                            classes="input-description",
-                        )
+
+                            with Container(classes="setting-row"):
+                                yield Label("Protected Recent Tokens:", classes="setting-label")
+                                yield Input(
+                                    id="protected-tokens-input",
+                                    classes="setting-input",
+                                    placeholder="50000",
+                                )
+                            yield Static(
+                                "Number of recent tokens to preserve during compaction.",
+                                classes="input-description",
+                            )
+
+                            with Container(classes="switch-row"):
+                                yield Label("Auto-Save Session:", classes="setting-label")
+                                yield Switch(id="auto-save-switch", classes="setting-input")
+                                yield Static(
+                                    "Automatically save the session after each LLM response.",
+                                    classes="setting-description",
+                                )
+
+                            with Container(classes="setting-row"):
+                                yield Label("Max Autosaved Sessions:", classes="setting-label")
+                                yield Input(
+                                    id="max-autosaves-input",
+                                    classes="setting-input",
+                                    placeholder="20",
+                                )
+                            yield Static(
+                                "Maximum number of autosaves to keep (0 for unlimited).",
+                                classes="input-description",
+                            )
 
             with Horizontal(id="ui-settings-buttons"):
                 yield Button("Save & Close", id="save-button", variant="primary")
@@ -377,7 +383,8 @@ class UISettingsScreen(ModalScreen):
         )
 
         # Tab 1: General
-        self.query_one("#easy-mode-switch", Switch).value = get_easy_mode()
+        easy_mode = get_easy_mode()
+        self.query_one("#easy-mode-switch", Switch).value = easy_mode
         self.query_one("#yolo-mode-switch", Switch).value = get_yolo_mode()
         self.query_one("#allow-recursion-switch", Switch).value = get_allow_recursion()
         self.load_theme_options()
@@ -387,12 +394,13 @@ class UISettingsScreen(ModalScreen):
         self.query_one("#suppress-thinking-switch", Switch).value = get_suppress_thinking_messages()
         self.query_one("#suppress-informational-switch", Switch).value = get_suppress_informational_messages()
 
-        # Tab 3: History & Context
-        self.query_one("#compaction-strategy-select", Select).value = get_compaction_strategy()
-        self.query_one("#compaction-threshold-input", Input).value = str(get_compaction_threshold())
-        self.query_one("#protected-tokens-input", Input).value = str(get_protected_token_count())
-        self.query_one("#auto-save-switch", Switch).value = get_auto_save_session()
-        self.query_one("#max-autosaves-input", Input).value = str(get_max_saved_sessions())
+        # Tab 3: History & Context - only load if not in Easy Mode
+        if not easy_mode:
+            self.query_one("#compaction-strategy-select", Select).value = get_compaction_strategy()
+            self.query_one("#compaction-threshold-input", Input).value = str(get_compaction_threshold())
+            self.query_one("#protected-tokens-input", Input).value = str(get_protected_token_count())
+            self.query_one("#auto-save-switch", Switch).value = get_auto_save_session()
+            self.query_one("#max-autosaves-input", Input).value = str(get_max_saved_sessions())
 
     def load_theme_options(self):
         """Load available themes into the theme select widget."""
@@ -416,6 +424,21 @@ class UISettingsScreen(ModalScreen):
             fallback = [("Nord", "nord")]
             self.query_one("#theme-select", Select).set_options(fallback)
             self.query_one("#theme-select", Select).value = "nord"
+
+    @on(Switch.Changed, "#easy-mode-switch")
+    def on_easy_mode_changed(self, event: Switch.Changed) -> None:
+        """Handle Easy Mode toggle - reopen dialog to show/hide History & Context tab."""
+        from ticca.config import set_easy_mode, get_easy_mode
+
+        # Only rerender if the value actually changed from what's in config
+        current_easy_mode = get_easy_mode()
+        if event.value != current_easy_mode:
+            # Save the Easy Mode change immediately
+            set_easy_mode(event.value)
+
+            # Close and reopen the dialog to re-render with the new tab visibility
+            self.app.pop_screen()
+            self.app.push_screen(UISettingsScreen())
 
     @on(Button.Pressed, "#save-button")
     def save_settings(self) -> None:
@@ -464,36 +487,37 @@ class UISettingsScreen(ModalScreen):
             set_suppress_thinking_messages(suppress_thinking)
             set_suppress_informational_messages(suppress_informational)
 
-            # Tab 3: History & Context
-            compaction_strategy = self.query_one("#compaction-strategy-select", Select).value
-            compaction_threshold = self.query_one("#compaction-threshold-input", Input).value.strip()
-            protected_tokens = self.query_one("#protected-tokens-input", Input).value.strip()
-            auto_save = self.query_one("#auto-save-switch", Switch).value
-            max_autosaves = self.query_one("#max-autosaves-input", Input).value.strip()
+            # Tab 3: History & Context - only save if not in Easy Mode
+            if not easy_mode:
+                compaction_strategy = self.query_one("#compaction-strategy-select", Select).value
+                compaction_threshold = self.query_one("#compaction-threshold-input", Input).value.strip()
+                protected_tokens = self.query_one("#protected-tokens-input", Input).value.strip()
+                auto_save = self.query_one("#auto-save-switch", Switch).value
+                max_autosaves = self.query_one("#max-autosaves-input", Input).value.strip()
 
-            if compaction_strategy in ["summarization", "truncation"]:
-                set_config_value("compaction_strategy", compaction_strategy)
+                if compaction_strategy in ["summarization", "truncation"]:
+                    set_config_value("compaction_strategy", compaction_strategy)
 
-            if compaction_threshold:
-                threshold_value = float(compaction_threshold)
-                if 0.8 <= threshold_value <= 0.95:
-                    set_config_value("compaction_threshold", compaction_threshold)
-                else:
-                    raise ValueError("Compaction threshold must be between 0.8 and 0.95")
+                if compaction_threshold:
+                    threshold_value = float(compaction_threshold)
+                    if 0.8 <= threshold_value <= 0.95:
+                        set_config_value("compaction_threshold", compaction_threshold)
+                    else:
+                        raise ValueError("Compaction threshold must be between 0.8 and 0.95")
 
-            if protected_tokens.isdigit():
-                tokens_value = int(protected_tokens)
-                model_context_length = get_model_context_length()
-                max_protected_tokens = int(model_context_length * 0.75)
-                if 1000 <= tokens_value <= max_protected_tokens:
-                    set_config_value("protected_token_count", protected_tokens)
-                else:
-                    raise ValueError(f"Protected tokens must be between 1000 and {max_protected_tokens}")
+                if protected_tokens.isdigit():
+                    tokens_value = int(protected_tokens)
+                    model_context_length = get_model_context_length()
+                    max_protected_tokens = int(model_context_length * 0.75)
+                    if 1000 <= tokens_value <= max_protected_tokens:
+                        set_config_value("protected_token_count", protected_tokens)
+                    else:
+                        raise ValueError(f"Protected tokens must be between 1000 and {max_protected_tokens}")
 
-            set_auto_save_session(auto_save)
+                set_auto_save_session(auto_save)
 
-            if max_autosaves.isdigit():
-                set_max_saved_sessions(int(max_autosaves))
+                if max_autosaves.isdigit():
+                    set_max_saved_sessions(int(max_autosaves))
 
             # Return success message
             from ticca.config import CONFIG_FILE

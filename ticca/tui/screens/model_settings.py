@@ -341,13 +341,14 @@ class ModelSettingsScreen(ModalScreen):
                         )
                         yield Container(id="agent-pinning-container")
 
-                        yield Label("GAC Plugin", classes="section-header")
+                        yield Label("GAC Plugin", classes="section-header", id="gac-header")
                         yield Static(
                             "Configure AI-powered git commit message generation.",
                             classes="setting-description",
+                            id="gac-description",
                         )
 
-                        with Container(classes="switch-row"):
+                        with Container(classes="switch-row", id="gac-enabled-row"):
                             yield Label("Enable GAC Plugin:", classes="setting-label")
                             yield Switch(id="gac-enabled-switch", classes="setting-input")
                             yield Static(
@@ -355,12 +356,13 @@ class ModelSettingsScreen(ModalScreen):
                                 classes="setting-description",
                             )
 
-                        with Container(classes="setting-row"):
+                        with Container(classes="setting-row", id="gac-model-row"):
                             yield Label("GAC Model:", classes="setting-label")
                             yield Select([], id="gac-model-select", classes="setting-input")
                         yield Static(
                             "Model to use for commit message generation. Select '(default)' to use global model.",
                             classes="input-description",
+                            id="gac-model-description",
                         )
 
                         yield Label("MCP & DBOS", classes="section-header")
@@ -471,14 +473,23 @@ class ModelSettingsScreen(ModalScreen):
             self.query_one("#agent-pinning-header", Label).display = False
             self.query_one("#agent-pinning-description", Static).display = False
             self.query_one("#agent-pinning-container", Container).display = False
+
+            # Hide GAC Plugin section in Easy Mode
+            self.query_one("#gac-header", Label).display = False
+            self.query_one("#gac-description", Static).display = False
+            self.query_one("#gac-enabled-row", Container).display = False
+            self.query_one("#gac-model-row", Container).display = False
+            self.query_one("#gac-model-description", Static).display = False
         else:
             # Show and populate agent pinning in normal mode
             self.load_agent_pinning_table()
 
-        self.load_gac_model_options()
-        self.query_one("#gac-enabled-switch", Switch).value = get_gac_enabled()
-        gac_model = get_gac_model()
-        self.query_one("#gac-model-select", Select).value = gac_model if gac_model else ""
+            # Show and populate GAC settings in normal mode
+            self.load_gac_model_options()
+            self.query_one("#gac-enabled-switch", Switch).value = get_gac_enabled()
+            gac_model = get_gac_model()
+            self.query_one("#gac-model-select", Select).value = gac_model if gac_model else ""
+
         self.query_one("#disable-mcp-switch", Switch).value = get_mcp_disabled()
         self.query_one("#enable-dbos-switch", Switch).value = get_use_dbos()
 
@@ -635,7 +646,8 @@ class ModelSettingsScreen(ModalScreen):
             set_openai_reasoning_effort(reasoning_effort)
 
             # Tab 2: Agents & Integrations
-            if not get_easy_mode():
+            easy_mode = get_easy_mode()
+            if not easy_mode:
                 from ticca.agents import get_available_agents
                 agents = get_available_agents()
                 for agent_name in agents.keys():
@@ -647,10 +659,14 @@ class ModelSettingsScreen(ModalScreen):
                     except Exception:
                         pass
 
-            gac_enabled = self.query_one("#gac-enabled-switch", Switch).value
-            gac_model = self.query_one("#gac-model-select", Select).value
-            set_gac_enabled(gac_enabled)
-            set_gac_model(gac_model if gac_model else "")
+                # Save GAC settings only if not in Easy Mode
+                gac_enabled = self.query_one("#gac-enabled-switch", Switch).value
+                gac_model = self.query_one("#gac-model-select", Select).value
+                set_gac_enabled(gac_enabled)
+                set_gac_model(gac_model if gac_model else "")
+            else:
+                # In Easy Mode, force GAC to use default model
+                set_gac_model("")  # Empty string means "use global model"
 
             disable_mcp = self.query_one("#disable-mcp-switch", Switch).value
             enable_dbos = self.query_one("#enable-dbos-switch", Switch).value
