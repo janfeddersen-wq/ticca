@@ -436,6 +436,14 @@ class UISettingsScreen(ModalScreen):
             # Save the Easy Mode change immediately
             set_easy_mode(event.value)
 
+            # Update the right sidebar agent selector visibility immediately
+            try:
+                from ticca.tui.components import RightSidebar
+                right_sidebar = self.app.query_one(RightSidebar)
+                right_sidebar.update_agent_selector_visibility()
+            except Exception:
+                pass
+
             # Close and reopen the dialog to re-render with the new tab visibility
             self.app.pop_screen()
             self.app.push_screen(UISettingsScreen())

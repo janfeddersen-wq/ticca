@@ -698,6 +698,7 @@ class ModelSettingsScreen(ModalScreen):
                 "success": True,
                 "message": message,
                 "model_changed": model_changed,
+                "gac_changed": True,  # Always refresh git actions visibility
             })
 
         except Exception as e:

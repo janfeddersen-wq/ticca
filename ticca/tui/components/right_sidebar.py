@@ -172,6 +172,16 @@ class RightSidebar(Container):
         except Exception:
             pass
 
+        # Show/hide git actions based on GAC plugin state
+        try:
+            from ticca.config import get_gac_enabled
+            gac_enabled = get_gac_enabled()
+            git_actions = self.query_one("#git-actions")
+            # Show git actions when GAC is enabled (buttons use GAC features)
+            git_actions.display = gac_enabled
+        except Exception:
+            pass
+
         self._update_display()
         # Auto-refresh every second for live updates
         self.set_interval(1.0, self._update_display)
@@ -234,7 +244,7 @@ class RightSidebar(Container):
 
         status_text = Text()
 
-        # Active Agent Section (like ticca_old)
+        # Active Agent Section
         status_text.append("Active Agent:\n", style="bold")
         status_text.append(f"  {self.agent_name}\n\n", style="cyan")
 
@@ -244,56 +254,7 @@ class RightSidebar(Container):
         model_display = self.current_model
         if len(model_display) > 28:
             model_display = model_display[:25] + "..."
-        status_text.append(f"  {model_display}\n\n", style="cyan")
-
-        # Agent Status List (hide in Easy Mode)
-        from ticca.config import get_easy_mode
-        if not get_easy_mode():
-            status_text.append("Agents:\n", style="bold")
-
-            # Try to get available agents and their status
-            try:
-                from ticca.agents import get_available_agents
-                from ticca.agents.agent_manager import get_current_agent, _AGENT_HISTORIES
-                agents = get_available_agents()
-
-                # Get the current agent to access its live message history
-                try:
-                    current_agent = get_current_agent()
-                    current_agent_id = current_agent.name
-                except Exception:
-                    current_agent = None
-                    current_agent_id = None
-
-                for agent_id, agent_display in agents.items():
-                    # Show agent with idle status and message count
-                    # Use a simple indicator: ○ for idle agents, ● for active
-                    indicator = "●" if agent_id.lower() in self.agent_name.lower() else "○"
-                    status_text.append(f"  {indicator} ", style="dim")
-
-                    # Remove the word "Agent" from display name
-                    display_clean = agent_display.replace(" Agent", "").replace(" agent", "")
-                    status_text.append(f"{display_clean}: ", style="white")
-                    status_text.append("idle ", style="dim")
-
-                    # Get message count for this specific agent
-                    try:
-                        # If this is the current agent, get its live history
-                        if current_agent and agent_id == current_agent_id:
-                            agent_msg_count = len(current_agent.get_message_history())
-                        # Otherwise, get from stored history
-                        elif agent_id in _AGENT_HISTORIES:
-                            agent_msg_count = len(_AGENT_HISTORIES[agent_id])
-                        else:
-                            agent_msg_count = 0
-                    except Exception:
-                        agent_msg_count = 0
-
-                    status_text.append(f"({agent_msg_count} msg)\n", style="dim")
-            except Exception:
-                # Fallback if agent discovery fails
-                display_clean = self.agent_name.replace("-agent", "").title()
-                status_text.append(f"  ● {display_clean}: idle ({self.message_count} msg)\n", style="white")
+        status_text.append(f"  {model_display}\n", style="cyan")
 
         # Clear and write to RichLog
         status_display.clear()
@@ -341,3 +302,29 @@ class RightSidebar(Container):
     def on_git_push_button_pressed(self) -> None:
         """Handle git push button press."""
         self.post_message(self.GitPushRequested())
+
+    def update_git_actions_visibility(self) -> None:
+        """Update git actions visibility based on GAC plugin state."""
+        try:
+            from ticca.config import get_gac_enabled
+            gac_enabled = get_gac_enabled()
+            git_actions = self.query_one("#git-actions")
+            # Show git actions when GAC is enabled (buttons use GAC features)
+            git_actions.display = gac_enabled
+        except Exception:
+            pass
+
+    def update_agent_selector_visibility(self) -> None:
+        """Update agent selector visibility based on Easy Mode state."""
+        try:
+            from ticca.config import get_easy_mode
+            easy_mode = get_easy_mode()
+            agent_selector = self.query_one("#agent-selector")
+            # Hide agent selector when Easy Mode is enabled, show when disabled
+            agent_selector.display = not easy_mode
+            # Force a refresh to update the layout
+            self.refresh()
+        except Exception as e:
+            # Log the error for debugging
+            import logging
+            logging.debug(f"Failed to update agent selector visibility: {e}")

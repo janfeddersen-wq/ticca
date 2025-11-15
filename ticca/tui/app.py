@@ -180,7 +180,7 @@ class CodePuppyTUI(App):
         Binding("ctrl+2", "toggle_sidebar", "History"),
         Binding("ctrl+3", "open_ui_settings", "UI Settings"),
         Binding("ctrl+4", "toggle_file_tree", "Files"),
-        Binding("ctrl+5", "focus_input", "Focus Prompt"),
+        Binding("ctrl+a", "focus_input", "Focus Prompt"),
         Binding("ctrl+6", "focus_chat", "Focus Response"),
         Binding("ctrl+7", "toggle_right_sidebar", "Status"),
         Binding("ctrl+m", "open_model_settings", "Model Settings"),
@@ -1043,10 +1043,9 @@ class CodePuppyTUI(App):
                             status_bar = self.query_one(StatusBar)
                             status_bar.current_model = self.current_model
 
-                        # Reload right sidebar to show/hide agent selector
+                        # Update right sidebar to show/hide agent selector
                         right_sidebar = self.query_one(RightSidebar)
-                        agent_selector = right_sidebar.query_one("#agent-selector")
-                        agent_selector.display = not easy_mode
+                        right_sidebar.update_agent_selector_visibility()
 
                     except Exception as e:
                         self.add_error_message(f"Failed to update Easy Mode: {e}")
@@ -1079,6 +1078,14 @@ class CodePuppyTUI(App):
                         self.add_error_message(
                             f"Failed to reload agent after model change: {reload_error}"
                         )
+
+                # Handle GAC settings change - update git actions visibility
+                if result.get("gac_changed"):
+                    try:
+                        right_sidebar = self.query_one(RightSidebar)
+                        right_sidebar.update_git_actions_visibility()
+                    except Exception:
+                        pass
 
                 # Update status bar
                 status_bar = self.query_one(StatusBar)
