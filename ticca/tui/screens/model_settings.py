@@ -6,7 +6,7 @@ import os
 from textual.app import ComposeResult
 from textual.containers import Container, Horizontal, VerticalScroll
 from textual.screen import ModalScreen
-from textual.widgets import Button, Input, Label, Select, Static, Switch, TabbedContent, TabPane
+from textual.widgets import Button, Input, Label, Select, Static, Switch, TabbedContent, TabPane, TextArea
 from textual import on
 
 
@@ -225,6 +225,57 @@ class ModelSettingsScreen(ModalScreen):
         padding: 0 !important;
     }
 
+    .param-row {
+        layout: horizontal;
+        height: auto;
+        margin: 0 0 1 0;
+        align: left middle;
+    }
+
+    .param-row .setting-label {
+        width: 20;
+        margin: 0 1 0 0;
+        padding: 0;
+        height: auto;
+    }
+
+    .param-row Switch {
+        width: 4;
+        margin: 0 1 0 0;
+        height: 1;
+        padding: 0;
+    }
+
+    .param-row Input {
+        width: 1fr;
+        margin: 0;
+        padding: 0 1;
+        height: 3;
+    }
+
+    .param-row Input:disabled {
+        opacity: 0.5;
+        background: $surface-darken-1;
+    }
+
+    TextArea {
+        width: 100%;
+        height: 8;
+        border: round $primary;
+        background: $panel;
+        margin: 0 0 1 0;
+    }
+
+    TextArea:focus {
+        border: round $accent;
+        background: $secondary;
+    }
+
+    .textarea-label {
+        color: $text;
+        margin: 1 0 0 0;
+    }
+
     #model-settings-buttons {
         layout: horizontal;
         height: 3;
@@ -330,17 +381,6 @@ class ModelSettingsScreen(ModalScreen):
                             classes="input-description",
                         )
 
-                # Tab 2: Agents & Integrations
-                with TabPane("Agents & Integrations", id="integrations"):
-                    with VerticalScroll(classes="tab-scroll"):
-                        yield Label("Agent Model Pinning", classes="section-header", id="agent-pinning-header")
-                        yield Static(
-                            "Pin specific models to individual agents. Select '(default)' to use the global model.",
-                            classes="setting-description",
-                            id="agent-pinning-description",
-                        )
-                        yield Container(id="agent-pinning-container")
-
                         yield Label("GAC Plugin", classes="section-header", id="gac-header")
                         yield Static(
                             "Configure AI-powered git commit message generation.",
@@ -383,7 +423,9 @@ class ModelSettingsScreen(ModalScreen):
                                 classes="setting-description",
                             )
 
-                # Tab 3: API Keys & Status
+                # Agent tabs will be dynamically created in on_mount()
+
+                # Tab: API Keys & Status
                 with TabPane("API Keys & Status", id="status"):
                     with VerticalScroll(classes="tab-scroll"):
                         yield Static("API Keys Configuration", classes="section-header")
@@ -467,13 +509,8 @@ class ModelSettingsScreen(ModalScreen):
         self.query_one("#vqa-model-select", Select).value = get_vqa_model_name()
         self.query_one("#reasoning-effort-select", Select).value = get_openai_reasoning_effort()
 
-        # Tab 2: Agents & Integrations
+        # GAC settings
         if easy_mode:
-            # Hide agent pinning section in Easy Mode
-            self.query_one("#agent-pinning-header", Label).display = False
-            self.query_one("#agent-pinning-description", Static).display = False
-            self.query_one("#agent-pinning-container", Container).display = False
-
             # Hide GAC Plugin section in Easy Mode
             self.query_one("#gac-header", Label).display = False
             self.query_one("#gac-description", Static).display = False
@@ -481,9 +518,6 @@ class ModelSettingsScreen(ModalScreen):
             self.query_one("#gac-model-row", Container).display = False
             self.query_one("#gac-model-description", Static).display = False
         else:
-            # Show and populate agent pinning in normal mode
-            self.load_agent_pinning_table()
-
             # Show and populate GAC settings in normal mode
             self.load_gac_model_options()
             self.query_one("#gac-enabled-switch", Switch).value = get_gac_enabled()
@@ -493,7 +527,11 @@ class ModelSettingsScreen(ModalScreen):
         self.query_one("#disable-mcp-switch", Switch).value = get_mcp_disabled()
         self.query_one("#enable-dbos-switch", Switch).value = get_use_dbos()
 
-        # Tab 3: API Keys & Status
+        # Create per-agent tabs (when not in easy mode)
+        if not easy_mode:
+            self.create_agent_tabs()
+
+        # API Keys & Status
         self.load_api_keys()
 
     def load_model_options(self):
@@ -543,33 +581,108 @@ class ModelSettingsScreen(ModalScreen):
             fallback = [("(use global model)", "")]
             self.query_one("#gac-model-select", Select).set_options(fallback)
 
-    def load_agent_pinning_table(self):
-        """Load agent model pinning dropdowns."""
+    def create_agent_tabs(self):
+        """Create per-agent configuration tabs."""
         from ticca.agents import get_available_agents
-        from ticca.config import get_agent_pinned_model
+        from ticca.config import (
+            get_agent_pinned_model,
+            get_agent_temperature,
+            get_agent_top_p,
+            get_agent_base_url,
+            get_agent_system_prompt_suffix,
+        )
         from ticca.model_factory import ModelFactory
 
-        container = self.query_one("#agent-pinning-container")
+        # Get the TabbedContent widget
+        tabs_widget = self.query_one("#model-settings-tabs", TabbedContent)
+
+        # Get available agents and models
         agents = get_available_agents()
         models_data = ModelFactory.load_config()
 
+        # Prepare model options for dropdowns
         model_options = [("(default)", "")]
         for model_name, model_config in models_data.items():
             model_type = model_config.get("type", "unknown")
             display_name = f"{model_name} ({model_type})"
             model_options.append((display_name, model_name))
 
+        # Create a tab for each agent
         for agent_name, display_name in agents.items():
+            # Get current values from config
             pinned_model = get_agent_pinned_model(agent_name) or ""
-            agent_row = Container(classes="agent-pin-row")
-            container.mount(agent_row)
+            temperature = get_agent_temperature(agent_name)
+            top_p = get_agent_top_p(agent_name)
+            base_url = get_agent_base_url(agent_name)
+            system_prompt_suffix = get_agent_system_prompt_suffix(agent_name)
 
-            label = Label(f"{display_name}:", classes="setting-label")
-            agent_row.mount(label)
+            # Create tab pane for this agent
+            tab_pane = TabPane(display_name, id=f"agent-tab-{agent_name}")
 
-            select_id = f"agent-pin-{agent_name}"
-            agent_select = Select(model_options, id=select_id, value=pinned_model)
-            agent_row.mount(agent_select)
+            # Add tab to the tabbed content FIRST so it's attached
+            tabs_widget.add_pane(tab_pane)
+
+            # Create scroll container
+            scroll_container = VerticalScroll(classes="tab-scroll")
+
+            # Mount scroll container to tab pane
+            tab_pane.mount(scroll_container)
+
+            # Create and mount model row
+            model_row = Container(classes="setting-row")
+            scroll_container.mount(model_row)
+            model_row.mount(
+                Label("Pinned Model:", classes="setting-label"),
+                Select(model_options, id=f"agent-model-{agent_name}", classes="setting-input", value=pinned_model)
+            )
+
+            # Create and mount temperature row
+            temp_row = Container(classes="param-row")
+            scroll_container.mount(temp_row)
+            temp_row.mount(
+                Label("Temperature:", classes="setting-label"),
+                Switch(id=f"agent-temp-enabled-{agent_name}", value=temperature is not None),
+                Input(
+                    id=f"agent-temp-{agent_name}",
+                    value=str(temperature) if temperature is not None else "0.7",
+                    disabled=temperature is None,
+                )
+            )
+
+            # Create and mount top_p row
+            top_p_row = Container(classes="param-row")
+            scroll_container.mount(top_p_row)
+            top_p_row.mount(
+                Label("Top P:", classes="setting-label"),
+                Switch(id=f"agent-topp-enabled-{agent_name}", value=top_p is not None),
+                Input(
+                    id=f"agent-topp-{agent_name}",
+                    value=str(top_p) if top_p is not None else "1.0",
+                    disabled=top_p is None,
+                )
+            )
+
+            # Create and mount base_url row
+            base_url_row = Container(classes="param-row")
+            scroll_container.mount(base_url_row)
+            base_url_row.mount(
+                Label("Base URL:", classes="setting-label"),
+                Switch(id=f"agent-baseurl-enabled-{agent_name}", value=base_url is not None),
+                Input(
+                    id=f"agent-baseurl-{agent_name}",
+                    value=base_url if base_url is not None else "https://api.example.com/v1",
+                    disabled=base_url is None,
+                )
+            )
+
+            # Mount prompt suffix label and textarea
+            scroll_container.mount(
+                Label("System Prompt Suffix:", classes="textarea-label"),
+                TextArea(
+                    id=f"agent-prompt-suffix-{agent_name}",
+                    text=system_prompt_suffix,
+                )
+            )
 
     def load_api_keys(self):
         """Load API keys from environment variables or ~/.ticca/puppy.cfg into input fields."""
@@ -616,6 +729,43 @@ class ModelSettingsScreen(ModalScreen):
         for key, value in api_keys.items():
             set_api_key(key, value)
 
+    @on(Switch.Changed)
+    def handle_switch_changed(self, event: Switch.Changed) -> None:
+        """Handle switch changes to enable/disable associated inputs."""
+        switch_id = event.switch.id
+        if not switch_id:
+            return
+
+        # Handle temperature switch
+        if switch_id.startswith("agent-temp-enabled-"):
+            agent_name = switch_id.replace("agent-temp-enabled-", "")
+            input_id = f"agent-temp-{agent_name}"
+            try:
+                input_widget = self.query_one(f"#{input_id}", Input)
+                input_widget.disabled = not event.value
+            except Exception:
+                pass
+
+        # Handle top_p switch
+        elif switch_id.startswith("agent-topp-enabled-"):
+            agent_name = switch_id.replace("agent-topp-enabled-", "")
+            input_id = f"agent-topp-{agent_name}"
+            try:
+                input_widget = self.query_one(f"#{input_id}", Input)
+                input_widget.disabled = not event.value
+            except Exception:
+                pass
+
+        # Handle base_url switch
+        elif switch_id.startswith("agent-baseurl-enabled-"):
+            agent_name = switch_id.replace("agent-baseurl-enabled-", "")
+            input_id = f"agent-baseurl-{agent_name}"
+            try:
+                input_widget = self.query_one(f"#{input_id}", Input)
+                input_widget.disabled = not event.value
+            except Exception:
+                pass
+
     @on(Button.Pressed, "#save-button")
     def save_settings(self) -> None:
         """Save the modified settings."""
@@ -625,6 +775,10 @@ class ModelSettingsScreen(ModalScreen):
             set_vqa_model_name,
             set_openai_reasoning_effort,
             set_agent_pinned_model,
+            set_agent_temperature,
+            set_agent_top_p,
+            set_agent_base_url,
+            set_agent_system_prompt_suffix,
             set_gac_enabled,
             set_gac_model,
             set_config_value,
@@ -645,17 +799,80 @@ class ModelSettingsScreen(ModalScreen):
                 set_vqa_model_name(selected_vqa_model)
             set_openai_reasoning_effort(reasoning_effort)
 
-            # Tab 2: Agents & Integrations
+            # Per-agent settings
             easy_mode = get_easy_mode()
+            agent_settings_changed = False
             if not easy_mode:
-                from ticca.agents import get_available_agents
+                from ticca.agents import get_available_agents, get_current_agent_name
                 agents = get_available_agents()
+                current_agent_name = get_current_agent_name()
+
                 for agent_name in agents.keys():
-                    select_id = f"agent-pin-{agent_name}"
+                    # Save pinned model
                     try:
-                        agent_select = self.query_one(f"#{select_id}", Select)
+                        agent_select = self.query_one(f"#agent-model-{agent_name}", Select)
                         pinned_model = agent_select.value
                         set_agent_pinned_model(agent_name, pinned_model)
+                        if agent_name == current_agent_name:
+                            agent_settings_changed = True
+                    except Exception:
+                        pass
+
+                    # Save temperature (only if enabled)
+                    try:
+                        temp_switch = self.query_one(f"#agent-temp-enabled-{agent_name}", Switch)
+                        if temp_switch.value:
+                            temp_input = self.query_one(f"#agent-temp-{agent_name}", Input)
+                            try:
+                                temp_value = float(temp_input.value)
+                                set_agent_temperature(agent_name, temp_value)
+                            except (ValueError, TypeError):
+                                set_agent_temperature(agent_name, None)
+                        else:
+                            set_agent_temperature(agent_name, None)
+                        if agent_name == current_agent_name:
+                            agent_settings_changed = True
+                    except Exception:
+                        pass
+
+                    # Save top_p (only if enabled)
+                    try:
+                        top_p_switch = self.query_one(f"#agent-topp-enabled-{agent_name}", Switch)
+                        if top_p_switch.value:
+                            top_p_input = self.query_one(f"#agent-topp-{agent_name}", Input)
+                            try:
+                                top_p_value = float(top_p_input.value)
+                                set_agent_top_p(agent_name, top_p_value)
+                            except (ValueError, TypeError):
+                                set_agent_top_p(agent_name, None)
+                        else:
+                            set_agent_top_p(agent_name, None)
+                        if agent_name == current_agent_name:
+                            agent_settings_changed = True
+                    except Exception:
+                        pass
+
+                    # Save base_url (only if enabled)
+                    try:
+                        base_url_switch = self.query_one(f"#agent-baseurl-enabled-{agent_name}", Switch)
+                        if base_url_switch.value:
+                            base_url_input = self.query_one(f"#agent-baseurl-{agent_name}", Input)
+                            base_url_value = base_url_input.value.strip()
+                            set_agent_base_url(agent_name, base_url_value if base_url_value else None)
+                        else:
+                            set_agent_base_url(agent_name, None)
+                        if agent_name == current_agent_name:
+                            agent_settings_changed = True
+                    except Exception:
+                        pass
+
+                    # Save system prompt suffix
+                    try:
+                        prompt_textarea = self.query_one(f"#agent-prompt-suffix-{agent_name}", TextArea)
+                        suffix = prompt_textarea.text
+                        set_agent_system_prompt_suffix(agent_name, suffix)
+                        if agent_name == current_agent_name:
+                            agent_settings_changed = True
                     except Exception:
                         pass
 
@@ -673,11 +890,11 @@ class ModelSettingsScreen(ModalScreen):
             set_config_value("disable_mcp", "true" if disable_mcp else "false")
             set_enable_dbos(enable_dbos)
 
-            # Tab 3: API Keys & Status
+            # API Keys & Status
             self.save_api_keys()
 
-            # Reload agent if model changed
-            if model_changed:
+            # Reload agent if model changed or agent settings changed
+            if model_changed or agent_settings_changed:
                 try:
                     from ticca.agents import get_current_agent
                     current_agent = get_current_agent()

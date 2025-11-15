@@ -38,7 +38,11 @@ from pydantic_ai.settings import ModelSettings
 
 # Consolidated relative imports
 from ticca.config import (
+    get_agent_base_url,
     get_agent_pinned_model,
+    get_agent_system_prompt_suffix,
+    get_agent_temperature,
+    get_agent_top_p,
     get_compaction_strategy,
     get_compaction_threshold,
     get_global_model_name,
@@ -941,7 +945,29 @@ class BaseAgent(ABC):
 
         model_name = self.get_model_name()
 
+        # Load per-agent overrides (only if active/not None)
+        agent_temperature = get_agent_temperature(self.name)
+        agent_top_p = get_agent_top_p(self.name)
+        agent_base_url = get_agent_base_url(self.name)
+        agent_system_prompt_suffix = get_agent_system_prompt_suffix(self.name)
+
         models_config = ModelFactory.load_config()
+
+        # Apply base_url override if set by modifying the model config
+        if agent_base_url:
+            # Create a modified copy of the model config with the custom base_url
+            if model_name in models_config:
+                import copy
+                model_config = copy.deepcopy(models_config[model_name])
+                model_type = model_config.get("type", "")
+
+                # Apply base_url based on model type
+                if model_type in ["custom_openai", "custom_anthropic", "claude_code", "cerebras"]:
+                    if "custom_endpoint" not in model_config:
+                        model_config["custom_endpoint"] = {}
+                    model_config["custom_endpoint"]["url"] = agent_base_url
+                    models_config[model_name] = model_config
+
         model, resolved_model_name = self._load_model_with_fallback(
             model_name,
             models_config,
@@ -953,6 +979,10 @@ class BaseAgent(ABC):
         if puppy_rules:
             instructions += f"\n{puppy_rules}"
 
+        # Append system prompt suffix if set
+        if agent_system_prompt_suffix:
+            instructions += f"\n{agent_system_prompt_suffix}"
+
         mcp_servers = self.load_mcp_servers()
 
         model_settings_dict: Dict[str, Any] = {"seed": 42}
@@ -961,6 +991,12 @@ class BaseAgent(ABC):
             min(int(0.05 * self.get_model_context_length()) - 1024, 16384),
         )
         model_settings_dict["max_tokens"] = output_tokens
+
+        # Apply temperature and top_p overrides if set
+        if agent_temperature is not None:
+            model_settings_dict["temperature"] = agent_temperature
+        if agent_top_p is not None:
+            model_settings_dict["top_p"] = agent_top_p
 
         model_settings: ModelSettings = ModelSettings(**model_settings_dict)
         if "gpt-5" in model_name:

@@ -403,6 +403,12 @@ class ModelFactory:
             model = GoogleModel(model_name=model_config["name"], provider=google_gla)
             return model
         elif model_type == "cerebras":
+            url, headers, verify, api_key = get_custom_config(model_config)
+            if not api_key:
+                emit_warning(
+                    f"API key is not set for Cerebras endpoint; skipping model '{model_config.get('name')}'."
+                )
+                return None
 
             class ZaiCerebrasProvider(CerebrasProvider):
                 def model_profile(self, model_name: str) -> ModelProfile | None:
@@ -413,18 +419,33 @@ class ModelFactory:
                         profile = profile.update(qwen_model_profile("qwen-3-coder"))
                     return profile
 
-            url, headers, verify, api_key = get_custom_config(model_config)
-            if not api_key:
-                emit_warning(
-                    f"API key is not set for Cerebras endpoint; skipping model '{model_config.get('name')}'."
-                )
-                return None
-            client = create_async_client(headers=headers, verify=verify)
-            provider_args = dict(
-                api_key=api_key,
-                http_client=client,
-            )
-            provider = ZaiCerebrasProvider(**provider_args)
+            # Check if we're using a custom URL (not the default Cerebras URL)
+            default_cerebras_url = "https://api.cerebras.ai/v1"
+            if url != default_cerebras_url:
+                # Custom base_url - create AsyncOpenAI client with custom URL
+                from openai import AsyncOpenAI
+
+                # Create httpx client with fallback for decompression errors
+                base_http_client = create_async_client(headers=headers, verify=verify)
+                original_send = base_http_client.send
+
+                async def send_with_decompression_fallback(request, *args, **kwargs):
+                    try:
+                        return await original_send(request, *args, **kwargs)
+                    except httpx.DecodingError:
+                        # Decompression failed, retry without compression
+                        if 'accept-encoding' in request.headers:
+                            request.headers = request.headers.copy()
+                            del request.headers['accept-encoding']
+                        return await original_send(request, *args, **kwargs)
+
+                base_http_client.send = send_with_decompression_fallback
+
+                openai_client = AsyncOpenAI(base_url=url, api_key=api_key, http_client=base_http_client)
+                provider = ZaiCerebrasProvider(openai_client=openai_client)
+            else:
+                # Default Cerebras URL - use standard provider initialization
+                provider = ZaiCerebrasProvider(api_key=api_key)
 
             model = OpenAIChatModel(model_name=model_config["name"], provider=provider)
             setattr(model, "provider", provider)

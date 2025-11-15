@@ -737,6 +737,118 @@ def clear_agent_pinned_model(agent_name: str):
     set_config_value(f"agent_model_{agent_name}", "")
 
 
+def get_agent_temperature(agent_name: str) -> Optional[float]:
+    """Get the temperature override for a specific agent.
+
+    Args:
+        agent_name: Name of the agent to get the temperature for.
+
+    Returns:
+        Temperature value, or None if no override is set (use model default).
+    """
+    value = get_value(f"agent_temperature_{agent_name}")
+    if value is None or value == "":
+        return None
+    try:
+        return float(value)
+    except (ValueError, TypeError):
+        return None
+
+
+def set_agent_temperature(agent_name: str, temperature: Optional[float]):
+    """Set the temperature override for a specific agent.
+
+    Args:
+        agent_name: Name of the agent to set the temperature for.
+        temperature: Temperature value (0.0-2.0), or None to use model default.
+    """
+    if temperature is None:
+        set_config_value(f"agent_temperature_{agent_name}", "")
+    else:
+        set_config_value(f"agent_temperature_{agent_name}", str(temperature))
+
+
+def get_agent_top_p(agent_name: str) -> Optional[float]:
+    """Get the top_p override for a specific agent.
+
+    Args:
+        agent_name: Name of the agent to get the top_p for.
+
+    Returns:
+        Top P value, or None if no override is set (use model default).
+    """
+    value = get_value(f"agent_top_p_{agent_name}")
+    if value is None or value == "":
+        return None
+    try:
+        return float(value)
+    except (ValueError, TypeError):
+        return None
+
+
+def set_agent_top_p(agent_name: str, top_p: Optional[float]):
+    """Set the top_p override for a specific agent.
+
+    Args:
+        agent_name: Name of the agent to set the top_p for.
+        top_p: Top P value (0.0-1.0), or None to use model default.
+    """
+    if top_p is None:
+        set_config_value(f"agent_top_p_{agent_name}", "")
+    else:
+        set_config_value(f"agent_top_p_{agent_name}", str(top_p))
+
+
+def get_agent_system_prompt_suffix(agent_name: str) -> str:
+    """Get the system prompt suffix for a specific agent.
+
+    Args:
+        agent_name: Name of the agent to get the system prompt suffix for.
+
+    Returns:
+        System prompt suffix, or empty string if none is set.
+    """
+    return get_value(f"agent_system_prompt_suffix_{agent_name}") or ""
+
+
+def set_agent_system_prompt_suffix(agent_name: str, suffix: str):
+    """Set the system prompt suffix for a specific agent.
+
+    Args:
+        agent_name: Name of the agent to set the system prompt suffix for.
+        suffix: System prompt suffix text, or empty string to clear.
+    """
+    set_config_value(f"agent_system_prompt_suffix_{agent_name}", suffix or "")
+
+
+def get_agent_base_url(agent_name: str) -> Optional[str]:
+    """Get the custom base URL override for a specific agent.
+
+    Args:
+        agent_name: Name of the agent to get the base URL for.
+
+    Returns:
+        Base URL string, or None if no override is set (use model default).
+    """
+    value = get_value(f"agent_base_url_{agent_name}")
+    if value is None or value == "":
+        return None
+    return value
+
+
+def set_agent_base_url(agent_name: str, base_url: Optional[str]):
+    """Set the custom base URL override for a specific agent.
+
+    Args:
+        agent_name: Name of the agent to set the base URL for.
+        base_url: Base URL string, or None to use model default.
+    """
+    if base_url is None or base_url == "":
+        set_config_value(f"agent_base_url_{agent_name}", "")
+    else:
+        set_config_value(f"agent_base_url_{agent_name}", base_url)
+
+
 def get_auto_save_session() -> bool:
     """
     Checks puppy.cfg for 'auto_save_session' (case-insensitive in value only).

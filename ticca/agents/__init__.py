@@ -8,6 +8,7 @@ from .agent_manager import (
     get_agent_descriptions,
     get_available_agents,
     get_current_agent,
+    get_current_agent_name,
     load_agent,
     refresh_agents,
     set_current_agent,
@@ -16,6 +17,7 @@ from .agent_manager import (
 __all__ = [
     "get_available_agents",
     "get_current_agent",
+    "get_current_agent_name",
     "set_current_agent",
     "load_agent",
     "get_agent_descriptions",

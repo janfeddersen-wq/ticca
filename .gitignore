@@ -18,7 +18,7 @@ wheels/
 .pytest_cache/
 
 dummy_path
-
+llms-full.txt
 .idea/
 
 .DS_Store
