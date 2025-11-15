@@ -208,14 +208,28 @@ def load_session(session_name: str, base_dir: Path) -> SessionHistory:
         # Convert StoredMessage back to pydantic_ai ModelMessage format
         from pydantic_ai.messages import ModelRequest, ModelResponse, TextPart, ToolReturnPart
 
+        # Import UserPromptPart and SystemPromptPart for proper message reconstruction
+        try:
+            from pydantic_ai.messages import UserPromptPart, SystemPromptPart
+        except ImportError:
+            # Fallback for older versions
+            UserPromptPart = None
+            SystemPromptPart = None
+
         converted_messages = []
         for msg in stored_messages:
             # Create appropriate message type based on role
             if msg.role == 'user':
-                # User messages are ModelRequest with TextPart
-                converted_messages.append(
-                    ModelRequest(parts=[TextPart(content=msg.content)])
-                )
+                # User messages are ModelRequest with UserPromptPart (not TextPart!)
+                if UserPromptPart:
+                    converted_messages.append(
+                        ModelRequest(parts=[UserPromptPart(content=msg.content)])
+                    )
+                else:
+                    # Fallback for older pydantic_ai versions
+                    converted_messages.append(
+                        ModelRequest(parts=[TextPart(content=msg.content)])
+                    )
             elif msg.role == 'assistant':
                 # Assistant messages are ModelResponse with TextPart
                 converted_messages.append(
@@ -238,8 +252,19 @@ def load_session(session_name: str, base_dir: Path) -> SessionHistory:
                     converted_messages.append(
                         ModelResponse(parts=[TextPart(content=msg.content)])
                     )
+            elif msg.role == 'system':
+                # System messages should use SystemPromptPart
+                if SystemPromptPart:
+                    converted_messages.append(
+                        ModelRequest(parts=[SystemPromptPart(content=msg.content)])
+                    )
+                else:
+                    # Fallback for older versions
+                    converted_messages.append(
+                        ModelRequest(parts=[TextPart(content=msg.content)])
+                    )
             else:
-                # System or other messages - use TextPart
+                # Other messages - use TextPart as fallback
                 converted_messages.append(
                     ModelRequest(parts=[TextPart(content=msg.content)])
                 )

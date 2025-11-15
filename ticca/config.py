@@ -972,11 +972,7 @@ def auto_save_session_if_enabled() -> bool:
     try:
         import pathlib
 
-        from rich.console import Console
-
         from ticca.agents.agent_manager import get_current_agent
-
-        console = Console()
 
         current_agent = get_current_agent()
         history = current_agent.get_message_history()
@@ -996,16 +992,31 @@ def auto_save_session_if_enabled() -> bool:
             auto_saved=True,
         )
 
-        console.print(
-            f"🐾 [dim]Auto-saved session: {metadata.message_count} messages ({metadata.total_tokens} tokens)[/dim]"
-        )
+        # Use messaging system for TUI compatibility
+        try:
+            from ticca.messaging import emit_info
+            emit_info(
+                f"🐾 Auto-saved session: {metadata.message_count} messages ({metadata.total_tokens} tokens)",
+                message_group="autosave"
+            )
+        except Exception:
+            # Fallback to console if messaging not available (interactive mode)
+            from rich.console import Console
+            Console().print(
+                f"🐾 [dim]Auto-saved session: {metadata.message_count} messages ({metadata.total_tokens} tokens)[/dim]"
+            )
 
         return True
 
     except Exception as exc:  # pragma: no cover - defensive logging
-        from rich.console import Console
-
-        Console().print(f"[dim]❌ Failed to auto-save session: {exc}[/dim]")
+        # Use messaging system for TUI compatibility
+        try:
+            from ticca.messaging import emit_error
+            emit_error(f"❌ Failed to auto-save session: {exc}")
+        except Exception:
+            # Fallback to console if messaging not available
+            from rich.console import Console
+            Console().print(f"[dim]❌ Failed to auto-save session: {exc}[/dim]")
         return False
 
 

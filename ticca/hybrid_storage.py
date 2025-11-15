@@ -151,15 +151,22 @@ class HybridStorage:
             for part in msg.parts:
                 # Handle all text-containing parts
                 if isinstance(part, TextPart):
-                    content += part.content
+                    # Only save if it's actual text, not validation errors or lists
+                    if isinstance(part.content, str):
+                        content += part.content
+                    # Skip non-string content (validation errors, etc.)
                 elif UserPromptPart and isinstance(part, UserPromptPart):
                     # This is the actual user's message!
-                    content += part.content
+                    if isinstance(part.content, str):
+                        content += part.content
+                    # Skip non-string content (validation errors, etc.)
                 elif SystemPromptPart and isinstance(part, SystemPromptPart):
-                    content += part.content
+                    if isinstance(part.content, str):
+                        content += part.content
                     role = "system"
                 elif RetryPromptPart and isinstance(part, RetryPromptPart):
-                    content += part.content
+                    if isinstance(part.content, str):
+                        content += part.content
                 elif isinstance(part, ToolCallPart):
                     tool_name = part.tool_name
                     tool_call_id = part.tool_call_id
@@ -169,12 +176,16 @@ class HybridStorage:
                     tool_name = part.tool_name
                     tool_call_id = part.tool_call_id
                     role = "tool"
-                    content = str(part.content) if part.content else ""
+                    # Only save string content, skip complex structures
+                    if isinstance(part.content, str):
+                        content = part.content
+                    # Skip validation errors and complex return values
                 elif hasattr(part, 'content') and hasattr(part, 'part_kind'):
-                    # Fallback: any part with content attribute (future-proofing)
+                    # Fallback: only save if content is a string
                     part_content = getattr(part, 'content', '')
                     if part_content and isinstance(part_content, str):
                         content += part_content
+                    # Skip non-string content
 
         timestamp = datetime.now(timezone.utc).isoformat()
 
