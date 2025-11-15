@@ -5,7 +5,7 @@ import tempfile
 
 import pytest
 
-from ticca.agents.agent_ticca import CodePuppyAgent
+from ticca.agents.agent_code_agent import CodeAgent
 from ticca.config import (
     clear_agent_pinned_model,
     get_agent_pinned_model,
@@ -63,7 +63,7 @@ class TestAgentPinnedModels:
 
     def test_base_agent_get_model_name(self):
         """Test BaseAgent.get_model_name() returns pinned model."""
-        agent = CodePuppyAgent()
+        agent = CodeAgent()
         agent_name = agent.name  # "code-puppy"
         model_name = "gpt-4o-mini"
 

@@ -1270,6 +1270,15 @@ class BaseAgent(ABC):
 
         async def run_agent_task():
             try:
+                # TRACE LOGGING: Open trace log file
+                import datetime
+                trace_log = open("/tmp/trace.log", "a")
+                trace_log.write(f"\n\n{'='*80}\n")
+                trace_log.write(f"[{datetime.datetime.now()}] NEW REQUEST\n")
+                trace_log.write(f"Prompt: {prompt_payload}\n")
+                trace_log.write(f"{'='*80}\n\n")
+                trace_log.flush()
+
                 self.set_message_history(
                     self.prune_interrupted_tool_calls(self.get_message_history())
                 )
@@ -1331,6 +1340,59 @@ class BaseAgent(ABC):
                         usage_limits=usage_limits,
                         **kwargs,
                     )
+
+                # TRACE LOGGING: Log the LLM response
+                trace_log.write(f"\n{'='*80}\n")
+                trace_log.write(f"[{datetime.datetime.now()}] RESPONSE RECEIVED\n")
+                trace_log.write(f"{'='*80}\n\n")
+
+                # Log the result object
+                trace_log.write(f"Result type: {type(result_)}\n")
+                trace_log.write(f"Result data: {result_.data if hasattr(result_, 'data') else 'N/A'}\n\n")
+
+                # Log all message parts from the result
+                if hasattr(result_, '_all_messages'):
+                    trace_log.write(f"All messages count: {len(result_._all_messages)}\n")
+                    for i, msg in enumerate(result_._all_messages):
+                        trace_log.write(f"\nMessage {i}:\n")
+                        trace_log.write(f"  Type: {type(msg)}\n")
+                        trace_log.write(f"  Role: {getattr(msg, 'role', 'N/A')}\n")
+                        if hasattr(msg, 'parts'):
+                            trace_log.write(f"  Parts count: {len(msg.parts)}\n")
+                            for j, part in enumerate(msg.parts):
+                                trace_log.write(f"    Part {j}:\n")
+                                trace_log.write(f"      Type: {type(part)}\n")
+                                trace_log.write(f"      Part kind: {getattr(part, 'part_kind', 'N/A')}\n")
+
+                                # Check specifically for ThinkingPart
+                                if isinstance(part, ThinkingPart):
+                                    trace_log.write(f"      *** THINKING PART FOUND ***\n")
+                                    trace_log.write(f"      Content: {part.content[:200]}...\n")
+                                elif hasattr(part, 'content'):
+                                    content_preview = str(part.content)[:200] if part.content else "None"
+                                    trace_log.write(f"      Content preview: {content_preview}\n")
+
+                # Log the current message history
+                trace_log.write(f"\n{'='*80}\n")
+                trace_log.write(f"MESSAGE HISTORY ({len(self.get_message_history())} messages):\n")
+                trace_log.write(f"{'='*80}\n")
+                for i, msg in enumerate(self.get_message_history()):
+                    trace_log.write(f"\nHistory Message {i}:\n")
+                    trace_log.write(f"  Type: {type(msg)}\n")
+                    trace_log.write(f"  Role: {getattr(msg, 'role', 'N/A')}\n")
+                    if hasattr(msg, 'parts'):
+                        for j, part in enumerate(msg.parts):
+                            trace_log.write(f"    Part {j}: {type(part).__name__}")
+                            if isinstance(part, ThinkingPart):
+                                trace_log.write(f" *** THINKING ***")
+                            trace_log.write(f"\n")
+
+                trace_log.write(f"\n{'='*80}\n")
+                trace_log.write(f"END OF RESPONSE TRACE\n")
+                trace_log.write(f"{'='*80}\n\n")
+                trace_log.flush()
+                trace_log.close()
+
                 return result_
             except* UsageLimitExceeded as ule:
                 emit_info(f"Usage limit exceeded: {str(ule)}", group_id=group_id)

@@ -3,6 +3,7 @@ TUI components package.
 """
 
 from .chat_view import ChatView
+from .collapsible_thinking import CollapsibleThinking
 from .commit_message_modal import CommitMessageModal
 from .copy_button import CopyButton
 from .custom_widgets import CustomTextArea
@@ -17,6 +18,7 @@ __all__ = [
     "CustomTextArea",
     "StatusBar",
     "ChatView",
+    "CollapsibleThinking",
     "CommitMessageModal",
     "CopyButton",
     "FileTreePanel",

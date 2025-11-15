@@ -1215,3 +1215,75 @@ def set_gac_model(model: str) -> None:
         model: Model name to use for GAC, or empty string to use global model
     """
     set_config_value("gac_model", model or "")
+
+
+def get_enable_semantic_search() -> bool:
+    """Get whether semantic search (ChromaDB) is enabled.
+
+    Returns:
+        bool: True if semantic search is enabled, False otherwise. Defaults to True.
+    """
+    true_vals = {"1", "true", "yes", "on"}
+    cfg_val = get_value("enable_semantic_search")
+    if cfg_val is not None:
+        if str(cfg_val).strip().lower() in true_vals:
+            return True
+        return False
+    return True  # Default to enabled
+
+
+def set_enable_semantic_search(enabled: bool) -> None:
+    """Enable or disable semantic search (ChromaDB).
+
+    Args:
+        enabled: Whether to enable semantic search
+    """
+    set_config_value("enable_semantic_search", "true" if enabled else "false")
+
+
+def get_embedding_model() -> str:
+    """Get the embedding model to use for semantic search.
+
+    Returns:
+        str: The embedding model name. Defaults to Qwen3-Embedding-0.6B.
+    """
+    return get_value("embedding_model") or "Qwen/Qwen3-Embedding-0.6B"
+
+
+def set_embedding_model(model: str) -> None:
+    """Set the embedding model for semantic search.
+
+    Args:
+        model: Model name (e.g., 'Qwen/Qwen3-Embedding-0.6B', 'sentence-transformers/all-MiniLM-L6-v2', or 'openai:text-embedding-3-small')
+    """
+    set_config_value("embedding_model", model or "")
+
+
+def get_easy_mode() -> bool:
+    """Get whether Easy Mode is enabled.
+
+    In Easy Mode:
+    - Agent selector is hidden
+    - Always uses code-agent
+    - Agent pinning is hidden
+    - Uses default model for code-agent
+
+    Returns:
+        bool: True if Easy Mode is enabled, False otherwise. Defaults to False.
+    """
+    true_vals = {"1", "true", "yes", "on"}
+    cfg_val = get_value("easy_mode")
+    if cfg_val is not None:
+        if str(cfg_val).strip().lower() in true_vals:
+            return True
+        return False
+    return False  # Default to disabled
+
+
+def set_easy_mode(enabled: bool) -> None:
+    """Enable or disable Easy Mode.
+
+    Args:
+        enabled: Whether to enable Easy Mode
+    """
+    set_config_value("easy_mode", "true" if enabled else "false")

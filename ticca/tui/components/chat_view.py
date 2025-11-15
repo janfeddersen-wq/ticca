@@ -13,6 +13,7 @@ from textual.containers import Vertical, VerticalScroll
 from textual.widgets import Markdown as MarkdownWidget, MarkdownViewer, Static
 
 from ..models import ChatMessage, MessageCategory, MessageType, get_message_category
+from .collapsible_thinking import CollapsibleThinking
 
 
 class SafeMarkdownViewer(MarkdownViewer):
@@ -338,10 +339,20 @@ class ChatView(VerticalScroll):
             try:
                 # Try to parse as markup first - this handles rich styling correctly
                 last_widget.update(Text.from_markup(last_message.content))
-            except Exception:
-                # If markup parsing fails, fall back to plain text
-                # This handles cases where content contains literal square brackets
-                last_widget.update(Text(last_message.content))
+            except Exception as e:
+                # If markup parsing fails, log and try alternative approaches
+                import logging
+                logging.warning(f"Markup parsing failed in _append_to_existing_group: {e}")
+                logging.warning(f"Content preview: {last_message.content[:200]}")
+
+                # Try to render with markup enabled on the Static widget directly
+                try:
+                    # Create a new Text with markup, but with better error tolerance
+                    last_widget.update(Text.from_markup(last_message.content, style=""))
+                except Exception:
+                    # Last resort: render as plain text
+                    # But this will show raw markup tags
+                    last_widget.update(Text(last_message.content))
 
         # Add the new message to our tracking lists
         self.messages.append(message)
@@ -445,15 +456,26 @@ class ChatView(VerticalScroll):
                     self._last_widget.update(Text.from_markup(last_message.content))
                     # Force layout recalculation so the container grows
                     self._last_widget.refresh(layout=True)
-                except Exception:
-                    # If markup parsing fails, fall back to plain text
+                except Exception as e:
+                    # If markup parsing fails, log and fall back
+                    import logging
+                    logging.warning(f"Markup parsing failed in category-based combining: {e}")
+                    logging.warning(f"Content preview: {last_message.content[:200]}")
+
                     try:
-                        self._last_widget.update(Text(last_message.content))
+                        # Try with empty style to be more tolerant
+                        self._last_widget.update(Text.from_markup(last_message.content, style=""))
                         # Force layout recalculation so the container grows
                         self._last_widget.refresh(layout=True)
                     except Exception:
-                        # If update fails, create a new widget instead
-                        pass
+                        # Last resort: render as plain text (will show raw markup)
+                        try:
+                            self._last_widget.update(Text(last_message.content))
+                            # Force layout recalculation so the container grows
+                            self._last_widget.refresh(layout=True)
+                        except Exception:
+                            # If update fails, create a new widget instead
+                            pass
 
             # Add to messages list but don't create a new widget
             self.messages.append(message)
@@ -539,13 +561,35 @@ class ChatView(VerticalScroll):
             message_widget.border_title = "SYSTEM"
 
         elif message.type == MessageType.AGENT_REASONING:
-            # Agent reasoning with border title
-            message_widget = Static(Text(message.content), classes=css_class)
-            message_widget.border_title = "AGENT REASONING"
+            # Agent reasoning in collapsible container
+            # Handle both Rich objects (like Markdown) and plain strings
+            if hasattr(message.content, "__rich_console__"):
+                # Rich object (Markdown, Table, etc.) - render directly
+                content_widget = Static(message.content)
+            else:
+                # Plain string - convert to Text
+                content_widget = Static(Text(str(message.content)))
+
+            message_widget = CollapsibleThinking(
+                title="💭 Agent Reasoning",
+                content=content_widget,
+                classes=css_class
+            )
         elif message.type == MessageType.PLANNED_NEXT_STEPS:
-            # Planned next steps with border title
-            message_widget = Static(Text(message.content), classes=css_class)
-            message_widget.border_title = "PLANNED NEXT STEPS"
+            # Planned next steps in collapsible container
+            # Handle both Rich objects (like Markdown) and plain strings
+            if hasattr(message.content, "__rich_console__"):
+                # Rich object (Markdown, Table, etc.) - render directly
+                content_widget = Static(message.content)
+            else:
+                # Plain string - convert to Text
+                content_widget = Static(Text(str(message.content)))
+
+            message_widget = CollapsibleThinking(
+                title="📋 Planned Next Steps",
+                content=content_widget,
+                classes=css_class
+            )
         elif message.type == MessageType.AGENT_RESPONSE:
             # Agent response with border title - use MarkdownViewer
             content = message.content
@@ -646,12 +690,14 @@ class ChatView(VerticalScroll):
         self._last_message_category = None  # Reset category tracking
         self._last_widget = None  # Reset widget tracking
         self._last_combined_message = None  # Reset combined message tracking
-        # Remove all message widgets (Static, SafeMarkdownViewer, and Vertical containers)
+        # Remove all message widgets (Static, SafeMarkdownViewer, Vertical containers, and CollapsibleThinking)
         for widget in self.query(Static):
             widget.remove()
         for widget in self.query(SafeMarkdownViewer):
             widget.remove()
         for widget in self.query(Vertical):
+            widget.remove()
+        for widget in self.query(CollapsibleThinking):
             widget.remove()
 
     def _schedule_scroll(self) -> None:

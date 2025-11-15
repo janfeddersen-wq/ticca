@@ -16,6 +16,7 @@ from rich.syntax import Syntax
 from rich.text import Text
 
 from ticca import __version__, callbacks, plugins
+from ticca.perf import time_block, is_profiling_enabled, print_performance_report, save_performance_report
 from ticca.agents import get_current_agent
 from ticca.command_line.attachments import parse_prompt_attachments
 from ticca.config import (
@@ -40,60 +41,61 @@ plugins.load_plugin_callbacks()
 
 
 async def main():
-    parser = argparse.ArgumentParser(description="Ticca - Terminal Injected Coding CLI Assistant")
-    parser.add_argument(
-        "--version",
-        "-v",
-        action="version",
-        version=f"{__version__}",
-        help="Show version and exit",
-    )
-    parser.add_argument("--tui", "-t", action="store_true", help="Run in TUI mode (always on, this flag is kept for compatibility)")
-    parser.add_argument(
-        "--web",
-        "-w",
-        action="store_true",
-        help="Run in web mode (serves TUI in browser)",
-    )
-    parser.add_argument(
-        "--host",
-        type=str,
-        default="127.0.0.1",
-        help="Host to bind web server to (default: 127.0.0.1). Use 0.0.0.0 to allow external connections",
-    )
-    parser.add_argument(
-        "--port",
-        type=int,
-        help="Port to bind web server to (default: auto-find available port 8090-9010)",
-    )
-    parser.add_argument(
-        "--interactive",
-        "-i",
-        action="store_true",
-        help="(Deprecated) TUI mode is now always on",
-    )
-    parser.add_argument(
-        "--prompt",
-        "-p",
-        type=str,
-        help="Start TUI with this prompt pre-filled",
-    )
-    parser.add_argument(
-        "--agent",
-        "-a",
-        type=str,
-        help="Specify which agent to use (e.g., --agent code-agent)",
-    )
-    parser.add_argument(
-        "--model",
-        "-m",
-        type=str,
-        help="Specify which model to use (e.g., --model gpt-5)",
-    )
-    parser.add_argument(
-        "command", nargs="*", help="Start TUI with this command pre-filled (use -p for single-word prompts)"
-    )
-    args = parser.parse_args()
+    with time_block("Argument parsing"):
+        parser = argparse.ArgumentParser(description="Ticca - Terminal Injected Coding CLI Assistant")
+        parser.add_argument(
+            "--version",
+            "-v",
+            action="version",
+            version=f"{__version__}",
+            help="Show version and exit",
+        )
+        parser.add_argument("--tui", "-t", action="store_true", help="Run in TUI mode (always on, this flag is kept for compatibility)")
+        parser.add_argument(
+            "--web",
+            "-w",
+            action="store_true",
+            help="Run in web mode (serves TUI in browser)",
+        )
+        parser.add_argument(
+            "--host",
+            type=str,
+            default="127.0.0.1",
+            help="Host to bind web server to (default: 127.0.0.1). Use 0.0.0.0 to allow external connections",
+        )
+        parser.add_argument(
+            "--port",
+            type=int,
+            help="Port to bind web server to (default: auto-find available port 8090-9010)",
+        )
+        parser.add_argument(
+            "--interactive",
+            "-i",
+            action="store_true",
+            help="(Deprecated) TUI mode is now always on",
+        )
+        parser.add_argument(
+            "--prompt",
+            "-p",
+            type=str,
+            help="Start TUI with this prompt pre-filled",
+        )
+        parser.add_argument(
+            "--agent",
+            "-a",
+            type=str,
+            help="Specify which agent to use (e.g., --agent code-agent)",
+        )
+        parser.add_argument(
+            "--model",
+            "-m",
+            type=str,
+            help="Specify which model to use (e.g., --model gpt-5)",
+        )
+        parser.add_argument(
+            "command", nargs="*", help="Start TUI with this command pre-filled (use -p for single-word prompts)"
+        )
+        args = parser.parse_args()
 
     # Always start in TUI mode (unless web mode is requested)
     # Web mode launches TUI in browser, so we set TUI mode for web too
@@ -124,7 +126,9 @@ async def main():
     ):
         pass
 
-    initialize_command_history_file()
+    with time_block("Initialize command history"):
+        initialize_command_history_file()
+
     if args.web:
         from rich.console import Console
 
@@ -226,72 +230,77 @@ async def main():
     # Early model setting if specified via command line
     # This happens before ensure_config_exists() to ensure config is set up correctly
     early_model = None
-    if args.model:
-        early_model = args.model.strip()
-        from ticca.config import set_model_name
+    with time_block("Early model configuration"):
+        if args.model:
+            early_model = args.model.strip()
+            from ticca.config import set_model_name
 
-        set_model_name(early_model)
+            set_model_name(early_model)
 
-    ensure_config_exists()
+    with time_block("Ensure config exists"):
+        ensure_config_exists()
 
     # Load API keys from puppy.cfg into environment variables
-    from ticca.config import load_api_keys_to_environment
+    with time_block("Load API keys to environment"):
+        from ticca.config import load_api_keys_to_environment
 
-    load_api_keys_to_environment()
+        load_api_keys_to_environment()
 
     # Handle model validation from command line (validation happens here, setting was earlier)
-    if args.model:
-        from ticca.config import _validate_model_exists
+    with time_block("Model validation"):
+        if args.model:
+            from ticca.config import _validate_model_exists
 
-        model_name = args.model.strip()
-        try:
-            # Validate that the model exists in models.json
-            if not _validate_model_exists(model_name):
-                from ticca.model_factory import ModelFactory
+            model_name = args.model.strip()
+            try:
+                # Validate that the model exists in models.json
+                if not _validate_model_exists(model_name):
+                    from ticca.model_factory import ModelFactory
 
-                models_config = ModelFactory.load_config()
-                available_models = list(models_config.keys()) if models_config else []
+                    models_config = ModelFactory.load_config()
+                    available_models = list(models_config.keys()) if models_config else []
 
+                    emit_system_message(
+                        f"[bold red]Error:[/bold red] Model '{model_name}' not found"
+                    )
+                    emit_system_message(f"Available models: {', '.join(available_models)}")
+                    sys.exit(1)
+
+                # Model is valid, show confirmation (already set earlier)
+                emit_system_message(f"🎯 Using model: {model_name}")
+            except Exception as e:
                 emit_system_message(
-                    f"[bold red]Error:[/bold red] Model '{model_name}' not found"
+                    f"[bold red]Error validating model:[/bold red] {str(e)}"
                 )
-                emit_system_message(f"Available models: {', '.join(available_models)}")
                 sys.exit(1)
-
-            # Model is valid, show confirmation (already set earlier)
-            emit_system_message(f"🎯 Using model: {model_name}")
-        except Exception as e:
-            emit_system_message(
-                f"[bold red]Error validating model:[/bold red] {str(e)}"
-            )
-            sys.exit(1)
 
     # Handle agent selection from command line
-    if args.agent:
-        from ticca.agents.agent_manager import (
-            get_available_agents,
-            set_current_agent,
-        )
+    with time_block("Agent selection"):
+        if args.agent:
+            from ticca.agents.agent_manager import (
+                get_available_agents,
+                set_current_agent,
+            )
 
-        agent_name = args.agent.lower()
-        try:
-            # First check if the agent exists by getting available agents
-            available_agents = get_available_agents()
-            if agent_name not in available_agents:
-                emit_system_message(
-                    f"[bold red]Error:[/bold red] Agent '{agent_name}' not found"
-                )
-                emit_system_message(
-                    f"Available agents: {', '.join(available_agents.keys())}"
-                )
+            agent_name = args.agent.lower()
+            try:
+                # First check if the agent exists by getting available agents
+                available_agents = get_available_agents()
+                if agent_name not in available_agents:
+                    emit_system_message(
+                        f"[bold red]Error:[/bold red] Agent '{agent_name}' not found"
+                    )
+                    emit_system_message(
+                        f"Available agents: {', '.join(available_agents.keys())}"
+                    )
+                    sys.exit(1)
+
+                # Agent exists, set it
+                set_current_agent(agent_name)
+                emit_system_message(f"🤖 Using agent: {agent_name}")
+            except Exception as e:
+                emit_system_message(f"[bold red]Error setting agent:[/bold red] {str(e)}")
                 sys.exit(1)
-
-            # Agent exists, set it
-            set_current_agent(agent_name)
-            emit_system_message(f"🤖 Using agent: {agent_name}")
-        except Exception as e:
-            emit_system_message(f"[bold red]Error setting agent:[/bold red] {str(e)}")
-            sys.exit(1)
 
     current_version = __version__
 
@@ -299,34 +308,36 @@ async def main():
     version_msg = f"Current version: {current_version}"
     emit_system_message(version_msg)
 
-    await callbacks.on_startup()
+    with time_block("Startup callbacks"):
+        await callbacks.on_startup()
 
     # Initialize DBOS if not disabled
-    if get_use_dbos():
-        # Append a Unix timestamp in ms to the version for uniqueness
-        dbos_app_version = os.environ.get(
-            "DBOS_APP_VERSION", f"{current_version}-{int(time.time() * 1000)}"
-        )
-        dbos_config: DBOSConfig = {
-            "name": "dbos-ticca",
-            "system_database_url": DBOS_DATABASE_URL,
-            "run_admin_server": False,
-            "conductor_key": os.environ.get(
-                "DBOS_CONDUCTOR_KEY"
-            ),  # Optional, if set in env, connect to conductor
-            "log_level": os.environ.get(
-                "DBOS_LOG_LEVEL", "ERROR"
-            ),  # Default to ERROR level to suppress verbose logs
-            "application_version": dbos_app_version,  # Match DBOS app version to Ticca version
-        }
-        try:
-            DBOS(config=dbos_config)
-            DBOS.launch()
-        except Exception as e:
-            emit_system_message(f"[bold red]Error initializing DBOS:[/bold red] {e}")
-            sys.exit(1)
-    else:
-        pass
+    with time_block("Initialize DBOS"):
+        if get_use_dbos():
+            # Append a Unix timestamp in ms to the version for uniqueness
+            dbos_app_version = os.environ.get(
+                "DBOS_APP_VERSION", f"{current_version}-{int(time.time() * 1000)}"
+            )
+            dbos_config: DBOSConfig = {
+                "name": "dbos-ticca",
+                "system_database_url": DBOS_DATABASE_URL,
+                "run_admin_server": False,
+                "conductor_key": os.environ.get(
+                    "DBOS_CONDUCTOR_KEY"
+                ),  # Optional, if set in env, connect to conductor
+                "log_level": os.environ.get(
+                    "DBOS_LOG_LEVEL", "ERROR"
+                ),  # Default to ERROR level to suppress verbose logs
+                "application_version": dbos_app_version,  # Match DBOS app version to Ticca version
+            }
+            try:
+                DBOS(config=dbos_config)
+                DBOS.launch()
+            except Exception as e:
+                emit_system_message(f"[bold red]Error initializing DBOS:[/bold red] {e}")
+                sys.exit(1)
+        else:
+            pass
 
     global shutdown_flag
     shutdown_flag = False
@@ -340,9 +351,11 @@ async def main():
 
         # Always run in TUI mode
         try:
-            from ticca.tui import run_textual_ui
+            with time_block("Import TUI"):
+                from ticca.tui import run_textual_ui
 
-            await run_textual_ui(initial_command=initial_command)
+            with time_block("Run TUI"):
+                await run_textual_ui(initial_command=initial_command)
         except ImportError:
             from ticca.messaging import emit_error
 
@@ -362,6 +375,11 @@ async def main():
         await callbacks.on_shutdown()
         if get_use_dbos():
             DBOS.destroy()
+
+        # Print performance report if profiling is enabled
+        if is_profiling_enabled():
+            print_performance_report(min_duration_ms=10.0)
+            save_performance_report()
 
 
 # Add the file handling functionality for interactive mode

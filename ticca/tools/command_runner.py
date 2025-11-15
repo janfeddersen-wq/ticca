@@ -14,9 +14,11 @@ from rich.markdown import Markdown
 from rich.text import Text
 
 from ticca.messaging import (
+    emit_agent_reasoning,
     emit_divider,
     emit_error,
     emit_info,
+    emit_planned_next_steps,
     emit_system_message,
     emit_warning,
 )
@@ -780,19 +782,27 @@ def share_your_reasoning(
     )  # Use first 50 chars for context
 
     if not is_tui_mode():
+        # In CLI mode, show with headers and dividers
         emit_divider(message_group=group_id)
         emit_info(
             "\n[bold white on purple] AGENT REASONING [/bold white on purple]",
             message_group=group_id,
         )
-    emit_info("[bold cyan]Current reasoning:[/bold cyan]", message_group=group_id)
-    emit_system_message(Markdown(reasoning), message_group=group_id)
-    if next_steps is not None and next_steps.strip():
-        emit_info(
-            "\n[bold cyan]Planned next steps:[/bold cyan]", message_group=group_id
-        )
-        emit_system_message(Markdown(next_steps), message_group=group_id)
-    emit_info("[dim]" + "-" * 60 + "[/dim]\n", message_group=group_id)
+        emit_info("[bold cyan]Current reasoning:[/bold cyan]", message_group=group_id)
+        emit_agent_reasoning(Markdown(reasoning), message_group=group_id)
+        if next_steps is not None and next_steps.strip():
+            emit_info(
+                "\n[bold cyan]Planned next steps:[/bold cyan]", message_group=group_id
+            )
+            emit_planned_next_steps(Markdown(next_steps), message_group=group_id)
+        emit_info("[dim]" + "-" * 60 + "[/dim]\n", message_group=group_id)
+    else:
+        # In TUI mode, just emit the content without extra labels
+        # The collapsible widget will provide the title
+        emit_agent_reasoning(Markdown(reasoning), message_group=group_id)
+        if next_steps is not None and next_steps.strip():
+            emit_planned_next_steps(Markdown(next_steps), message_group=group_id)
+
     return ReasoningOutput(**{"success": True})
 
 

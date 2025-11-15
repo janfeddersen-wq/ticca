@@ -1,18 +1,24 @@
 """Shared helpers for persisting and restoring chat sessions.
 
-This module centralises the pickle + metadata handling that used to live in
-both the CLI command handler and the auto-save feature. Keeping it here helps
-us avoid duplication while staying inside the Zen-of-Python sweet spot: simple
-is better than complex, nested side effects are worse than deliberate helpers.
+This module provides a backward-compatible interface to the new hybrid storage system
+(SQLite + JSON + ChromaDB) while maintaining the same API as the old pickle-based system.
+
+Migration Path:
+1. Old code continues to work (calls these functions)
+2. These functions now use hybrid_storage under the hood
+3. Old pickle files are automatically migrated on first access
+4. New sessions are saved in the better format
 """
 
 from __future__ import annotations
 
 import json
-import pickle
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Callable, List
+
+# Import hybrid storage
+from ticca.hybrid_storage import create_storage, StoredMessage
 
 SessionHistory = List[Any]
 TokenEstimator = Callable[[Any], int]
@@ -20,17 +26,19 @@ TokenEstimator = Callable[[Any], int]
 
 @dataclass(slots=True)
 class SessionPaths:
-    pickle_path: Path
-    metadata_path: Path
+    """Legacy path structure for backward compatibility."""
+    pickle_path: Path  # Now points to JSON file
+    metadata_path: Path  # Still used for compatibility
 
 
 @dataclass(slots=True)
 class SessionMetadata:
+    """Session metadata structure."""
     session_name: str
     timestamp: str
     message_count: int
     total_tokens: int
-    pickle_path: Path
+    pickle_path: Path  # Legacy name, actually JSON now
     metadata_path: Path
     auto_saved: bool = False
 
@@ -46,14 +54,83 @@ class SessionMetadata:
 
 
 def ensure_directory(path: Path) -> Path:
+    """Ensure a directory exists."""
     path.mkdir(parents=True, exist_ok=True)
     return path
 
 
 def build_session_paths(base_dir: Path, session_name: str) -> SessionPaths:
-    pickle_path = base_dir / f"{session_name}.pkl"
+    """Build session file paths (now using JSON instead of pickle)."""
+    # New: use .json instead of .pkl
+    json_path = base_dir / f"{session_name}.json"
     metadata_path = base_dir / f"{session_name}_meta.json"
-    return SessionPaths(pickle_path=pickle_path, metadata_path=metadata_path)
+    return SessionPaths(pickle_path=json_path, metadata_path=metadata_path)
+
+
+def _get_storage(base_dir: Path):
+    """Get or create a hybrid storage instance for the given directory.
+
+    This centralizes storage creation with proper configuration.
+    """
+    return create_storage(base_dir=base_dir)
+
+
+def _migrate_pickle_if_exists(base_dir: Path, session_name: str) -> bool:
+    """Automatically migrate old pickle files to new format if they exist.
+
+    Args:
+        base_dir: Base directory for sessions
+        session_name: Name of the session
+
+    Returns:
+        True if migration occurred, False otherwise
+    """
+    import pickle
+    from datetime import datetime
+
+    # Check for old pickle file
+    old_pickle_path = base_dir / f"{session_name}.pkl"
+    if not old_pickle_path.exists():
+        return False
+
+    # Load from pickle
+    try:
+        with open(old_pickle_path, 'rb') as f:
+            messages = pickle.load(f)
+    except Exception:
+        # Can't load pickle, skip migration
+        return False
+
+    # Get metadata if it exists
+    meta_path = base_dir / f"{session_name}_meta.json"
+    agent_name = "unknown"
+    auto_saved = False
+
+    if meta_path.exists():
+        try:
+            with open(meta_path, 'r') as f:
+                meta_data = json.load(f)
+                agent_name = meta_data.get('agent_name', 'unknown')
+                auto_saved = meta_data.get('auto_saved', False)
+        except Exception:
+            pass
+
+    # Migrate to new storage
+    storage = _get_storage(base_dir)
+    storage.save_session(
+        session_id=session_name,
+        messages=messages,
+        agent_name=agent_name,
+        auto_saved=auto_saved
+    )
+
+    # Rename old pickle to .pkl.old (don't delete, just in case)
+    try:
+        old_pickle_path.rename(old_pickle_path.with_suffix('.pkl.old'))
+    except Exception:
+        pass  # If rename fails, it's okay
+
+    return True
 
 
 def save_session(
@@ -65,12 +142,38 @@ def save_session(
     token_estimator: TokenEstimator,
     auto_saved: bool = False,
 ) -> SessionMetadata:
+    """Save a session using hybrid storage (SQLite + JSON + ChromaDB).
+
+    This maintains API compatibility with old pickle-based system.
+    """
     ensure_directory(base_dir)
+
+    # Use hybrid storage
+    storage = _get_storage(base_dir)
+
+    # Determine agent name (try to infer from context)
+    agent_name = "unknown"
+    try:
+        from ticca.agents.agent_manager import get_current_agent
+        current_agent = get_current_agent()
+        if current_agent:
+            agent_name = current_agent.display_name
+    except Exception:
+        pass
+
+    # Save to hybrid storage
+    storage_metadata = storage.save_session(
+        session_id=session_name,
+        messages=history,
+        agent_name=agent_name,
+        token_estimator=token_estimator,
+        auto_saved=auto_saved
+    )
+
+    # Build legacy paths
     paths = build_session_paths(base_dir, session_name)
 
-    with paths.pickle_path.open("wb") as pickle_file:
-        pickle.dump(history, pickle_file)
-
+    # Create legacy metadata JSON for backward compatibility
     total_tokens = sum(token_estimator(message) for message in history)
     metadata = SessionMetadata(
         session_name=session_name,
@@ -89,56 +192,123 @@ def save_session(
 
 
 def load_session(session_name: str, base_dir: Path) -> SessionHistory:
-    paths = build_session_paths(base_dir, session_name)
-    if not paths.pickle_path.exists():
-        raise FileNotFoundError(paths.pickle_path)
-    with paths.pickle_path.open("rb") as pickle_file:
-        return pickle.load(pickle_file)
+    """Load a session from hybrid storage.
+
+    Automatically migrates old pickle files on first access.
+    """
+    # Check if we need to migrate from pickle
+    _migrate_pickle_if_exists(base_dir, session_name)
+
+    # Load from hybrid storage
+    storage = _get_storage(base_dir)
+
+    try:
+        stored_messages = storage.load_session(session_name)
+
+        # Convert StoredMessage back to pydantic_ai ModelMessage format
+        from pydantic_ai.messages import ModelRequest, ModelResponse, TextPart, ToolReturnPart
+
+        converted_messages = []
+        for msg in stored_messages:
+            # Create appropriate message type based on role
+            if msg.role == 'user':
+                # User messages are ModelRequest with TextPart
+                converted_messages.append(
+                    ModelRequest(parts=[TextPart(content=msg.content)])
+                )
+            elif msg.role == 'assistant':
+                # Assistant messages are ModelResponse with TextPart
+                converted_messages.append(
+                    ModelResponse(parts=[TextPart(content=msg.content)])
+                )
+            elif msg.role == 'tool':
+                # Tool return messages
+                if msg.tool_call_id:
+                    converted_messages.append(
+                        ModelResponse(parts=[
+                            ToolReturnPart(
+                                tool_name=msg.tool_name or '',
+                                content=msg.content,
+                                tool_call_id=msg.tool_call_id
+                            )
+                        ])
+                    )
+                else:
+                    # Fallback if no tool_call_id
+                    converted_messages.append(
+                        ModelResponse(parts=[TextPart(content=msg.content)])
+                    )
+            else:
+                # System or other messages - use TextPart
+                converted_messages.append(
+                    ModelRequest(parts=[TextPart(content=msg.content)])
+                )
+
+        return converted_messages
+    except FileNotFoundError:
+        # If not in new storage, try old pickle as fallback
+        paths = build_session_paths(base_dir, session_name)
+        old_pickle = paths.pickle_path.with_suffix('.pkl')
+
+        if old_pickle.exists():
+            import pickle
+            with old_pickle.open("rb") as f:
+                return pickle.load(f)
+
+        # Really not found
+        raise FileNotFoundError(f"Session '{session_name}' not found")
 
 
 def list_sessions(base_dir: Path) -> List[str]:
+    """List all available sessions.
+
+    Returns session names (IDs) from both old and new storage.
+    """
     if not base_dir.exists():
         return []
-    return sorted(path.stem for path in base_dir.glob("*.pkl"))
+
+    session_names = set()
+
+    # Get from hybrid storage
+    try:
+        storage = _get_storage(base_dir)
+        metadata_list = storage.list_sessions(limit=999999)
+        session_names.update(meta.session_id for meta in metadata_list)
+    except Exception:
+        pass
+
+    # Also check for old pickle files
+    for pkl_file in base_dir.glob("*.pkl"):
+        session_names.add(pkl_file.stem)
+
+    return sorted(session_names)
 
 
 def cleanup_sessions(base_dir: Path, max_sessions: int) -> List[str]:
+    """Clean up old sessions, keeping only the most recent ones.
+
+    Args:
+        base_dir: Directory containing sessions
+        max_sessions: Maximum number of sessions to keep (0 = keep all)
+
+    Returns:
+        List of deleted session names
+    """
     if max_sessions <= 0:
         return []
 
     if not base_dir.exists():
         return []
 
-    candidate_paths = list(base_dir.glob("*.pkl"))
-    if len(candidate_paths) <= max_sessions:
-        return []
-
-    sorted_candidates = sorted(
-        ((path.stat().st_mtime, path) for path in candidate_paths),
-        key=lambda item: item[0],
-    )
-
-    stale_entries = sorted_candidates[:-max_sessions]
-    removed_sessions: List[str] = []
-    for _, pickle_path in stale_entries:
-        metadata_path = base_dir / f"{pickle_path.stem}_meta.json"
-        try:
-            pickle_path.unlink(missing_ok=True)
-            metadata_path.unlink(missing_ok=True)
-            removed_sessions.append(pickle_path.stem)
-        except OSError:
-            continue
-
-    return removed_sessions
+    # Use hybrid storage cleanup
+    storage = _get_storage(base_dir)
+    return storage.cleanup_old_sessions(max_sessions)
 
 
 async def restore_autosave_interactively(base_dir: Path) -> None:
     """Prompt the user to load an autosave session from base_dir, if any exist.
 
-    This helper is deliberately placed in session_storage to keep autosave
-    restoration close to the persistence layer. It uses the same public APIs
-    (list_sessions, load_session) and mirrors the interactive behaviours from
-    the command handler.
+    This uses hybrid storage but maintains the same interactive flow.
     """
     sessions = list_sessions(base_dir)
     if not sessions:
@@ -154,18 +324,32 @@ async def restore_autosave_interactively(base_dir: Path) -> None:
     )
     from ticca.messaging import emit_success, emit_system_message, emit_warning
 
+    # Get metadata from hybrid storage
+    storage = _get_storage(base_dir)
     entries = []
+
     for name in sessions:
-        meta_path = base_dir / f"{name}_meta.json"
         try:
-            with meta_path.open("r", encoding="utf-8") as meta_file:
-                data = json.load(meta_file)
-            timestamp = data.get("timestamp")
-            message_count = data.get("message_count")
+            metadata = storage.get_session_metadata(name)
+            if metadata:
+                timestamp = metadata.created_at.isoformat()
+                message_count = metadata.message_count
+            else:
+                # Fallback to legacy metadata
+                meta_path = base_dir / f"{name}_meta.json"
+                if meta_path.exists():
+                    with meta_path.open("r", encoding="utf-8") as f:
+                        data = json.load(f)
+                    timestamp = data.get("timestamp")
+                    message_count = data.get("message_count")
+                else:
+                    timestamp = None
+                    message_count = None
+            entries.append((name, timestamp, message_count))
         except Exception:
             timestamp = None
             message_count = None
-        entries.append((name, timestamp, message_count))
+            entries.append((name, timestamp, message_count))
 
     def sort_key(entry):
         _, timestamp, _ = entry
@@ -197,7 +381,6 @@ async def restore_autosave_interactively(base_dir: Path) -> None:
             emit_system_message(
                 f"  [{idx}] {name} ({message_display}, saved at {timestamp_display})"
             )
-        # If there are more pages, offer next-page; show 'Return to first page' on last page
         if total > PAGE_SIZE:
             page_count = (total + PAGE_SIZE - 1) // PAGE_SIZE
             is_last_page = (page + 1) >= page_count
@@ -232,12 +415,10 @@ async def restore_autosave_interactively(base_dir: Path) -> None:
         if not selection:
             return
 
-        # Numeric choice: 1-5 select within current page; 6 advances page
         if selection.isdigit():
             num = int(selection)
             if num == 6 and total > PAGE_SIZE:
                 page = (page + 1) % ((total + PAGE_SIZE - 1) // PAGE_SIZE)
-                # loop and re-render next page
                 continue
             if 1 <= num <= 5:
                 start = page * PAGE_SIZE
@@ -251,7 +432,6 @@ async def restore_autosave_interactively(base_dir: Path) -> None:
             emit_warning("Invalid selection; choose 1-5 or 6 for next")
             continue
 
-        # Allow direct typing by exact session name
         for name, _ts, _mc in entries:
             if name == selection:
                 chosen_name = name
@@ -259,7 +439,6 @@ async def restore_autosave_interactively(base_dir: Path) -> None:
         if chosen_name:
             break
         emit_warning("No autosave loaded (invalid selection)")
-        # keep looping and allow another try
 
     if not chosen_name:
         return
@@ -276,17 +455,16 @@ async def restore_autosave_interactively(base_dir: Path) -> None:
     agent = get_current_agent()
     agent.set_message_history(history)
 
-    # Set current autosave session id so subsequent autosaves overwrite this session
+    # Set current autosave session id
     try:
         from ticca.config import set_current_autosave_from_session_name
-
         set_current_autosave_from_session_name(chosen_name)
     except Exception:
         pass
 
     total_tokens = sum(agent.estimate_tokens_for_message(msg) for msg in history)
 
-    session_path = base_dir / f"{chosen_name}.pkl"
+    session_path = base_dir / f"{chosen_name}.json"
     emit_success(
         f"✅ Autosave loaded: {len(history)} messages ({total_tokens} tokens)\n"
         f"📁 From: {session_path}"

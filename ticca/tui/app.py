@@ -42,6 +42,8 @@ from .screens import (
     ModelPicker,
     QuitConfirmationScreen,
     SettingsScreen,
+    UISettingsScreen,
+    ModelSettingsScreen,
 )
 
 
@@ -176,11 +178,12 @@ class CodePuppyTUI(App):
         Binding("ctrl+l", "clear_chat", "Clear Chat"),
         Binding("ctrl+1", "clear_chat", "Clear Chat", show=False),  # Hidden from footer
         Binding("ctrl+2", "toggle_sidebar", "History"),
-        Binding("ctrl+3", "open_settings", "Settings"),
+        Binding("ctrl+3", "open_ui_settings", "UI Settings"),
         Binding("ctrl+4", "toggle_file_tree", "Files"),
         Binding("ctrl+5", "focus_input", "Focus Prompt"),
         Binding("ctrl+6", "focus_chat", "Focus Response"),
         Binding("ctrl+7", "toggle_right_sidebar", "Status"),
+        Binding("ctrl+m", "open_model_settings", "Model Settings"),
         Binding("ctrl+t", "open_mcp_wizard", "MCP Install Wizard"),
         Binding("ctrl+backslash", "command_palette", "Command Palette"),
     ]
@@ -253,7 +256,10 @@ class CodePuppyTUI(App):
         self._last_history_click_index = None
 
     def _register_themes(self) -> None:
-        """Register all custom themes with Textual."""
+        """Register only the active theme to avoid expensive startup style recalculations.
+
+        Other themes are registered lazily when the user switches to them.
+        """
         from ticca.themes import ThemeManager
         from ticca.themes.css_generator import create_textual_theme
         from ticca.config import get_value
@@ -261,24 +267,20 @@ class CodePuppyTUI(App):
         # Initialize theme manager
         ThemeManager.initialize()
 
-        # Get all available themes
-        themes = ThemeManager.list_themes()
-
-        # Register each theme
-        for theme_name in themes.keys():
-            theme_obj = ThemeManager.get_theme(theme_name)
-            if theme_obj:
-                textual_theme = create_textual_theme(theme_obj)
-                self.register_theme(textual_theme)
-
-        # Set the current theme from config
+        # Get the current theme from config
         try:
             current_theme_name = get_value("tui_theme") or "nord"
         except Exception:
             current_theme_name = "nord"
 
-        # Apply the theme
-        self.theme = current_theme_name
+        # OPTIMIZATION: Only register the active theme at startup
+        # This avoids triggering style recalculations for all themes
+        # Other themes will be registered on-demand when user switches
+        theme_obj = ThemeManager.get_theme(current_theme_name)
+        if theme_obj:
+            textual_theme = create_textual_theme(theme_obj)
+            self.register_theme(textual_theme)
+            self.theme = current_theme_name
 
     def compose(self) -> ComposeResult:
         """Create the UI layout."""
@@ -309,7 +311,15 @@ class CodePuppyTUI(App):
 
         # Load configuration
         # Get current agent information
-        from ticca.agents.agent_manager import get_current_agent
+        from ticca.agents.agent_manager import get_current_agent, set_current_agent
+        from ticca.config import get_easy_mode, clear_agent_pinned_model
+
+        # If Easy Mode is enabled, force code-agent and ensure it uses default model
+        if get_easy_mode():
+            # Clear any pinned model for code-agent to ensure it uses default model
+            clear_agent_pinned_model("code-agent")
+            # Force code-agent as the current agent
+            set_current_agent("code-agent")
 
         current_agent_config = get_current_agent()
         self.current_agent = (
@@ -350,9 +360,11 @@ class CodePuppyTUI(App):
         # Using call_after_refresh to start it as soon as possible after mount
         self.call_after_refresh(self.start_message_renderer_sync)
 
-        # Kick off a non-blocking preload of the agent/model so the
-        # status bar shows loading before first prompt
-        self.call_after_refresh(self.preload_agent_on_startup)
+        # DEFER agent preload until TUI is fully visible to avoid blocking initial render
+        # Use a short timer (0.3s) so user sees the UI immediately, THEN we load the model
+        def deferred_preload():
+            self.run_worker(self.preload_agent_on_startup(), exclusive=False)
+        self.set_timer(0.3, deferred_preload)
 
         # After preload, offer to restore an autosave session (like interactive mode)
         self.call_after_refresh(self.maybe_prompt_restore_autosave)
@@ -479,9 +491,14 @@ class CodePuppyTUI(App):
         chat_view.add_message(message)
 
     def add_agent_reasoning_message(
-        self, content: str, message_group: str = None
+        self, content, message_group: str = None
     ) -> None:
-        """Add an agent reasoning message to the chat."""
+        """Add an agent reasoning message to the chat.
+
+        Args:
+            content: Message content - can be a string or Rich object (like Markdown)
+            message_group: Optional group ID for grouping related messages
+        """
         message = ChatMessage(
             id=f"agent_reasoning_{datetime.now(timezone.utc).timestamp()}",
             type=MessageType.AGENT_REASONING,
@@ -493,9 +510,14 @@ class CodePuppyTUI(App):
         chat_view.add_message(message)
 
     def add_planned_next_steps_message(
-        self, content: str, message_group: str = None
+        self, content, message_group: str = None
     ) -> None:
-        """Add an planned next steps to the chat."""
+        """Add a planned next steps message to the chat.
+
+        Args:
+            content: Message content - can be a string or Rich object (like Markdown)
+            message_group: Optional group ID for grouping related messages
+        """
         message = ChatMessage(
             id=f"planned_next_steps_{datetime.now(timezone.utc).timestamp()}",
             type=MessageType.PLANNED_NEXT_STEPS,
@@ -897,8 +919,60 @@ class CodePuppyTUI(App):
         except Exception:
             pass
 
-    def action_open_settings(self) -> None:
-        """Open the settings configuration screen."""
+    def action_open_ui_settings(self) -> None:
+        """Open the UI settings configuration screen."""
+
+        def handle_settings_result(result):
+            if result and result.get("success"):
+                # Handle theme change if needed
+                if result.get("theme_changed"):
+                    self.add_system_message("Theme updated successfully")
+
+                # Handle Easy Mode change - reload right sidebar
+                if result.get("easy_mode_changed"):
+                    try:
+                        from ticca.config import get_easy_mode, clear_agent_pinned_model
+                        from ticca.agents.agent_manager import set_current_agent
+
+                        easy_mode = get_easy_mode()
+
+                        # Force code-agent when enabling Easy Mode
+                        if easy_mode:
+                            clear_agent_pinned_model("code-agent")
+                            set_current_agent("code-agent")
+
+                            # Reload current agent info
+                            from ticca.agents.agent_manager import get_current_agent
+                            current_agent_config = get_current_agent()
+                            self.current_agent = current_agent_config.display_name
+                            self.current_model = current_agent_config.get_model_name()
+
+                            # Update status bar
+                            status_bar = self.query_one(StatusBar)
+                            status_bar.current_model = self.current_model
+
+                        # Reload right sidebar to show/hide agent selector
+                        right_sidebar = self.query_one(RightSidebar)
+                        agent_selector = right_sidebar.query_one("#agent-selector")
+                        agent_selector.display = not easy_mode
+
+                    except Exception as e:
+                        self.add_error_message(f"Failed to update Easy Mode: {e}")
+
+                # Show success message
+                self.add_system_message(result.get("message", "UI settings updated"))
+            elif (
+                result
+                and not result.get("success")
+                and "cancelled" not in result.get("message", "").lower()
+            ):
+                # Show error message (but not for cancellation)
+                self.add_error_message(result.get("message", "UI settings update failed"))
+
+        self.push_screen(UISettingsScreen(), handle_settings_result)
+
+    def action_open_model_settings(self) -> None:
+        """Open the model settings configuration screen."""
 
         def handle_settings_result(result):
             if result and result.get("success"):
@@ -919,16 +993,21 @@ class CodePuppyTUI(App):
                 status_bar.current_model = self.current_model
 
                 # Show success message
-                self.add_system_message(result.get("message", "Settings updated"))
+                self.add_system_message(result.get("message", "Model settings updated"))
             elif (
                 result
                 and not result.get("success")
                 and "cancelled" not in result.get("message", "").lower()
             ):
                 # Show error message (but not for cancellation)
-                self.add_error_message(result.get("message", "Settings update failed"))
+                self.add_error_message(result.get("message", "Model settings update failed"))
 
-        self.push_screen(SettingsScreen(), handle_settings_result)
+        self.push_screen(ModelSettingsScreen(), handle_settings_result)
+
+    def action_open_settings(self) -> None:
+        """Open the settings configuration screen (legacy - redirects to model settings)."""
+        # Keep for backward compatibility - redirect to model settings
+        self.action_open_model_settings()
 
     def action_open_mcp_wizard(self) -> None:
         """Open the MCP Install Wizard."""
@@ -1472,6 +1551,12 @@ class CodePuppyTUI(App):
     def on_right_sidebar_agent_changed(self, event: RightSidebar.AgentChanged) -> None:
         """Handle agent change from right sidebar dropdown."""
         try:
+            # Prevent agent switching when Easy Mode is enabled
+            from ticca.config import get_easy_mode
+            if get_easy_mode():
+                self.add_system_message("⚠️  Agent switching is disabled in Easy Mode")
+                return
+
             agent_name = event.agent_name
 
             # Use the agent manager to switch agents

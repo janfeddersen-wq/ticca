@@ -1,7 +1,6 @@
 # agent_tools.py
 import asyncio
 import json
-import pickle
 import re
 import traceback
 from datetime import datetime
@@ -15,7 +14,8 @@ from pydantic import BaseModel
 from pydantic_ai import Agent, RunContext, UsageLimits
 from pydantic_ai.messages import ModelMessage
 
-from ticca.config import get_message_limit, get_use_dbos
+from ticca.config import get_message_limit, get_use_dbos, CONFIG_DIR
+from ticca.hybrid_storage import create_storage
 from ticca.messaging import (
     emit_divider,
     emit_error,
@@ -74,11 +74,16 @@ def _get_subagent_sessions_dir() -> Path:
     """Get the directory for storing subagent session data.
 
     Returns:
-        Path to ~/.ticca/subagent_sessions/
+        Path to ~/.ticca/subagent_sessions/ (hybrid storage location)
     """
-    sessions_dir = Path.home() / ".ticca" / "subagent_sessions"
+    sessions_dir = Path(CONFIG_DIR) / "subagent_sessions"
     sessions_dir.mkdir(parents=True, exist_ok=True)
     return sessions_dir
+
+
+def _get_subagent_storage():
+    """Get hybrid storage instance for subagent sessions."""
+    return create_storage(base_dir=_get_subagent_sessions_dir())
 
 
 def _save_session_history(
@@ -87,13 +92,13 @@ def _save_session_history(
     agent_name: str,
     initial_prompt: str | None = None,
 ) -> None:
-    """Save session history to filesystem.
+    """Save session history using hybrid storage (SQLite + JSON + ChromaDB).
 
     Args:
         session_id: The session identifier (must be kebab-case)
         message_history: List of messages to save
         agent_name: Name of the agent being invoked
-        initial_prompt: The first prompt that started this session (for .txt metadata)
+        initial_prompt: The first prompt that started this session
 
     Raises:
         ValueError: If session_id is not valid kebab-case format
@@ -101,41 +106,18 @@ def _save_session_history(
     # Validate session_id format before saving
     _validate_session_id(session_id)
 
-    sessions_dir = _get_subagent_sessions_dir()
-
-    # Save pickle file with message history
-    pkl_path = sessions_dir / f"{session_id}.pkl"
-    with open(pkl_path, "wb") as f:
-        pickle.dump(message_history, f)
-
-    # Save or update txt file with metadata
-    txt_path = sessions_dir / f"{session_id}.txt"
-    if not txt_path.exists() and initial_prompt:
-        # Only write initial metadata on first save
-        metadata = {
-            "session_id": session_id,
-            "agent_name": agent_name,
-            "initial_prompt": initial_prompt,
-            "created_at": datetime.now().isoformat(),
-            "message_count": len(message_history),
-        }
-        with open(txt_path, "w") as f:
-            json.dump(metadata, f, indent=2)
-    elif txt_path.exists():
-        # Update message count on subsequent saves
-        try:
-            with open(txt_path, "r") as f:
-                metadata = json.load(f)
-            metadata["message_count"] = len(message_history)
-            metadata["last_updated"] = datetime.now().isoformat()
-            with open(txt_path, "w") as f:
-                json.dump(metadata, f, indent=2)
-        except Exception:
-            pass  # If we can't update metadata, no big deal
+    # Use hybrid storage
+    storage = _get_subagent_storage()
+    storage.save_session(
+        session_id=session_id,
+        messages=message_history,
+        agent_name=agent_name,
+        auto_saved=False
+    )
 
 
 def _load_session_history(session_id: str) -> List[ModelMessage]:
-    """Load session history from filesystem.
+    """Load session history from hybrid storage.
 
     Args:
         session_id: The session identifier (must be kebab-case)
@@ -149,17 +131,56 @@ def _load_session_history(session_id: str) -> List[ModelMessage]:
     # Validate session_id format before loading
     _validate_session_id(session_id)
 
-    sessions_dir = _get_subagent_sessions_dir()
-    pkl_path = sessions_dir / f"{session_id}.pkl"
-
-    if not pkl_path.exists():
-        return []
+    storage = _get_subagent_storage()
 
     try:
-        with open(pkl_path, "rb") as f:
-            return pickle.load(f)
+        stored_messages = storage.load_session(session_id)
+
+        # Convert StoredMessage back to pydantic_ai ModelMessage format
+        from pydantic_ai.messages import ModelRequest, ModelResponse, TextPart, ToolReturnPart
+
+        converted_messages = []
+        for msg in stored_messages:
+            # Create appropriate message type based on role
+            if msg.role == 'user':
+                # User messages are ModelRequest with TextPart
+                converted_messages.append(
+                    ModelRequest(parts=[TextPart(content=msg.content)])
+                )
+            elif msg.role == 'assistant':
+                # Assistant messages are ModelResponse with TextPart
+                converted_messages.append(
+                    ModelResponse(parts=[TextPart(content=msg.content)])
+                )
+            elif msg.role == 'tool':
+                # Tool return messages
+                if msg.tool_call_id:
+                    converted_messages.append(
+                        ModelResponse(parts=[
+                            ToolReturnPart(
+                                tool_name=msg.tool_name or '',
+                                content=msg.content,
+                                tool_call_id=msg.tool_call_id
+                            )
+                        ])
+                    )
+                else:
+                    # Fallback if no tool_call_id
+                    converted_messages.append(
+                        ModelResponse(parts=[TextPart(content=msg.content)])
+                    )
+            else:
+                # System or other messages - use TextPart
+                converted_messages.append(
+                    ModelRequest(parts=[TextPart(content=msg.content)])
+                )
+
+        return converted_messages
+    except FileNotFoundError:
+        # Session doesn't exist, return empty list
+        return []
     except Exception:
-        # If pickle is corrupted or incompatible, return empty history
+        # If any error occurs, return empty history
         return []
 
 

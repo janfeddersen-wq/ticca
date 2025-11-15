@@ -174,6 +174,16 @@ class TUIRenderer(MessageRenderer):
             )
             return
 
+        # For thinking messages, preserve Rich objects (like Markdown)
+        if message.type in (MessageType.AGENT_REASONING, MessageType.PLANNED_NEXT_STEPS):
+            # Preserve Rich objects for proper markdown rendering in collapsible widgets
+            content = message.content  # Keep as-is (Markdown object or string)
+            if message.type == MessageType.AGENT_REASONING:
+                self.tui_app.add_agent_reasoning_message(content, message_group=group_id)
+            else:
+                self.tui_app.add_planned_next_steps_message(content, message_group=group_id)
+            return
+
         # Convert content to string for TUI display (for all other cases)
         if hasattr(message.content, "__rich_console__"):
             # For Rich objects, render to plain text using a Console
@@ -197,16 +207,6 @@ class TUIRenderer(MessageRenderer):
             MessageType.SUCCESS,
         ):
             self.tui_app.add_system_message(content_str, message_group=group_id)
-        elif message.type == MessageType.AGENT_REASONING:
-            # Agent reasoning messages should use the dedicated method
-            self.tui_app.add_agent_reasoning_message(
-                content_str, message_group=group_id
-            )
-        elif message.type == MessageType.PLANNED_NEXT_STEPS:
-            # Agent reasoning messages should use the dedicated method
-            self.tui_app.add_planned_next_steps_message(
-                content_str, message_group=group_id
-            )
         elif message.type in (
             MessageType.TOOL_OUTPUT,
             MessageType.COMMAND_OUTPUT,
