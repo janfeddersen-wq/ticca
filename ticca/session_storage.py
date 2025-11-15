@@ -206,7 +206,7 @@ def load_session(session_name: str, base_dir: Path) -> SessionHistory:
         stored_messages = storage.load_session(session_name)
 
         # Convert StoredMessage back to pydantic_ai ModelMessage format
-        from pydantic_ai.messages import ModelRequest, ModelResponse, TextPart, ToolReturnPart
+        from pydantic_ai.messages import ModelRequest, ModelResponse, TextPart
 
         # Import UserPromptPart and SystemPromptPart for proper message reconstruction
         try:
@@ -219,6 +219,8 @@ def load_session(session_name: str, base_dir: Path) -> SessionHistory:
         converted_messages = []
         for msg in stored_messages:
             # Create appropriate message type based on role
+            # Note: We only save user, assistant, and system messages
+            # Tool calls and tool returns are skipped as internal implementation details
             if msg.role == 'user':
                 # User messages are ModelRequest with UserPromptPart (not TextPart!)
                 if UserPromptPart:
@@ -235,23 +237,6 @@ def load_session(session_name: str, base_dir: Path) -> SessionHistory:
                 converted_messages.append(
                     ModelResponse(parts=[TextPart(content=msg.content)])
                 )
-            elif msg.role == 'tool':
-                # Tool return messages
-                if msg.tool_call_id:
-                    converted_messages.append(
-                        ModelResponse(parts=[
-                            ToolReturnPart(
-                                tool_name=msg.tool_name or '',
-                                content=msg.content,
-                                tool_call_id=msg.tool_call_id
-                            )
-                        ])
-                    )
-                else:
-                    # Fallback if no tool_call_id
-                    converted_messages.append(
-                        ModelResponse(parts=[TextPart(content=msg.content)])
-                    )
             elif msg.role == 'system':
                 # System messages should use SystemPromptPart
                 if SystemPromptPart:
@@ -263,11 +248,7 @@ def load_session(session_name: str, base_dir: Path) -> SessionHistory:
                     converted_messages.append(
                         ModelRequest(parts=[TextPart(content=msg.content)])
                     )
-            else:
-                # Other messages - use TextPart as fallback
-                converted_messages.append(
-                    ModelRequest(parts=[TextPart(content=msg.content)])
-                )
+            # Skip any other message types (should not happen with new storage)
 
         return converted_messages
     except FileNotFoundError:

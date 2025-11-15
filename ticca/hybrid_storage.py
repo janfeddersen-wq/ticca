@@ -168,18 +168,13 @@ class HybridStorage:
                     if isinstance(part.content, str):
                         content += part.content
                 elif isinstance(part, ToolCallPart):
-                    tool_name = part.tool_name
-                    tool_call_id = part.tool_call_id
-                    role = "tool_call"
-                    content = f"Tool call: {tool_name}"
+                    # Skip tool calls - they are internal implementation details
+                    # We only care about user questions and assistant text responses
+                    continue
                 elif isinstance(part, ToolReturnPart):
-                    tool_name = part.tool_name
-                    tool_call_id = part.tool_call_id
-                    role = "tool"
-                    # Only save string content, skip complex structures
-                    if isinstance(part.content, str):
-                        content = part.content
-                    # Skip validation errors and complex return values
+                    # Skip tool returns - they are internal implementation details
+                    # We only care about user questions and assistant text responses
+                    continue
                 elif hasattr(part, 'content') and hasattr(part, 'part_kind'):
                     # Fallback: only save if content is a string
                     part_content = getattr(part, 'content', '')
@@ -188,6 +183,10 @@ class HybridStorage:
                     # Skip non-string content
 
         timestamp = datetime.now(timezone.utc).isoformat()
+
+        # Skip messages with no content (e.g., messages that only had tool calls/returns)
+        if not content.strip():
+            return None
 
         return StoredMessage(
             role=role,
@@ -217,8 +216,12 @@ class HybridStorage:
         Returns:
             SessionMetadata for the saved session
         """
-        # Convert messages to storable format
-        stored_messages = [self._convert_message_to_stored(msg) for msg in messages]
+        # Convert messages to storable format (filter out None for messages with no content)
+        stored_messages = [
+            self._convert_message_to_stored(msg)
+            for msg in messages
+        ]
+        stored_messages = [msg for msg in stored_messages if msg is not None]
 
         # Save to JSON
         json_path = self.json_dir / f"{session_id}.json"
