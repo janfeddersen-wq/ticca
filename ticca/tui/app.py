@@ -754,7 +754,13 @@ class CodePuppyTUI(App):
                 # The command handler directly uses the messaging system, so we don't need to capture stdout
                 try:
                     result = handle_command(message.strip())
-                    if not result:
+
+                    # Handle special command return values
+                    if result == "__AUTOSAVE_LOAD__":
+                        # Open the autosave picker dialog
+                        await self.maybe_prompt_restore_autosave()
+                        return
+                    elif not result:
                         self.add_system_message(f"Unknown command: {message}")
                 except Exception as e:
                     self.add_error_message(f"Error executing command: {str(e)}")
@@ -1428,6 +1434,7 @@ class CodePuppyTUI(App):
             base_dir = Path(AUTOSAVE_DIR)
             sessions = list_sessions(base_dir)
             if not sessions:
+                self.add_system_message("📭 No saved sessions available to resume")
                 return
 
             # Show modal picker for selection
