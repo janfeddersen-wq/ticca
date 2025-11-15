@@ -1859,13 +1859,36 @@ class CodePuppyTUI(App):
 
 async def run_textual_ui(initial_command: str = None):
     """Run the Textual UI interface."""
-    from ticca.config import load_api_keys_to_environment
+    from ticca.config import load_api_keys_to_environment, get_value, set_easy_mode
 
     # Initialize the command history file
     initialize_command_history_file()
 
     # Load API keys from puppy.cfg into environment variables
     load_api_keys_to_environment()
+
+    # Check if easy_mode is configured, if not show selection dialog
+    easy_mode_value = get_value("easy_mode")
+    if easy_mode_value is None:
+        # Easy mode not configured yet - show selection dialog
+        from textual.app import App
+        from .screens.easy_mode_selection import EasyModeSelectionScreen
+
+        # Create a minimal standalone app just to show the easy mode dialog
+        class EasyModeApp(App):
+            """Temporary app to show Easy Mode selection dialog."""
+            def on_mount(self) -> None:
+                # Push the selection screen immediately
+                self.push_screen(EasyModeSelectionScreen(), self.handle_selection)
+
+            def handle_selection(self, result: bool) -> None:
+                # Save the user's choice and exit
+                set_easy_mode(result)
+                self.exit()
+
+        # Run the selection dialog
+        temp_app = EasyModeApp()
+        await temp_app.run_async()
 
     # YOLO mode is now user-configurable via Settings (Ctrl+3)
     # No longer forced to "true" in TUI mode
