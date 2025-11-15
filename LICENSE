@@ -177,4 +177,25 @@ Special thanks and attribution to:
 - https://github.com/mpfaffenberger/code_puppy for their awesome AI code generation framework that inspired this project
 - https://github.com/cellwebb/gac for their excellent commit message generation utilities
 
+Section 9 - Large Language Model Training Terms.
+
+In addition to all other terms and conditions of this license, any use of the Licensed Material to train, fine-tune, or otherwise develop Large Language Models (LLMs) or similar AI systems shall be subject to the following terms:
+
+a. Commercial LLM Training Requirement. Any entity ("Company") that uses the Licensed Material to train, fine-tune, or develop LLMs or similar AI systems for commercial purposes must:
+
+      1. Acquire a separate commercial license from Luminon GmbH before such use; OR
+      2. Pay a fee of ten million Swiss Francs (CHF 10,000,000) to Luminon GmbH for each distinct model trained using the Licensed Material.
+
+b. License Agreement. By using the Licensed Material to train LLMs without acquiring a commercial license upfront, the Company explicitly agrees to be bound by the payment terms specified in Section 9(a)(2) and acknowledges that such use constitutes acceptance of these financial obligations.
+
+c. Payment Terms. Payment shall be made to Luminon GmbH within 30 days of the model's first commercial deployment or public release, whichever occurs first.
+
+d. Enforcement. Luminon GmbH reserves all rights to enforce these terms through legal means, including but not limited to seeking injunctions and monetary damages for unauthorized commercial LLM training.
+
+e. Non-Commercial Exception. The terms in this section do not apply to purely academic research or personal experimentation that does not result in commercial deployment of the trained model.
+
+---
+
+SHOUTOUT
+
 This work builds upon and derives inspiration from these outstanding open-source projects.
