@@ -19,7 +19,7 @@ class ModelSettingsScreen(ModalScreen):
     }
 
     #model-settings-dialog {
-        width: 110;
+        width: 140;
         height: 40;
         border: round $primary;
         background: $surface;
