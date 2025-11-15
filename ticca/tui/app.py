@@ -174,7 +174,7 @@ class CodePuppyTUI(App):
 
     BINDINGS = [
         Binding("ctrl+q", "quit", "Quit"),
-        Binding("ctrl+c", "quit", "Quit"),
+        Binding("ctrl+c", "copy_selection", "Copy", show=False),
         Binding("ctrl+l", "clear_chat", "Clear Chat"),
         Binding("ctrl+1", "clear_chat", "Clear Chat", show=False),  # Hidden from footer
         Binding("ctrl+2", "toggle_sidebar", "History"),
@@ -834,6 +834,91 @@ class CodePuppyTUI(App):
         agent = get_current_agent()
         agent.clear_message_history()
         self.add_system_message("Chat history cleared")
+
+    def action_copy_selection(self) -> None:
+        """Copy selected text to clipboard."""
+        import subprocess
+        import sys
+
+        try:
+            # Get the currently focused widget
+            focused = self.focused
+            selected_text = None
+
+            # Try to get selected text from focused widget
+            if hasattr(focused, 'selected_text') and focused.selected_text:
+                selected_text = focused.selected_text
+            elif hasattr(focused, 'selection') and focused.selection:
+                # For TextArea widgets with selection
+                try:
+                    start, end = focused.selection
+                    selected_text = focused.text[start.offset:end.offset]
+                except Exception:
+                    pass
+
+            # If no selection, try to get all text from input field if it's focused
+            if not selected_text and isinstance(focused, CustomTextArea):
+                selected_text = focused.text
+
+            if not selected_text:
+                self.add_system_message("💡 No text selected to copy")
+                return
+
+            # Copy to clipboard using platform-appropriate method
+            success = False
+            error_msg = None
+
+            try:
+                if sys.platform == "darwin":  # macOS
+                    subprocess.run(
+                        ["pbcopy"], input=selected_text, text=True, check=True, capture_output=True
+                    )
+                    success = True
+                elif sys.platform == "win32":  # Windows
+                    subprocess.run(
+                        ["clip"], input=selected_text, text=True, check=True, capture_output=True
+                    )
+                    success = True
+                else:  # Linux and other Unix-like systems
+                    # Try xclip first, then xsel as fallback
+                    try:
+                        subprocess.run(
+                            ["xclip", "-selection", "clipboard"],
+                            input=selected_text,
+                            text=True,
+                            check=True,
+                            capture_output=True,
+                        )
+                        success = True
+                    except (subprocess.CalledProcessError, FileNotFoundError):
+                        # Fallback to xsel
+                        subprocess.run(
+                            ["xsel", "--clipboard", "--input"],
+                            input=selected_text,
+                            text=True,
+                            check=True,
+                            capture_output=True,
+                        )
+                        success = True
+            except subprocess.CalledProcessError as e:
+                error_msg = f"Clipboard command failed: {e}"
+            except FileNotFoundError:
+                if sys.platform not in ["darwin", "win32"]:
+                    error_msg = "Clipboard utilities not found. Please install xclip or xsel."
+                else:
+                    error_msg = "System clipboard command not found."
+            except Exception as e:
+                error_msg = f"Unexpected error: {e}"
+
+            if success:
+                # Show success message with preview of copied text
+                preview = selected_text[:50] + "..." if len(selected_text) > 50 else selected_text
+                self.add_system_message(f"📋 Copied to clipboard: {preview}")
+            else:
+                self.add_error_message(f"Failed to copy to clipboard: {error_msg}")
+
+        except Exception as e:
+            self.add_error_message(f"Failed to copy selection: {e}")
 
     def action_quit(self) -> None:
         """Show quit confirmation dialog before exiting."""
