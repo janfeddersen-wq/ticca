@@ -992,31 +992,15 @@ def auto_save_session_if_enabled() -> bool:
             auto_saved=True,
         )
 
-        # Use messaging system for TUI compatibility
-        try:
-            from ticca.messaging import emit_info
-            emit_info(
-                f"🐾 Auto-saved session: {metadata.message_count} messages ({metadata.total_tokens} tokens)",
-                message_group="autosave"
-            )
-        except Exception:
-            # Fallback to console if messaging not available (interactive mode)
-            from rich.console import Console
-            Console().print(
-                f"🐾 [dim]Auto-saved session: {metadata.message_count} messages ({metadata.total_tokens} tokens)[/dim]"
-            )
-
+        # Autosave happens silently in the background
+        # No UI notification needed - sessions are automatically saved
         return True
 
     except Exception as exc:  # pragma: no cover - defensive logging
-        # Use messaging system for TUI compatibility
-        try:
-            from ticca.messaging import emit_error
-            emit_error(f"❌ Failed to auto-save session: {exc}")
-        except Exception:
-            # Fallback to console if messaging not available
-            from rich.console import Console
-            Console().print(f"[dim]❌ Failed to auto-save session: {exc}[/dim]")
+        # Silently fail - autosave errors shouldn't interrupt the user's workflow
+        # Errors are logged but not shown in the UI
+        import logging
+        logging.debug(f"Auto-save failed: {exc}")
         return False
 
 
