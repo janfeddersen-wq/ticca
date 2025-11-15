@@ -125,6 +125,15 @@ class HybridStorage:
         """Convert pydantic_ai ModelMessage to StoredMessage."""
         from pydantic_ai.messages import TextPart, ToolCallPart, ToolReturnPart
 
+        # Import additional part types that contain user content
+        try:
+            from pydantic_ai.messages import UserPromptPart, SystemPromptPart, RetryPromptPart
+        except ImportError:
+            # Fallback for older versions
+            UserPromptPart = None
+            SystemPromptPart = None
+            RetryPromptPart = None
+
         role = "unknown"
         content = ""
         tool_name = None
@@ -140,7 +149,16 @@ class HybridStorage:
         # Extract content from parts
         if hasattr(msg, 'parts'):
             for part in msg.parts:
+                # Handle all text-containing parts
                 if isinstance(part, TextPart):
+                    content += part.content
+                elif UserPromptPart and isinstance(part, UserPromptPart):
+                    # This is the actual user's message!
+                    content += part.content
+                elif SystemPromptPart and isinstance(part, SystemPromptPart):
+                    content += part.content
+                    role = "system"
+                elif RetryPromptPart and isinstance(part, RetryPromptPart):
                     content += part.content
                 elif isinstance(part, ToolCallPart):
                     tool_name = part.tool_name
@@ -152,6 +170,11 @@ class HybridStorage:
                     tool_call_id = part.tool_call_id
                     role = "tool"
                     content = str(part.content) if part.content else ""
+                elif hasattr(part, 'content') and hasattr(part, 'part_kind'):
+                    # Fallback: any part with content attribute (future-proofing)
+                    part_content = getattr(part, 'content', '')
+                    if part_content and isinstance(part_content, str):
+                        content += part_content
 
         timestamp = datetime.now(timezone.utc).isoformat()
 

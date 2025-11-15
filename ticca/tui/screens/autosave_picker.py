@@ -25,16 +25,50 @@ class AutosaveEntry:
     name: str
     timestamp: Optional[str]
     message_count: Optional[int]
+    last_user_message: Optional[str] = None
 
 
-def _load_metadata(base_dir: Path, name: str) -> Tuple[Optional[str], Optional[int]]:
+def _load_metadata(base_dir: Path, name: str) -> Tuple[Optional[str], Optional[int], Optional[str]]:
+    """Load metadata and last user message from session.
+
+    Returns:
+        Tuple of (timestamp, message_count, last_user_message)
+    """
     meta_path = base_dir / f"{name}_meta.json"
+    timestamp = None
+    message_count = None
+
     try:
         with meta_path.open("r", encoding="utf-8") as meta_file:
             data = json.load(meta_file)
-        return data.get("timestamp"), data.get("message_count")
+        timestamp = data.get("timestamp")
+        message_count = data.get("message_count")
     except Exception:
-        return None, None
+        pass
+
+    # Get last user message from session JSON (now fixed to save properly!)
+    last_user_message = None
+    try:
+        # Try new JSON format first
+        json_path = base_dir / "sessions" / f"{name}.json"
+        if json_path.exists():
+            with json_path.open("r", encoding="utf-8") as f:
+                messages = json.load(f)
+                # Find the last user message with non-empty content (iterate backwards)
+                for msg in reversed(messages):
+                    if msg.get("role") == "user":
+                        content = msg.get("content", "").strip()
+                        if content:  # Only use if content is not empty
+                            # Truncate to fit in one line (max 80 chars)
+                            if len(content) > 80:
+                                last_user_message = content[:77] + "..."
+                            else:
+                                last_user_message = content
+                            break
+    except Exception:
+        pass
+
+    return timestamp, message_count, last_user_message
 
 
 class AutosavePicker(ModalScreen):
@@ -89,13 +123,13 @@ class AutosavePicker(ModalScreen):
 
     def on_mount(self) -> None:
         names = list_sessions(self.autosave_dir)
-        raw_entries: List[Tuple[str, Optional[str], Optional[int]]] = []
+        raw_entries: List[Tuple[str, Optional[str], Optional[int], Optional[str]]] = []
         for name in names:
-            ts, count = _load_metadata(self.autosave_dir, name)
-            raw_entries.append((name, ts, count))
+            ts, count, last_msg = _load_metadata(self.autosave_dir, name)
+            raw_entries.append((name, ts, count, last_msg))
 
         def sort_key(entry):
-            _, ts, _ = entry
+            _, ts, _, _ = entry
             if ts:
                 try:
                     return datetime.fromisoformat(ts)
@@ -122,13 +156,27 @@ class AutosavePicker(ModalScreen):
                 self.list_view.children.clear()  # type: ignore
 
             for entry in self.entries[:50]:
-                ts = entry.timestamp or "unknown time"
+                # Format timestamp as date/time
+                if entry.timestamp:
+                    try:
+                        dt = datetime.fromisoformat(entry.timestamp.replace("Z", "+00:00"))
+                        ts_display = dt.strftime("%Y-%m-%d %H:%M")
+                    except Exception:
+                        ts_display = entry.timestamp
+                else:
+                    ts_display = "unknown time"
+
                 count = (
                     f"{entry.message_count} msgs"
                     if entry.message_count is not None
-                    else "unknown size"
+                    else "unknown"
                 )
-                label = f"{entry.name} — {count}, saved at {ts}"
+
+                # Build label with timestamp, message count, and last user message
+                if entry.last_user_message:
+                    label = f"{ts_display} | {count} | {entry.last_user_message}"
+                else:
+                    label = f"{ts_display} | {count}"
                 self.list_view.append(ListItem(Static(label)))
 
             # Focus and select first item for better UX
@@ -138,17 +186,31 @@ class AutosavePicker(ModalScreen):
 
     def compose(self) -> ComposeResult:
         with Container(id="modal-container"):
-            yield Label("Select an autosave to load (Esc to cancel)", id="list-label")
+            yield Label("Select a session to resume (Esc to cancel)", id="list-label")
             self.list_view = ListView(id="autosave-list")
             # populate items
             for entry in self.entries[:50]:  # cap to avoid long lists
-                ts = entry.timestamp or "unknown time"
+                # Format timestamp as date/time
+                if entry.timestamp:
+                    try:
+                        dt = datetime.fromisoformat(entry.timestamp.replace("Z", "+00:00"))
+                        ts_display = dt.strftime("%Y-%m-%d %H:%M")
+                    except Exception:
+                        ts_display = entry.timestamp
+                else:
+                    ts_display = "unknown time"
+
                 count = (
                     f"{entry.message_count} msgs"
                     if entry.message_count is not None
-                    else "unknown size"
+                    else "unknown"
                 )
-                label = f"{entry.name} — {count}, saved at {ts}"
+
+                # Build label with timestamp, message count, and last user message
+                if entry.last_user_message:
+                    label = f"{ts_display} | {count} | {entry.last_user_message}"
+                else:
+                    label = f"{ts_display} | {count}"
                 self.list_view.append(ListItem(Static(label)))
             yield self.list_view
             with Horizontal(classes="button-row"):

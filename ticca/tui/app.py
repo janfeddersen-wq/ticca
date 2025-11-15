@@ -185,6 +185,7 @@ class CodePuppyTUI(App):
         Binding("ctrl+7", "toggle_right_sidebar", "Status"),
         Binding("ctrl+m", "open_model_settings", "Model Settings"),
         Binding("ctrl+t", "open_mcp_wizard", "MCP Install Wizard"),
+        Binding("ctrl+r", "open_resume_dialog", "Resume"),
         Binding("ctrl+backslash", "command_palette", "Command Palette"),
     ]
 
@@ -366,8 +367,8 @@ class CodePuppyTUI(App):
             self.run_worker(self.preload_agent_on_startup(), exclusive=False)
         self.set_timer(0.3, deferred_preload)
 
-        # After preload, offer to restore an autosave session (like interactive mode)
-        self.call_after_refresh(self.maybe_prompt_restore_autosave)
+        # DO NOT auto-prompt for autosave on startup - user can use /resume or Ctrl+R
+        # self.call_after_refresh(self.maybe_prompt_restore_autosave)
 
         # Apply responsive design adjustments
         self.apply_responsive_layout()
@@ -1054,6 +1055,11 @@ class CodePuppyTUI(App):
                     self.add_error_message(f"Failed to switch model: {e}")
 
         self.push_screen(ModelPicker(), handle_model_select)
+
+    def action_open_resume_dialog(self) -> None:
+        """Open the resume/autosave picker dialog."""
+        # Call the same method used at startup, but now manually triggered
+        self.run_worker(self.maybe_prompt_restore_autosave(), exclusive=False)
 
     def process_initial_command(self) -> None:
         """Process the initial command provided when starting the TUI."""
